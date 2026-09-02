@@ -1,0 +1,31 @@
+# Dr.Swintus runtime and sensitive data
+tools/CodexHome/
+reports/
+
+# Authentication / secrets
+**/auth.json
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Runtime logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.old
+Thumbs.db
+Desktop.ini
+
+# Portable downloaded runtimes
+tools/Codex/
+tools/PowerShell/
+
+# Release archives and local build output
+*.zip
+dist/
+build/
+_release/
