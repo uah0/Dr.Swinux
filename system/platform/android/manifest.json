@@ -1,0 +1,11 @@
+{
+  "id": "android",
+  "displayName": "Android",
+  "status": "planned",
+  "product": "Doctor Swinux",
+  "runtime": "Native Android app + shared agent core",
+  "launcher": "APK application (planned)",
+  "broker": "Android permissions + Shizuku broker; optional root broker later",
+  "entrypoints": {},
+  "notes": "Android is planned after Windows and Linux. Root must not be required for the primary product path."
+}

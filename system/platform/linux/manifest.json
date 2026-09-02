@@ -1,0 +1,11 @@
+{
+  "id": "linux",
+  "displayName": "Linux",
+  "status": "planned",
+  "product": "Doctor Swinux",
+  "runtime": "Portable shell/PowerShell + Codex CLI",
+  "launcher": "ASK-AGENT.sh (planned)",
+  "broker": "typed sudo/polkit broker (planned)",
+  "entrypoints": {},
+  "notes": "Linux is the next planned platform. Initial implementation should target a real Debian/Ubuntu + systemd machine and grow only from real tasks."
+}

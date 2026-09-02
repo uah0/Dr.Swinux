@@ -1,0 +1,34 @@
+Dr.Swintus v1.5.25-final - AUDIT
+
+Purpose of this release:
+- Add reproducible GitHub Actions release automation.
+- Build release ZIP from repository source on Windows.
+- Audit PowerShell syntax and critical safety/update regressions before publishing.
+- Generate and publish SHA-256 alongside the ZIP.
+- Keep updater pointed at uah0/Dr.Swintus.
+
+Audit is performed after the source changes and again on the packaged artifact.
+Real Windows runtime testing of Codex/UAC/Broker remains required for product behavior changes.
+
+Static/source audit iteration 1: 21/21 PASS
+PASS - VERSION canonical v1.5.25
+PASS - updater repository uah0/Dr.Swintus
+PASS - old updater repository absent
+PASS - asset.digest verification retained
+PASS - no assignment-try regression
+PASS - no variable-colon regression
+PASS - no RootPath CMD regression
+PASS - no UsbRoot CMD regression
+PASS - no danger-full-access
+PASS - approval_policy=never retained
+PASS - windows sandbox unelevated retained
+PASS - workspace-write retained
+PASS - RUN-DR-SWINTUS absent
+PASS - no auth.json
+PASS - release workflow triggers on VERSION change
+PASS - workflow grants only contents:write
+PASS - workflow parses PowerShell source
+PASS - workflow creates GitHub Release
+PASS - workflow marks release Latest
+PASS - workflow generates SHA-256
+PASS - workflow does not pass project root through CMD

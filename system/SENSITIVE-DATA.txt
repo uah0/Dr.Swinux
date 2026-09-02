@@ -1,0 +1,43 @@
+Dr.Swintus - SENSITIVE DATA LOCATIONS
+
+This file lists locations and data types, not secret values.
+
+HIGH SENSITIVITY
+  tools\CodexHome\auth.json
+    Portable Codex/ChatGPT authentication material when file-based auth exists.
+    Treat the USB as a logged-in device while this authentication remains valid.
+    Do not share or publish this file.
+
+POTENTIALLY SENSITIVE
+  reports\prompt-history.txt
+    Every non-empty natural-language task entered into Dr.Swintus.
+
+  reports\<session>\prompt.txt
+    The exact task for that diagnostic session.
+
+  reports\<session>\final-answer.txt
+    Diagnostic conclusions. They may contain computer names, local paths,
+    device names, IP addresses, installed software, and event details.
+
+  reports\<session>\broker\
+    Privileged diagnostic request/response data and broker.log. Depending on
+    the task, this may contain network, process, service, driver, device,
+    storage, event-log, update, security-status, scheduled-task, and bounded
+    registry-read information.
+
+  reports\startup-error.log
+    Startup/bootstrap errors and paths. It can reveal usernames, drive letters,
+    and local paths.
+
+LOWER SENSITIVITY / SOFTWARE FILES
+  tools\Codex\
+  tools\PowerShell\
+  system\
+    Program binaries, scripts, and configuration. These should not normally
+    contain user credentials.
+
+IMPORTANT
+  The most security-sensitive location is tools\CodexHome.
+  The reports directory contains privacy-sensitive diagnostic history.
+  Deleting prompt-history.txt removes command-style prompt history but not
+  per-session prompt.txt copies.

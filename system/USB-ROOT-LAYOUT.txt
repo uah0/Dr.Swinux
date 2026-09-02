@@ -1,0 +1,30 @@
+Dr.Swintus portable layout
+
+Dr.Swintus\
+  ASK-AGENT.cmd.lnk
+  README.md
+  tools\
+    Codex\
+    CodexHome\
+    PowerShell\
+  system\
+    ASK-AGENT.cmd
+    Bootstrap-PortablePowerShell.ps1
+    Setup-PortableCodex.ps1
+    Start-Agent.ps1
+    PREPARE-USB-CODEX.cmd
+    README.txt
+    VERSION.txt
+    AUDIT.txt
+    config\
+    modules\
+  reports\
+    startup-error.log      (created at runtime)
+    pre-agent.log          (created at runtime)
+    prompt-history.txt     (created at runtime)
+    <COMPUTER>_<timestamp>_codex\
+
+Normal startup: Dr.Swintus\ASK-AGENT.cmd.lnk
+The shortcut targets Dr.Swintus\system\ASK-AGENT.cmd and uses the system folder as its working directory.
+No fallback root CMD launcher is required.
+No other Dr.Swintus runtime folders are created at the USB root.

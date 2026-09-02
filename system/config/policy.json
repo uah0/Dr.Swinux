@@ -1,0 +1,376 @@
+﻿{
+  "version": "1.5.16-final",
+  "agent_mode": "PortableCodexEngineer",
+  "arbitrary_shell": "deny",
+  "read_actions": "allow",
+  "safe_repair": "confirm",
+  "system_change": "confirm",
+  "critical": "deny",
+  "critical_denied": [
+    "disable_security",
+    "modify_bitlocker",
+    "modify_bcd",
+    "format_disk",
+    "modify_partitions",
+    "delete_users",
+    "mass_delete"
+  ],
+  "broker_allowlist": [
+    "GetWifiDetails",
+    "GetNetworkExtended",
+    "GetProcessExtended",
+    "GetDriverInventory",
+    "GetDeviceInventory",
+    "GetServiceExtended",
+    "GetStorageExtended",
+    "GetStorageReliability",
+    "GetEventLogElevated",
+    "GetUpdateHistory",
+    "GetFirewallSecurityStatus",
+    "GetScheduledTaskSnapshot",
+    "GetRegistryRead",
+    "GetInstalledPackages",
+    "SearchPackage",
+    "InstallPackage",
+    "UninstallPackage",
+    "SetRegistryValue",
+    "RemoveRegistryValue"
+  ],
+  "problem_states": [
+    "Explained",
+    "HealthyNow",
+    "NeedsMoreEvidence",
+    "ActionCandidate",
+    "Monitor",
+    "RepairFailedNeedsDiagnosis"
+  ],
+  "shared_portable_powershell": {
+    "location": "Dr.Swintus\\tools\\PowerShell\\pwsh.exe",
+    "project_local_copy": false
+  },
+  "repair_execution": {
+    "enabled": true,
+    "mode": "typed_confirmed_package_and_registry_value_changes",
+    "safe_repair_requires_confirmation": true,
+    "verification_required": true,
+    "safe_service_start_allowlist": [],
+    "critical_actions_denied": true
+  },
+  "repair_failure_diagnostics": {
+    "enabled": true,
+    "read_only": true,
+    "actions": [
+      "GetServiceFailureContext"
+    ],
+    "repeat_failed_repair_without_new_evidence": false
+  },
+  "pnp_driver_investigation": {
+    "enabled": true,
+    "read_only": true,
+    "prioritize_config_manager_error_codes": [
+      28
+    ],
+    "collect": [
+      "hardware_ids",
+      "compatible_ids",
+      "device_class",
+      "manufacturer",
+      "parent_device",
+      "driver_inf",
+      "driver_version",
+      "driver_provider",
+      "related_signed_drivers"
+    ],
+    "automatic_driver_install": false,
+    "automatic_driver_update": false
+  },
+  "service_noise_control": {
+    "automatic_stopped_is_not_failure_by_itself": true,
+    "automatic_stopped_default_state": "Monitor",
+    "state_only_service_repair_candidates": false,
+    "failed_start_requires_new_evidence_before_retry": true
+  },
+  "focused_evidence": {
+    "enabled": true,
+    "integrated_into_main_agent_loop": true,
+    "output_is_filtered_copy_of_agent_steps": true,
+    "actions": [
+      "GetDiskEventContext",
+      "GetPowerEventTimeline",
+      "GetWifiErrorTimeline",
+      "GetServiceConfigurationContext"
+    ]
+  },
+  "max_iterations": 28,
+  "temporal_correlation": {
+    "enabled": true,
+    "read_only": true,
+    "causation_claims": false,
+    "windows": {
+      "wifi_seconds": 30,
+      "storage_seconds": 20,
+      "power_minutes_before": 5,
+      "power_minutes_after": 2
+    },
+    "kinds": [
+      "WiFi",
+      "Storage",
+      "Power"
+    ],
+    "output": "correlation.json"
+  },
+  "hotfix": {
+    "real_failure": "wrong helper executable installed as D:\\Codex\\codex.exe",
+    "evidence": "login status returned runner: no pipe-in provided",
+    "main_cli_exact_selection": true,
+    "main_cli_version_validation": true,
+    "automatic_replacement_of_invalid_existing_cli": true,
+    "api_key_required": false,
+    "repairs_enabled": false
+  },
+  "incident_reasoning": {
+    "enabled": true,
+    "read_only": true,
+    "causation_proven_default": false,
+    "power_phase_separation": {
+      "before_minutes": 5,
+      "trigger_seconds": 3,
+      "after_minutes": 2,
+      "boot_events_are_not_pre_crash_evidence": true
+    },
+    "confidence_levels": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "high_confidence_rules": [
+      "planned USER32 shutdown before restart marker",
+      "WHEA evidence before restart marker"
+    ],
+    "medium_confidence_requires_repeated_subsystem_evidence": true,
+    "output": "incident-reasoning.json"
+  },
+  "incident_deduplication": {
+    "enabled": true,
+    "power_bucket_minutes": 10,
+    "wifi_bucket_seconds": 45,
+    "storage_bucket_seconds": 30,
+    "purpose": "collapse multiple event anchors from the same likely episode",
+    "causation_proven_default": false
+  },
+  "root_cause_ranking": {
+    "enabled": true,
+    "output": "canonical-incidents.json",
+    "fields": [
+      "ranked_hypotheses",
+      "supporting_evidence",
+      "contradicting_evidence",
+      "confidence",
+      "recommended_next_diagnostic_action"
+    ],
+    "repair_execution_from_ranking": false
+  },
+  "task_driven_agent": {
+    "ordinary_language": true,
+    "autonomous_hypothesis_loop": true,
+    "task_specific_rules": false,
+    "execution": "Codex CLI exec",
+    "diagnostics": "dynamic local Windows/PowerShell evidence plus typed privileged broker tools",
+    "repairs_enabled": "confirmed_package_management_and_controlled_registry_value_writes"
+  },
+  "portable_codex": {
+    "enabled": true,
+    "codex_binary": "X:\\Codex\\codex.exe",
+    "codex_home": "X:\\CodexHome",
+    "chatgpt_auth_on_usb": true,
+    "cli_auth_credentials_store": "file",
+    "api_key_required": false,
+    "automatic_binary_bootstrap": true,
+    "automatic_existing_auth_migration": false,
+    "one_time_chatgpt_login_if_no_valid_usb_auth": true,
+    "runtime_sandbox": "workspace-write",
+    "approval_policy": "never via --config",
+    "repairs_enabled": "confirmed_package_management_and_controlled_registry_value_writes",
+    "live_auth_failure_recovery": "remove stale portable auth.json + device-auth + retry same task once"
+  },
+  "codex_transport": {
+    "windows_native_sandbox": "workspace-write",
+    "windows_sandbox_backend": "unelevated",
+    "writable_workspace": "current USB report session only",
+    "approval_policy": "never via --config",
+    "reason": "real HP test: read-only sandbox blocked diagnostic process creation",
+    "danger_full_access": false,
+    "launcher_elevation": false,
+    "agent_policy": "autonomous Windows engineer; read diagnostics plus confirmed typed package management and controlled registry value writes across standard local hives",
+    "planned_privileged_boundary": "Dr.Swintus Broker"
+  },
+  "audit": {
+    "required_after_every_change": true,
+    "artifact": "AUDIT.txt",
+    "active_path": [
+      "ASK-AGENT.cmd",
+      "Start-Agent.ps1",
+      "Setup-PortableCodex.ps1",
+      "Privileged-Broker.ps1",
+      "Broker-Request.ps1",
+      "config/policy.json"
+    ],
+    "real_log_fix": "multiline Codex version validation tolerates harmless pre-version warnings",
+    "real_log_fix_2": "agent recovers from diagnostic command parser/tool failures and avoids redundant oversized probes",
+    "final_release": "blank-USB runtime bootstrap + drive-letter-independent paths + regression audit",
+    "blank_usb_hotfix": "pass drive designator without quoted trailing slash; normalize/validate in bootstrap and setup",
+    "usb_root_hotfix_2": "accept both drive-designator and rooted drive forms; canonicalize to drive root",
+    "single_folder_layout": "all runtime, auth, reports and scripts live below WINTEST; no runtime folders at USB root",
+    "root_path_hotfix": "bootstrap/setup root is PSScriptRoot; no WINTEST root path passed through cmd.exe",
+    "swintus_layout": "exact root: ASK-AGENT.cmd + tools/system/reports; tools contains Codex/CodexHome/PowerShell; persistent prompt history",
+    "interactive_window_hotfix": "ASK-AGENT runs portable PowerShell 7 in the existing console; no second agent console is spawned",
+    "privileged_broker_v1": "UAC-elevated read-only typed broker; Codex remains unelevated; no arbitrary elevated shell",
+    "broker_discovery_hotfix": "Per-session broker-read.ps1 is placed inside Codex workspace; prompt requires broker retry before permission-based conclusion",
+    "portable_root_shortcut": "Dr.Swintus.lnk at project root launches system\\ASK-AGENT.cmd through a relative shortcut target",
+    "shortcut_hotfix": "Shortcut uses %COMSPEC% plus root working directory instead of RelativePath-only link",
+    "uploaded_shortcut_analysis": "Tested shortcut depended on WorkingDirectory='.' and %CD%; Explorer does not guarantee %CD% equals shortcut directory",
+    "known_good_shortcut": "Release root shortcut binary is based on the user-supplied known-good Windows Shell Link; Windows self-refresh preserves the same direct-target style",
+    "single_console_window": "ASK-AGENT.cmd runs portable pwsh in the existing console; the UAC-elevated broker process is launched with WindowStyle Hidden; only the Windows UAC consent dialog may appear separately",
+    "russian_ui": "Dr.Swintus-owned interactive messages translated to Russian",
+    "no_task_gate": "Exact normalized cancellation/no-task phrases exit before history, updater, session, UAC broker, or Codex.",
+    "github_updater": "Accepted tasks check GitHub latest release before diagnostics; SHA-256 digest is verified; only project code and root shortcut are updated; CodexHome and reports are preserved.",
+    "package_management_v1": "winget-only typed search/list/install/uninstall; install and uninstall require broker-owned foreground/topmost Yes/No confirmation; exact package id; optional broker parameters are StrictMode-safe; package change stages are logged; no arbitrary installer path or arguments",
+    "registry_user_settings_v1": "real Explorer hidden-files task: typed SetRegistryValue writes only HKCU SOFTWARE, denies security/policy/credentials/persistence/Classes, supports DWord/QWord/String, requires foreground/topmost Yes/No per value, logs and verifies each write",
+    "auth_refresh_recovery": "real reports(9) failure: login status can be stale; detect refresh_token_reused/token_expired after real codex exec, remove only stale USB CodexHome auth.json, re-auth with official device flow, retry same task once; never clone host auth.json",
+    "pre_agent_logging": "reports\\pre-agent.log records launcher/runtime/auth/update/broker readiness and stops at CODEX_TASK_START; launcher also keeps a crash-survivable trace in %TEMP% and system\\launcher-trace.log; no credential contents logged",
+    "registry_broad_write_v2": "real user request: SetRegistryValue supports HKLM/HKCU/HKCR/HKU/HKCC existing keys with per-value confirmation and verification; credential/security, security-disable, boot/logon execution, service persistence and common execution-hijack targets remain denied",
+    "startup_registry_management_v1": "real Edge autostart task: GetRegistryRead can read Run/RunOnce/StartupApproved; RemoveRegistryValue confirmation-gates deletion of an exact existing value and verifies absence; SetRegistryValue still denies creating/modifying startup persistence",
+    "scheduled_task_snapshot_fix_v1": "real Edge autostart task: task action properties are optional/type-dependent; snapshot safely reads Execute/Arguments/WorkingDirectory and records ActionType under StrictMode"
+  },
+  "release_status": "final-engineer-controlled-registry-broad-write",
+  "portable_bootstrap": {
+    "single_root_folder": true,
+    "root_folder_name": "WINTEST",
+    "powershell_location": "WINTEST\\PowerShell\\pwsh.exe",
+    "codex_location": "WINTEST\\Codex\\codex.exe",
+    "codex_home": "WINTEST\\CodexHome",
+    "reports_location": "WINTEST\\reports",
+    "powershell_auto_bootstrap": true,
+    "codex_auto_bootstrap": true,
+    "system_install_required": false,
+    "usb_drive_letter_independent": true
+  },
+  "product_name": "Dr.Swintus",
+  "layout": {
+    "root_entries": [
+      "ASK-AGENT.cmd.lnk",
+      "tools",
+      "system",
+      "reports"
+    ],
+    "system_launcher": "system\\ASK-AGENT.cmd",
+    "tools": [
+      "Codex",
+      "CodexHome",
+      "PowerShell"
+    ],
+    "reports": [
+      "startup-error.log",
+      "pre-agent.log",
+      "prompt-history.txt",
+      "session report folders"
+    ],
+    "root_shortcut": "ASK-AGENT.cmd.lnk",
+    "shortcut_refresh": "system\\Create-Shortcut.ps1 creates a standard Windows .lnk with TargetPath=<actual>\\system\\ASK-AGENT.cmd and WorkingDirectory=<actual>\\system"
+  },
+  "prompt_history": {
+    "enabled": true,
+    "path": "Dr.Swintus\\reports\\prompt-history.txt",
+    "navigation": "Up/Down arrows",
+    "append_each_nonempty_prompt": true
+  },
+  "privileged_diagnostics": {
+    "enabled": true,
+    "elevation": "UAC once per agent task",
+    "codex_process_elevated": false,
+    "broker_elevated": true,
+    "broker_mode": "typed allowlist with read actions and confirmation-gated package/registry changes",
+    "request_transport": "JSON files inside current report session",
+    "timeout_minutes": 60,
+    "actions": [
+      "GetWifiDetails",
+      "GetNetworkExtended",
+      "GetProcessExtended",
+      "GetDriverInventory",
+      "GetDeviceInventory",
+      "GetServiceExtended",
+      "GetStorageExtended",
+      "GetStorageReliability",
+      "GetEventLogElevated",
+      "GetUpdateHistory",
+      "GetFirewallSecurityStatus",
+      "GetScheduledTaskSnapshot",
+      "GetRegistryRead",
+      "GetInstalledPackages",
+      "SearchPackage",
+      "InstallPackage",
+      "UninstallPackage",
+      "SetRegistryValue",
+      "RemoveRegistryValue"
+    ],
+    "registry_read_roots": [
+      "HKLM",
+      "HKCU",
+      "HKCR",
+      "HKU",
+      "HKCC"
+    ],
+    "sensitive_registry_denied": [
+      "SAM/SECURITY and credential/secret stores for reads and writes",
+      "security-disable locations for writes/removals",
+      "Winlogon and IFEO/SilentProcessExit for writes/removals",
+      "service persistence for writes/removals",
+      "common HKCR execution-hijack targets for writes/removals",
+      "Run/RunOnce/StartupApproved creation or modification; exact existing value removal is confirmation-gated"
+    ],
+    "arbitrary_command": false,
+    "arbitrary_script": false,
+    "write_operations": "restricted_confirmed_actions_only",
+    "workspace_entrypoint": "reports\\<session>\\broker-read.ps1",
+    "agent_retry_on_permission_denied": true,
+    "must_try_matching_broker_before_permission_conclusion": true
+  },
+  "system_settings": {
+    "enabled": true,
+    "registry_write_action": "SetRegistryValue",
+    "registry_write_scope": "HKLM/HKCU/HKCR/HKU/HKCC existing keys, except broker-denied sensitive/security/persistence/execution-hijack targets",
+    "confirmation": "broker-owned Yes/No per value",
+    "allowed_types": [
+      "DWord",
+      "QWord",
+      "String"
+    ],
+    "denied_categories": [
+      "credential/security stores",
+      "security-disable locations",
+      "high-risk boot/logon execution hooks",
+      "service persistence",
+      "common execution-hijack targets",
+      "creating/modifying startup persistence (Run/RunOnce/StartupApproved); removal of existing exact entries allowed with confirmation"
+    ],
+    "shell_notification": true,
+    "post_action_verification_required": true,
+    "arbitrary_registry_script": false,
+    "registry_remove_action": "RemoveRegistryValue",
+    "registry_read_scope": "HKLM/HKCU/HKCR/HKU/HKCC ordinary metadata including Run/RunOnce/StartupApproved; credential/secret stores denied",
+    "registry_remove_scope": "existing values across standard hives with confirmation; ordinary Run/RunOnce/StartupApproved removals allowed; higher-risk security/persistence/execution targets denied",
+    "verification": "read-after-write/remove required"
+  },
+  "package_management": {
+    "enabled": true,
+    "provider": "winget",
+    "search_and_inventory": "allow",
+    "install": "confirm_in_elevated_broker",
+    "uninstall": "confirm_in_elevated_broker",
+    "exact_package_id_required": true,
+    "silent_requested": true,
+    "arbitrary_installer_path": false,
+    "arbitrary_arguments": false,
+    "post_action_verification_required": true
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dr.Swintus platform manifest",
+  "type": "object",
+  "required": ["id", "displayName", "status", "runtime", "launcher", "broker", "entrypoints"],
+  "properties": {
+    "id": { "type": "string", "enum": ["windows", "linux", "android"] },
+    "displayName": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["supported", "planned", "experimental"] },
+    "runtime": { "type": "string", "minLength": 1 },
+    "launcher": { "type": "string", "minLength": 1 },
+    "broker": { "type": "string", "minLength": 1 },
+    "entrypoints": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

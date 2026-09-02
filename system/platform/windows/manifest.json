@@ -1,0 +1,19 @@
+{
+  "id": "windows",
+  "displayName": "Windows",
+  "status": "supported",
+  "product": "Dr.Swinux",
+  "runtime": "Portable PowerShell 7 + Codex CLI",
+  "launcher": "ASK-AGENT.cmd.lnk -> system/ASK-AGENT.cmd -> system/Start-DoctorSwinux.ps1",
+  "broker": "UAC-elevated typed allowlist broker",
+  "entrypoints": {
+    "agent": "system/Start-DoctorSwinux.ps1",
+    "compatibilityAgent": "system/Start-Agent.ps1",
+    "brokerServer": "system/Privileged-Broker.ps1",
+    "brokerClient": "system/Broker-Request.ps1",
+    "runtimeBootstrap": "system/Bootstrap-PortablePowerShell.ps1",
+    "codexSetup": "system/Setup-PortableCodex.ps1",
+    "updater": "system/Update-DrSwintus.ps1"
+  },
+  "notes": "Dr.Swinux is the public product name. Proven Dr.Swintus internal paths remain temporarily for update/runtime compatibility while migration behind the platform boundary is incremental."
+}
