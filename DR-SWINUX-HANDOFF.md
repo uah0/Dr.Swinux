@@ -4,7 +4,7 @@
 >
 > **Maintenance rule:** update this file whenever an architectural decision, safety invariant, release baseline, real-machine finding, or development-process rule changes. Do not use it as a changelog for insignificant edits.
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## 1. Product identity and goal
 
@@ -185,19 +185,23 @@ Repository URL:
 
 `https://github.com/uah0/Dr.Swinux`
 
-Current release baseline at the time of this handoff:
+The repository was deliberately recreated on 2026-09-02 as a clean repository because the previous Git history and releases were no longer required. The current repository history is the new source of truth; old repository commit IDs and old release hashes must not be used as the current baseline.
+
+Current release baseline:
 
 ```text
 Dr.Swinux v1.5.32-final
 Tag: v1.5.32
-Release target commit: 185a4cdee0e102880f9084c7dd185845397a5886
+Release target commit: 2d9fcbb6cf91e005345b55d4efc2e8046478275a
 Asset: Dr.Swinux-v1.5.32-final.zip
-SHA-256: a220880e1ad58f562775d2a56d0236ee59111412d78add8b7bfc615d2c4baf9a
+SHA-256: 1396e33807a67c278f753d3ee3f65bf97e1ef36b95620d35cdebc87bf0994d48
 ```
+
+The release workflow for this clean baseline completed successfully through source audit, portable ZIP build, ZIP verification, and GitHub Release publication.
 
 The canonical runtime version is read from `system/VERSION.txt`. Do not hardcode the current version into `Start-Agent.ps1`.
 
-Repository history was renamed from older Dr.Swintus repositories. Do not reintroduce old public branding. Historical commits were not rewritten merely to remove old contributor/repository names.
+Legacy internal filenames may remain for compatibility, but do not reintroduce old public branding. The obsolete `.mailmap` from the previous-history cleanup was removed after the repository was recreated; it is not needed for the clean history.
 
 ## 9. Mandatory development/audit process
 
