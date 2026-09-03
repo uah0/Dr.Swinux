@@ -1,0 +1,21 @@
+name: Apply trusted package fallback patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-trusted-package-fallback.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited trusted package fallback patch
+        shell: pwsh
+        run: '& .github/scripts/patch-trusted-package-fallback.ps1'
