@@ -1,17 +1,10 @@
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 $path='system/Privileged-Broker.ps1'
-$text=Get-Content -LiteralPath $path -Raw -Encoding UTF8
+$text=(Get-Content -LiteralPath $path -Raw -Encoding UTF8).Replace("`r`n","`n")
 
-$old=@'
-                Publisher=$publisher
-                QuietUninstallString=(Get-RegistryStringProperty -Object $item -Name 'QuietUninstallString')
-'@
-$new=@'
-                Publisher=$publisher
-                QuietUninstallString=(Get-RegistryStringProperty -Object $item -Name 'QuietUninstallString')
-                UninstallString=(Get-RegistryStringProperty -Object $item -Name 'UninstallString')
-'@
+$old="                Publisher=`$publisher`n                QuietUninstallString=(Get-RegistryStringProperty -Object `$item -Name 'QuietUninstallString')"
+$new=$old+"`n                UninstallString=(Get-RegistryStringProperty -Object `$item -Name 'UninstallString')"
 if(-not $text.Contains($old)){throw 'Registry entry anchor not found.'}
 $text=$text.Replace($old,$new)
 
@@ -46,7 +39,10 @@ function Get-TrustedUninstallCommand {
 if(-not $text.Contains($anchor)){throw 'Command converter anchor not found.'}
 $text=$text.Replace($anchor,$helper+$anchor)
 
-$text=$text.Replace('$command=Convert-TrustedQuietUninstallCommand -Command $entry.QuietUninstallString','$command=Get-TrustedUninstallCommand -Package $package -Entry $entry')
+$oldCommand='$command=Convert-TrustedQuietUninstallCommand -Command $entry.QuietUninstallString'
+if(-not $text.Contains($oldCommand)){throw 'Uninstall command anchor not found.'}
+$text=$text.Replace($oldCommand,'$command=Get-TrustedUninstallCommand -Package $package -Entry $entry')
+
 $oldFresh="if((Get-RegistryStringProperty -Object `$fresh -Name 'DisplayName') -ne `$entry.DisplayName -or (Get-RegistryStringProperty -Object `$fresh -Name 'Publisher') -ne `$entry.Publisher -or (Get-RegistryStringProperty -Object `$fresh -Name 'QuietUninstallString') -ne `$entry.QuietUninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}`n    `$freshCommand=Convert-TrustedQuietUninstallCommand -Command (Get-RegistryStringProperty -Object `$fresh -Name 'QuietUninstallString')"
 $newFresh="if((Get-RegistryStringProperty -Object `$fresh -Name 'DisplayName') -ne `$entry.DisplayName -or (Get-RegistryStringProperty -Object `$fresh -Name 'Publisher') -ne `$entry.Publisher -or (Get-RegistryStringProperty -Object `$fresh -Name 'QuietUninstallString') -ne `$entry.QuietUninstallString -or (Get-RegistryStringProperty -Object `$fresh -Name 'UninstallString') -ne `$entry.UninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}`n    `$freshEntry=[pscustomobject]@{QuietUninstallString=(Get-RegistryStringProperty -Object `$fresh -Name 'QuietUninstallString');UninstallString=(Get-RegistryStringProperty -Object `$fresh -Name 'UninstallString')}`n    `$freshCommand=Get-TrustedUninstallCommand -Package `$package -Entry `$freshEntry"
 if(-not $text.Contains($oldFresh)){throw 'TOCTOU anchor not found.'}
@@ -56,8 +52,7 @@ $text=$text.Replace('Команда взята только из HKLM uninstall 
 
 Set-Content -LiteralPath $path -Value $text -Encoding UTF8 -NoNewline
 Set-Content -LiteralPath 'system/VERSION.txt' -Value 'Dr.Swinux v1.5.57-final' -Encoding UTF8 -NoNewline
-
-$parseErrors=@();$tokens=$null;$errors=$null;[void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path),[ref]$tokens,[ref]$errors);if($errors){$errors|ForEach-Object{Write-Error $_};throw 'Broker parser audit failed.'}
+$tokens=$null;$errors=$null;[void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path),[ref]$tokens,[ref]$errors);if($errors){$errors|ForEach-Object{Write-Error $_};throw 'Broker parser audit failed.'}
 $check=Get-Content -LiteralPath $path -Raw
 foreach($needle in @('Get-TrustedMsiUninstallCommand','CatalogPinnedMsiProductCode','Registered MSI ProductCode is not pinned by the trusted catalog.','UninstallString=(Get-RegistryStringProperty')){if(-not $check.Contains($needle)){throw "Missing MSI uninstall invariant: $needle"}}
 if($check -match 'Invoke-Expression'){throw 'Unsafe Invoke-Expression detected.'}
