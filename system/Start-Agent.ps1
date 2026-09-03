@@ -525,7 +525,7 @@ param(
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
         'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
-        'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
+        'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
     [int]$TimeoutSeconds=45
@@ -601,14 +601,14 @@ PRIVILEGED BROKER:
 
 PACKAGE MANAGEMENT:
 - You may search installed/available software and install or uninstall a program when that is part of the user's task.
-- Use the broker's typed winget actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage.
-- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget. EnsureWinget shows its own broker-owned Yes/No confirmation before any repair/download/install and only uses the official Microsoft App Installer source.
+- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, InstallTrustedPackageFallback.
+- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available and the requested package is 7-Zip, call InstallTrustedPackageFallback with Id 7zip.7zip. This fallback is broker-owned, hard-coded to the official 7-Zip release, verifies Authenticode signer/status, shows its own Yes/No confirmation, and does not accept a URL or command line from you.
 - Before InstallPackage, use SearchPackage and identify an exact package Id. Before UninstallPackage, use GetInstalledPackages and identify an exact installed package Id.
-- InstallPackage and UninstallPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
+- InstallPackage, UninstallPackage, and InstallTrustedPackageFallback always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
 - After a confirmed install/uninstall, verify the requested result with GetInstalledPackages or another direct observation.
 
 STRICT BOUNDARY:
-- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, or free-form command-line arguments.
+- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, URLs, or free-form command-line arguments. Trusted direct installers are broker-owned fixed definitions only.
 - Apart from confirmed typed broker actions, treat ordinary shell commands as read-only and do not write outside the report session.
 - Do not modify registry directly; use typed broker actions.
 - Do not run cleanup, deletion, formatting, partitioning, boot/BCD, BitLocker, security-disabling, account-deletion, or mass-deletion commands.

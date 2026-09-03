@@ -5,7 +5,7 @@ param(
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
         'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
-        'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
+        'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
     [int]$TimeoutSeconds=45
