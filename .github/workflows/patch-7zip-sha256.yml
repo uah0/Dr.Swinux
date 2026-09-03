@@ -1,4 +1,5 @@
 name: Apply pinned 7-Zip SHA256 patch
+# retry after normalizing checked-out PowerShell line endings
 
 on:
   push:
