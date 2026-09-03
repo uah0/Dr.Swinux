@@ -18,4 +18,4 @@ jobs:
           fetch-depth: 0
       - name: Apply audited trusted uninstall fallback
         shell: pwsh
-        run: '& .github/scripts/patch-trusted-uninstall-fallback.ps1'
+        run: '& .github/scripts/run-trusted-uninstall-v2.ps1'
