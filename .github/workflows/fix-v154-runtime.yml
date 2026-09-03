@@ -1,0 +1,54 @@
+name: Fix v1.5.54 runtime recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-v154-runtime.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - shell: pwsh
+        run: |
+          $p='system/Start-Agent.ps1'
+          $t=Get-Content $p -Raw -Encoding UTF8
+          $pairs=@(
+            @('$report=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $failureReporter -Session $session -Status $taskOutcome -CodexExit $codexExit -Task $Task -ReportsRoot $reportsRoot -ProjectRoot $root)','$report=@(& $failureReporter -Session $session -Status $taskOutcome -CodexExit $codexExit -Task $Task -ReportsRoot $reportsRoot -ProjectRoot $root)'),
+            @('$repairOutput=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autoRepair -Session $session -Bundle ([string]$reportObject.Bundle) -ReportsRoot $reportsRoot -ProjectRoot $root -Codex $codex -CodexHome $codexHome)','$repairOutput=@(& $autoRepair -Session $session -Bundle ([string]$reportObject.Bundle) -ReportsRoot $reportsRoot -ProjectRoot $root -Codex $codex -CodexHome $codexHome)'),
+            @('$submitted=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairSubmitter -CandidateDirectory ([string]$repair.CandidateDirectory) -Repository $repo -BaseBranch $baseBranch)|Where-Object{$_ -and $_.PSObject.Properties[''PullRequest'']}|Select-Object -Last 1','$submitted=@(& $repairSubmitter -CandidateDirectory ([string]$repair.CandidateDirectory) -Repository $repo -BaseBranch $baseBranch)|Where-Object{$_ -and $_.PSObject.Properties[''PullRequest'']}|Select-Object -Last 1')
+          )
+          foreach($pair in $pairs){if(([regex]::Matches($t,[regex]::Escape($pair[0]))).Count-ne1){throw "Start-Agent marker mismatch"};$t=$t.Replace($pair[0],$pair[1])}
+          Set-Content $p $t -Encoding UTF8 -NoNewline
+
+          $b='system/Broker-Request.ps1'
+          $bt=Get-Content $b -Raw -Encoding UTF8
+          $marker='if($TimeoutSeconds -lt 5){$TimeoutSeconds=5}'
+          $replacement=@'
+          if($TimeoutSeconds -eq 45){
+              if($Action -eq 'EnsureWinget'){$TimeoutSeconds=180}
+              elseif($Action -in @('InstallPackage','UninstallPackage','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback')){$TimeoutSeconds=300}
+          }
+          if($TimeoutSeconds -lt 5){$TimeoutSeconds=5}
+          '@
+          $replacement=$replacement.Trim()
+          if(([regex]::Matches($bt,[regex]::Escape($marker))).Count-ne1){throw 'Broker timeout marker mismatch'}
+          $bt=$bt.Replace($marker,$replacement)
+          Set-Content $b $bt -Encoding UTF8 -NoNewline
+
+          Set-Content 'system/VERSION.txt' 'Dr.Swinux v1.5.54-final' -Encoding UTF8 -NoNewline
+          $parseErrors=@();Get-ChildItem system -Recurse -Filter '*.ps1'|ForEach-Object{$tok=$null;$err=$null;[void][Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tok,[ref]$err);if($err){$parseErrors+=$err}};if($parseErrors){$parseErrors|ForEach-Object{Write-Host $_};throw 'Parser audit failed'}
+          $final=Get-Content $p -Raw
+          if($final -match [regex]::Escape('& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $failureReporter')){throw 'Failure reporter still crosses native pwsh object boundary'}
+          if($final -match [regex]::Escape('& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autoRepair')){throw 'Auto repair still crosses native pwsh object boundary'}
+          $broker=Get-Content $b -Raw
+          if($broker-notmatch [regex]::Escape("if(`$Action -eq 'EnsureWinget'){`$TimeoutSeconds=180}")){throw 'EnsureWinget timeout audit failed'}
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add system/Start-Agent.ps1 system/Broker-Request.ps1 system/VERSION.txt
+          git commit -m 'Fix repair object handoff and broker operation timeouts'
+          git push
