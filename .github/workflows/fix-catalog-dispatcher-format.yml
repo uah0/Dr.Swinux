@@ -1,0 +1,21 @@
+name: Fix trusted catalog dispatcher formatting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-catalog-dispatcher-format.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Normalize dispatcher and parse broker
+        shell: pwsh
+        run: '& .github/scripts/fix-catalog-dispatcher-format.ps1'
