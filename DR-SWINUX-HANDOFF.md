@@ -184,7 +184,9 @@ Current branding assets are under `system/assets/branding/` and include:
 
 There is also a root `Dr.Swinux.png` used by README.
 
-Known technical debt: inspect `Create-Shortcut.ps1` before claiming the repository-supplied `.ico` survives packaging byte-for-byte. Historically the shortcut script regenerated/overwrote the ICO from the icon PNG.
+The Windows launcher and its user-visible startup logs use `Dr.Swinux`; the current temp flight recorder is `%TEMP%\DrSwinux-last-start.log`. Shortcut description is `Dr.Swinux portable AI doctor`.
+
+Known technical debt: inspect `Create-Shortcut.ps1` before claiming the repository-supplied `.ico` survives packaging byte-for-byte. The shortcut script currently regenerates/overwrites the ICO from the approved icon PNG.
 
 ## 8. GitHub repository and release baseline
 
@@ -201,14 +203,16 @@ The repository was deliberately recreated on 2026-09-02 as a clean repository be
 Current release baseline:
 
 ```text
-Dr.Swinux v1.5.32-final
-Tag: v1.5.32
-Release target commit: 2d9fcbb6cf91e005345b55d4efc2e8046478275a
-Asset: Dr.Swinux-v1.5.32-final.zip
-SHA-256: 1396e33807a67c278f753d3ee3f65bf97e1ef36b95620d35cdebc87bf0994d48
+Dr.Swinux v1.5.33-final
+Tag: v1.5.33
+Release target commit: f4beed0847d2392b46465757af1580dcb4528105
+Asset: Dr.Swinux-v1.5.33-final.zip
+SHA-256: e2ea9c9e9e3c57d596bbc1ee9ce91089a3f53fe82463e455ade9af8b088012c9
 ```
 
-The release workflow for this clean baseline completed successfully through source audit, portable ZIP build, ZIP verification, and GitHub Release publication.
+GitHub Actions run `33727922277` completed successfully. Source audit, portable ZIP build, ZIP verification and GitHub Release publication all passed.
+
+v1.5.33 is a real-startup repair release driven by a Windows failure where the launcher reached `START_AGENT_BEGIN` and returned exit code `216` without preserving a useful PowerShell exception. The launcher now validates that an existing portable `pwsh.exe` can actually start before using it; an invalid/stale/corrupt/wrong-architecture executable is routed through the existing bootstrap repair path. A final PowerShell startup probe runs immediately before launching the agent. The PowerShell wrapper also persists unhandled startup errors to `startup-error.log`/`pre-agent.log`.
 
 The canonical runtime version is read from `system/VERSION.txt`. Do not hardcode the current version into `Start-Agent.ps1`.
 
@@ -324,11 +328,12 @@ Past real Windows work demonstrated generic reasoning rather than hardcoded work
 - reaching the real winget installation path;
 - Explorer hidden-files configuration leading to a generic registry capability;
 - an Edge startup problem leading to startup-removal and Scheduled Task capability work;
-- firewall allowed-ports investigation where Codex corrected its own parser mistake.
+- firewall allowed-ports investigation where Codex corrected its own parser mistake;
+- a real slow-storage investigation that independently progressed through storage/reliability/event/driver/device evidence and exposed a genuine missing repair capability instead of a hardcoded workflow.
 
 Do not hardcode these cases as workflows. They are evidence that generic reasoning/capabilities can solve real tasks.
 
-## 14. Windows test-machine history
+## 14. Windows test-machine and startup-failure history
 
 A previously used physical test laptop was:
 
@@ -342,11 +347,15 @@ Intel AX201 Wi-Fi
 
 This information is historical test context only. Never hardcode expected answers for that machine.
 
-The next planned laboratory environment is a Windows 10 virtual machine. VM snapshots should be used to preserve/reproduce a problem state before Dr.Swinux attempts treatment.
+On 2026-09-03 a real Windows launch from `Z:\Dr.Swinux\` failed after `START_AGENT_BEGIN` with exit code `216`. The supplied logs showed that report logging, shortcut refresh and portable-PowerShell file discovery had succeeded, but there was no `Start-Agent` BEGIN entry and no useful exception. Authentication logs separately showed Codex was logged in via ChatGPT, so auth was not the failing stage.
 
-## 15. LAB MODE — v1.5.32
+The important development finding was architectural: launcher existence checks were insufficient. A present `pwsh.exe` can still be unusable, and loader failures can occur before PowerShell code has a chance to log an exception. v1.5.33 therefore probes the executable itself and repairs it through bootstrap if the probe fails. The exact underlying reason for the original Windows loader code 216 remains to be confirmed by re-running v1.5.33 on that machine; do not claim corruption or architecture mismatch as proven until the new probe log confirms it.
 
-v1.5.32 introduced the first autonomous development/lab loop.
+The Windows 10 VM remains useful for repeatable Lab testing. VM snapshots should preserve/reproduce a problem state before Dr.Swinux attempts treatment.
+
+## 15. LAB MODE — introduced in v1.5.32
+
+v1.5.32 introduced the first autonomous development/lab loop; it remains present in the current v1.5.33 release.
 
 Launcher:
 
@@ -391,21 +400,21 @@ Self-modification uses an isolated candidate and a guarded audit rather than bli
 
 Protected Lab/safety/update/auth/Broker files are not autonomously modifiable by the Lab candidate. A new privileged capability may be identified as a real gap, but the Lab must not autonomously weaken or expand the privilege boundary to solve it.
 
-The v1.5.32 GitHub Actions release audit, build, ZIP verification, and publication succeeded. **The full Lab runtime still requires real Windows 10 VM testing; CI cannot validate the complete Codex/UAC/local-machine interaction.**
+The current release workflow audit/build/package publication has passed, but **the full Lab runtime still requires real Windows 10 VM testing; CI cannot validate the complete Codex/UAC/local-machine interaction.**
 
 ## 16. Next real development step
 
-Do not start by inventing more diagnostics or plugins.
+First re-run/update to **v1.5.33** on the Windows machine that produced exit code 216. The launcher should now do one of two useful things: automatically replace an unusable portable PowerShell through bootstrap and continue, or stop with a specific `powershell-probe` / `powershell-final-probe` failure recorded in `startup-error.log`, `pre-agent.log`, the temp flight recorder and `launcher-trace.log`.
 
-Install/run v1.5.32 on a Windows 10 VM, create a useful snapshot, initialize/authenticate the portable environment normally, then run `LAB-SWINUX.cmd` with a real ordinary-language computer task.
+If startup succeeds, return to real ordinary-language tasks. The slow-storage case exposed a genuine capability gap around controlled filesystem repair; do not add a repair operation merely from theory. Use the same real symptom/problem state, determine exactly what safe typed action and verification would have been required, then implement only that generic capability under the existing Broker safety model.
 
-Observe the first actual failure of the end-to-end Lab loop. Preserve:
+For Lab-mode testing, use a Windows 10 VM snapshot and preserve:
 
 - original user task verbatim;
 - VM snapshot/state;
 - Dr.Swinux report/session directory;
 - Lab case/result/classification;
-- console error if any;
+- console/startup error if any;
 - whether the failure is reasoning, capability, permission/policy, tool implementation, verification, context/history, Lab orchestration, or another concrete class.
 
 Patch only the real failing stage, audit, restore/reproduce the same initial state, and retry the exact same task.
