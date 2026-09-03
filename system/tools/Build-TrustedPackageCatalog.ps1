@@ -1,6 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$WingetManifestRoot,
-    [Parameter(Mandatory=$true)][string]$OutputPath
+    [Parameter(Mandatory=$true)][string]$OutputPath,
+    [switch]$AutomaticSafeSubset,
+    [string]$SourceCommit=''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -24,11 +26,8 @@ function Get-NaturalVersionKey {
     $builder=[Text.StringBuilder]::new()
     foreach($part in $parts){
         $value=$part.Value
-        if($value -match '^\d+$'){
-            [void]$builder.Append($value.PadLeft(24,'0'))
-        } else {
-            [void]$builder.Append($value.ToLowerInvariant())
-        }
+        if($value -match '^\d+$'){[void]$builder.Append($value.PadLeft(24,'0'))}
+        else {[void]$builder.Append($value.ToLowerInvariant())}
         [void]$builder.Append('|')
     }
     return $builder.ToString()
@@ -37,12 +36,14 @@ function Get-NaturalVersionKey {
 $root=[IO.Path]::GetFullPath($WingetManifestRoot)
 if(-not(Test-Path -LiteralPath $root -PathType Container)){throw "Manifest root not found: $root"}
 
+$allowedTypes=if($AutomaticSafeSubset){@('msi','wix')}else{@('msi','wix','exe')}
 $rows=@()
 Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | ForEach-Object {
     try {$m=Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Yaml} catch {return}
     $id=[string](Get-OptionalProperty $m 'PackageIdentifier')
     $version=[string](Get-OptionalProperty $m 'PackageVersion')
     if([string]::IsNullOrWhiteSpace($id)-or[string]::IsNullOrWhiteSpace($version)){return}
+    if($id.Length -gt 200 -or $version.Length -gt 100){return}
 
     $rootType=([string](Get-OptionalProperty $m 'InstallerType')).ToLowerInvariant()
     $rootSwitches=Get-OptionalProperty $m 'InstallerSwitches'
@@ -59,10 +60,11 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
         $productCode=[string](Get-OptionalProperty $i 'ProductCode')
 
         if($arch -notin @('x64','x86','arm64')){continue}
-        if($type -notin @('msi','wix','exe')){continue}
+        if($type -notin $allowedTypes){continue}
         if($url -notmatch '^https://'){continue}
         try {$uri=[Uri]$url}catch{continue}
-        if($uri.Scheme -ne 'https'){continue}
+        if($uri.Scheme -ne 'https' -or [string]::IsNullOrWhiteSpace($uri.Host)){continue}
+        if($url.Length -gt 2048){continue}
         if($sha -notmatch '^[A-F0-9]{64}$'){continue}
 
         $silent=@()
@@ -81,12 +83,18 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
         if($afe.Count -eq 0){$afe=$rootAfe}
         if($afe.Count -gt 0 -and $null -ne $afe[0]){
             $displayName=[string](Get-OptionalProperty $afe[0] 'DisplayName')
-            if(-not [string]::IsNullOrWhiteSpace($displayName)){$displayPattern='^'+[regex]::Escape($displayName)}
+            if(-not [string]::IsNullOrWhiteSpace($displayName) -and $displayName.Length -le 300){$displayPattern='^'+[regex]::Escape($displayName)}
             $publisher=[string](Get-OptionalProperty $afe[0] 'Publisher')
-            if(-not [string]::IsNullOrWhiteSpace($publisher)){$publisherPattern='^'+[regex]::Escape($publisher)+'$'}
+            if(-not [string]::IsNullOrWhiteSpace($publisher) -and $publisher.Length -le 300){$publisherPattern='^'+[regex]::Escape($publisher)+'$'}
             if([string]::IsNullOrWhiteSpace($productCode)){$productCode=[string](Get-OptionalProperty $afe[0] 'ProductCode')}
         }
+
+        # Automatic snapshots are intentionally stricter: MSI/WiX must have a ProductCode.
+        # This gives the broker a deterministic identity for post-install verification and
+        # prevents broad regex-only upstream entries from entering the unattended catalog.
+        if($AutomaticSafeSubset -and [string]::IsNullOrWhiteSpace($productCode)){continue}
         if([string]::IsNullOrWhiteSpace($productCode)-and[string]::IsNullOrWhiteSpace($displayPattern)){continue}
+        if(-not[string]::IsNullOrWhiteSpace($productCode) -and ($productCode.Length -gt 200 -or $productCode -match '[\x00-\x1F\x7F]')){continue}
 
         $installers += [ordered]@{
             architecture=$arch
@@ -111,18 +119,12 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
     }
 }
 
-# Keep one deterministic newest-looking version snapshot per PackageIdentifier.
-# WinGet version strings are not uniformly SemVer, so a natural numeric/text sort key is used.
 $packages=@()
 foreach($g in ($rows | Group-Object id | Sort-Object Name)){
     $chosen=$g.Group | Sort-Object versionKey -Descending | Select-Object -First 1
-    $packages += [ordered]@{
-        id=$chosen.id
-        version=$chosen.version
-        displayName=$chosen.displayName
-        installers=@($chosen.installers)
-    }
+    $packages += [ordered]@{id=$chosen.id;version=$chosen.version;displayName=$chosen.displayName;installers=@($chosen.installers)}
 }
+if($AutomaticSafeSubset -and $packages.Count -lt 100){throw "Automatic safe catalog unexpectedly small: $($packages.Count) packages"}
 
 $out=[ordered]@{
     schemaVersion=1
@@ -130,10 +132,12 @@ $out=[ordered]@{
         name='microsoft/winget-pkgs'
         repository='https://github.com/microsoft/winget-pkgs'
         generatedAt=(Get-Date).ToUniversalTime().ToString('o')
+        commit=$SourceCommit
+        policy=if($AutomaticSafeSubset){'automatic-msi-wix-productcode-v1'}else{'reviewed-generator-v1'}
     }
     packages=$packages
 }
 $dir=Split-Path -Parent ([IO.Path]::GetFullPath($OutputPath))
 if($dir){New-Item -ItemType Directory -Path $dir -Force|Out-Null}
 $out | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputPath -Encoding UTF8
-Write-Host ("Generated trusted package catalog: {0} packages" -f $packages.Count)
+Write-Host ("Generated trusted package catalog: {0} packages; policy={1}" -f $packages.Count,$out.source.policy)
