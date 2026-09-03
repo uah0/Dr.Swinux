@@ -203,16 +203,18 @@ The repository was deliberately recreated on 2026-09-02 as a clean repository be
 Current release baseline:
 
 ```text
-Dr.Swinux v1.5.33-final
-Tag: v1.5.33
-Release target commit: f4beed0847d2392b46465757af1580dcb4528105
-Asset: Dr.Swinux-v1.5.33-final.zip
-SHA-256: e2ea9c9e9e3c57d596bbc1ee9ce91089a3f53fe82463e455ade9af8b088012c9
+Dr.Swinux v1.5.34-final
+Tag: v1.5.34
+Release target commit: bb3df54419679dbda8dde6778a6a69ee0cc6bac5
+Asset: Dr.Swinux-v1.5.34-final.zip
+SHA-256: c3a999a9a744a227ee3e0c73a4f510edc9839dbcaa6d025e073d4885052be2e7
 ```
 
-GitHub Actions run `33727922277` completed successfully. Source audit, portable ZIP build, ZIP verification and GitHub Release publication all passed.
+GitHub Actions run `33734840830` completed successfully. Source audit, portable ZIP build, ZIP verification and GitHub Release publication all passed.
 
-v1.5.33 is a real-startup repair release driven by a Windows failure where the launcher reached `START_AGENT_BEGIN` and returned exit code `216` without preserving a useful PowerShell exception. The launcher now validates that an existing portable `pwsh.exe` can actually start before using it; an invalid/stale/corrupt/wrong-architecture executable is routed through the existing bootstrap repair path. A final PowerShell startup probe runs immediately before launching the agent. The PowerShell wrapper also persists unhandled startup errors to `startup-error.log`/`pre-agent.log`.
+v1.5.33 added executable probes around portable PowerShell so a present but unusable `pwsh.exe` is no longer treated as healthy. A real rerun then proved the underlying startup condition: the existing `Z:\Dr.Swinux\tools\PowerShell\pwsh.exe` was incompatible with the Windows instance and returned loader exit code `216`. The repair path correctly selected the x86 PowerShell package, but Windows PowerShell 5.1 then failed to download it because it could not establish the required SSL/TLS channel to GitHub.
+
+v1.5.34 fixes that second real startup blocker. `Bootstrap-PortablePowerShell.ps1` explicitly enables TLS 1.2 (while preserving already-enabled protocols) before `Invoke-WebRequest`, so older Windows PowerShell 5.1 defaults do not prevent the verified PowerShell package download. The bootstrap still verifies the pinned SHA-256 before installation and then runs the downloaded `pwsh.exe` as a startup test.
 
 The canonical runtime version is read from `system/VERSION.txt`. Do not hardcode the current version into `Start-Agent.ps1`.
 
@@ -347,15 +349,15 @@ Intel AX201 Wi-Fi
 
 This information is historical test context only. Never hardcode expected answers for that machine.
 
-On 2026-09-03 a real Windows launch from `Z:\Dr.Swinux\` failed after `START_AGENT_BEGIN` with exit code `216`. The supplied logs showed that report logging, shortcut refresh and portable-PowerShell file discovery had succeeded, but there was no `Start-Agent` BEGIN entry and no useful exception. Authentication logs separately showed Codex was logged in via ChatGPT, so auth was not the failing stage.
+On 2026-09-03 a real Windows launch from `Z:\Dr.Swinux\` first failed after `START_AGENT_BEGIN` with exit code `216`. The v1.5.33 diagnostic repair made the failure observable. The next real log proved that Windows rejected the existing portable `pwsh.exe` as incompatible with that Windows instance. Dr.Swinux then entered the intended bootstrap repair path and selected `PowerShell-7.6.5-win-x86.zip`, but the Windows PowerShell 5.1 host failed at `Invoke-WebRequest` with “could not create SSL/TLS secure channel.”
 
-The important development finding was architectural: launcher existence checks were insufficient. A present `pwsh.exe` can still be unusable, and loader failures can occur before PowerShell code has a chance to log an exception. v1.5.33 therefore probes the executable itself and repairs it through bootstrap if the probe fails. The exact underlying reason for the original Windows loader code 216 remains to be confirmed by re-running v1.5.33 on that machine; do not claim corruption or architecture mismatch as proven until the new probe log confirms it.
+This establishes two separate startup lessons: existence checks are insufficient for portable executables, and bootstrap networking cannot rely on legacy Windows PowerShell TLS defaults. v1.5.34 explicitly enables TLS 1.2 before downloading from GitHub. Do not remove the executable probes or TLS 1.2 bootstrap setup without a newer real-machine reason.
 
 The Windows 10 VM remains useful for repeatable Lab testing. VM snapshots should preserve/reproduce a problem state before Dr.Swinux attempts treatment.
 
 ## 15. LAB MODE — introduced in v1.5.32
 
-v1.5.32 introduced the first autonomous development/lab loop; it remains present in the current v1.5.33 release.
+v1.5.32 introduced the first autonomous development/lab loop; it remains present in the current release.
 
 Launcher:
 
@@ -404,20 +406,24 @@ The current release workflow audit/build/package publication has passed, but **t
 
 ## 16. Next real development step
 
-First re-run/update to **v1.5.33** on the Windows machine that produced exit code 216. The launcher should now do one of two useful things: automatically replace an unusable portable PowerShell through bootstrap and continue, or stop with a specific `powershell-probe` / `powershell-final-probe` failure recorded in `startup-error.log`, `pre-agent.log`, the temp flight recorder and `launcher-trace.log`.
+Re-run **v1.5.34** on the same Windows machine/state. The expected startup path is now:
+
+```text
+existing incompatible pwsh detected
+  -> bootstrap repair
+  -> TLS 1.2 enabled in Windows PowerShell
+  -> correct PowerShell package downloaded
+  -> SHA-256 verified
+  -> portable PowerShell replaced
+  -> startup probe
+  -> Dr.Swinux agent launch
+```
+
+If startup fails again, use the newly preserved `startup-error.log`, `pre-agent.log`, `%TEMP%\DrSwinux-last-start.log` and `system\launcher-trace.log` to patch only the next real failing stage.
 
 If startup succeeds, return to real ordinary-language tasks. The slow-storage case exposed a genuine capability gap around controlled filesystem repair; do not add a repair operation merely from theory. Use the same real symptom/problem state, determine exactly what safe typed action and verification would have been required, then implement only that generic capability under the existing Broker safety model.
 
-For Lab-mode testing, use a Windows 10 VM snapshot and preserve:
-
-- original user task verbatim;
-- VM snapshot/state;
-- Dr.Swinux report/session directory;
-- Lab case/result/classification;
-- console/startup error if any;
-- whether the failure is reasoning, capability, permission/policy, tool implementation, verification, context/history, Lab orchestration, or another concrete class.
-
-Patch only the real failing stage, audit, restore/reproduce the same initial state, and retry the exact same task.
+For Lab-mode testing, use a Windows 10 VM snapshot and preserve the original task, snapshot/state, report/session directory, Lab classification and exact console/startup error when present. Patch only the real failing stage, audit, restore/reproduce the same initial state, and retry the exact same task.
 
 ## 17. Longer roadmap
 
