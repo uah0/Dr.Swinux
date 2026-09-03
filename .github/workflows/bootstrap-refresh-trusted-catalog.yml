@@ -12,9 +12,10 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel superseded refresh and dispatch current pipeline
+      - name: Force-cancel superseded refresh and dispatch current pipeline
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST repos/uah0/Dr.Swinux/actions/runs/33777343862/cancel || true
+          gh api -X POST repos/uah0/Dr.Swinux/actions/runs/33777343862/force-cancel || true
+          gh api -X POST repos/uah0/Dr.Swinux/actions/runs/33778031858/cancel || true
           gh workflow run refresh-trusted-catalog.yml --repo uah0/Dr.Swinux
