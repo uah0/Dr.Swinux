@@ -6,15 +6,37 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 
-# Branding compatibility layer for the proven Windows runtime.
-# Internal Dr.Swintus identifiers and filenames are intentionally preserved during
-# the transition so existing update packages, reports and automation keep working.
+# Compatibility entrypoint for the proven Windows runtime.
 $legacyAgent=Join-Path $PSScriptRoot 'Start-Agent.ps1'
+$root=Split-Path -Parent $PSScriptRoot
+$reportsRoot=Join-Path $root 'reports'
+$startupLog=Join-Path $reportsRoot 'startup-error.log'
+$preAgentLog=Join-Path $reportsRoot 'pre-agent.log'
+
 if(-not (Test-Path -LiteralPath $legacyAgent -PathType Leaf)){
     throw ('Dr.Swinux runtime not found: {0}' -f $legacyAgent)
 }
 
 try { $Host.UI.RawUI.WindowTitle='Dr.Swinux' } catch {}
+
+function Write-StartupFailure {
+    param([System.Management.Automation.ErrorRecord]$ErrorRecord)
+    try {
+        New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
+        $stamp=(Get-Date).ToString('yyyy-MM-ddTHH:mm:ss.fffK')
+        $message=[string]$ErrorRecord.Exception.Message
+        $position=[string]$ErrorRecord.InvocationInfo.PositionMessage
+        $stack=[string]$ErrorRecord.ScriptStackTrace
+        Add-Content -LiteralPath $startupLog -Encoding UTF8 -Value @(
+            ''
+            ('[{0}] Start-DoctorSwinux UNHANDLED_ERROR' -f $stamp)
+            ('Message: {0}' -f $message)
+            ('Position: {0}' -f $position)
+            ('Stack: {0}' -f $stack)
+        )
+        Add-Content -LiteralPath $preAgentLog -Encoding UTF8 -Value ('[{0}] [start-wrapper] UNHANDLED_ERROR :: {1}' -f $stamp,($message -replace '[\r\n]+',' '))
+    } catch {}
+}
 
 function global:Write-Host {
     [CmdletBinding()]
@@ -28,8 +50,9 @@ function global:Write-Host {
     )
     process {
         $mapped=@($Object | ForEach-Object {
-            if($_ -is [string]){ ([string]$_).Replace('Dr.Swintus','Dr.Swinux') }
-            else { $_ }
+            if($_ -is [string]){
+                ([string]$_).Replace('Doctor Swinux','Dr.Swinux').Replace('Dr.Swintus','Dr.Swinux')
+            } else { $_ }
         })
         $p=@{Object=$mapped}
         if($PSBoundParameters.ContainsKey('Separator')){ $p.Separator=$Separator }
@@ -45,6 +68,10 @@ try {
     $code=$LASTEXITCODE
     if($null -eq $code){ $code=0 }
     exit [int]$code
+} catch {
+    Write-StartupFailure -ErrorRecord $_
+    Microsoft.PowerShell.Utility\Write-Error -ErrorRecord $_
+    exit 1
 } finally {
     try { $Host.UI.RawUI.WindowTitle='Dr.Swinux' } catch {}
 }
