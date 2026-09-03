@@ -1,0 +1,21 @@
+name: Apply v1.5.50 Matches collision fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-v150-matches-collision.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited Matches collision fix
+        shell: pwsh
+        run: '& .github/scripts/patch-v150-matches-collision.ps1'
