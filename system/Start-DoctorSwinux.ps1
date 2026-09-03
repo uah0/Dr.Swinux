@@ -150,6 +150,32 @@ function New-PrevalidatedRuntimeAgent {
     $safeDisposition=($PreflightDisposition -replace "'","''")
     $authReplacement="Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_HANDLED' -Detail 'startup login-status preflight $safeDisposition; duplicate blocking startup check skipped; task/server auth recovery remains active'"
     $source=$source.Replace($authNeedle,$authReplacement)
+
+    # Codex 0.151.0 on the unelevated Windows restricted-token backend rejects
+    # execution when its modern permission profile and the legacy WorkspaceWrite
+    # projection resolve different writable-root sets. On Windows, TEMP/TMP can
+    # resolve to C: while the Dr.Swinux task workspace lives on Z:. Keep all temp
+    # aliases used by the Codex child inside the already-writable task session.
+    # Only the Codex ProcessStartInfo is modified; the launcher and elevated broker
+    # keep their original environment.
+    $psiPattern='(?m)^(\s*)\$psi=\[System\.Diagnostics\.ProcessStartInfo\]::new\(\)\r?\n\1\$psi\.FileName=\$codex\r?\n\1\$psi\.UseShellExecute=\$false\r?\n\1\$psi\.CreateNoWindow=\$true'
+    $psiMatches=[regex]::Matches($source,$psiPattern)
+    if($psiMatches.Count -ne 1){ throw ('Expected exactly one Codex ProcessStartInfo block, found {0}.' -f $psiMatches.Count) }
+    $indent=$psiMatches[0].Groups[1].Value
+    $psiReplacement=@(
+        ($indent+'$psi=[System.Diagnostics.ProcessStartInfo]::new()'),
+        ($indent+'$psi.FileName=$codex'),
+        ($indent+'$psi.UseShellExecute=$false'),
+        ($indent+'$psi.CreateNoWindow=$true'),
+        ($indent+"`$codexSessionTemp=Join-Path `$session '.codex-tmp'"),
+        ($indent+'New-Item -ItemType Directory -Path $codexSessionTemp -Force | Out-Null'),
+        ($indent+"`$psi.Environment['TEMP']=`$codexSessionTemp"),
+        ($indent+"`$psi.Environment['TMP']=`$codexSessionTemp"),
+        ($indent+"`$psi.Environment['TMPDIR']=`$codexSessionTemp"),
+        ($indent+"Set-Content -LiteralPath (Join-Path `$session 'sandbox-env.log') -Encoding UTF8 -Value @('TEMP='+`$codexSessionTemp,'TMP='+`$codexSessionTemp,'TMPDIR='+`$codexSessionTemp,'CODEX_HOME='+`$codexHome)")
+    ) -join "`r`n"
+    $source=[regex]::Replace($source,$psiPattern,[System.Text.RegularExpressions.MatchEvaluator]{ param($m) $psiReplacement },1)
+
     $dispatchNeedle='& $PSCommandPath -Task $nextTask -SingleTask'
     $escapedWrapper=$wrapperPath.Replace("'","''")
     $dispatchReplacement="& '$escapedWrapper' -Task `$nextTask -SingleTask"
@@ -158,7 +184,7 @@ function New-PrevalidatedRuntimeAgent {
     $id=[guid]::NewGuid().ToString('N')
     $script:runtimeAgent=Join-Path $PSScriptRoot ('Start-Agent.runtime.{0}.ps1' -f $id)
     Set-Content -LiteralPath $script:runtimeAgent -Value $source -Encoding UTF8
-    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}; authDisposition={2}' -f $script:runtimeAgent,$wrapperPath,$PreflightDisposition)
+    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}; authDisposition={2}; codexTemp=session-local' -f $script:runtimeAgent,$wrapperPath,$PreflightDisposition)
     return $script:runtimeAgent
 }
 
