@@ -1,0 +1,21 @@
+name: Apply v1.5.51 failure reporter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-v151-failure-reporter.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited failure reporter integration
+        shell: pwsh
+        run: '& .github/scripts/patch-v151-failure-reporter.ps1'
