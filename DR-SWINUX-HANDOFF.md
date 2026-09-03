@@ -55,14 +55,14 @@ Current status:
 
 ```text
 Windows 64-bit: supported reference implementation
-Windows 32-bit: unsupported by the current Codex runtime
+Windows 32-bit: explicitly out of scope; do not support
 Linux:          planned
 Android:        planned
 ```
 
-A real 2026-09-03 test proved that a 32-bit Windows installation cannot run the current pinned Windows Codex runtime. Dr.Swinux v1.5.35 detects this explicitly and reports a concrete platform blocker instead of proceeding into an opaque Codex/native-loader failure.
+**Project decision (2026-09-03): 32-bit Windows systems are excluded from Dr.Swinux support.** Do not spend development effort on an x86 Codex build, x86 agent backend, compatibility layer, or other work intended to make Dr.Swinux operate on 32-bit Windows. The explicit early architecture guard introduced in v1.5.35 should remain so users receive a clear unsupported-platform message.
 
-The current `Setup-PortableCodex.ps1` installs pinned Codex `0.151.0` from official Windows **x86_64** assets. Do not claim Windows x86 support unless a real compatible Codex runtime exists and passes startup/auth/task testing.
+A real 2026-09-03 test proved that a 32-bit Windows installation cannot run the current pinned Windows Codex runtime. This finding is retained as evidence for the guard, but it is no longer a capability gap to solve. Windows development targets 64-bit systems.
 
 ## 5. Safety invariants
 
@@ -141,6 +141,7 @@ The same `Z:\Dr.Swinux\` test sequence exposed three distinct real conditions:
 3. Bootstrap selected `PowerShell-7.6.5-win-x86.zip`, proving the tested Windows installation itself is 32-bit. Windows PowerShell 5.1 initially failed the GitHub download because it could not establish the SSL/TLS channel; v1.5.34 explicitly enabled TLS 1.2 and the repair then succeeded.
 4. After x86 PowerShell 7.6.5 started successfully, startup advanced into Codex preparation and failed in `Start-Agent.ps1` while invoking `Setup-PortableCodex.ps1`. The setup code only uses official Codex Windows x86_64 assets. This established the actual platform blocker: **the tested Windows installation is 32-bit and cannot run the current Codex runtime.**
 5. v1.5.35 adds an explicit early 32-bit-Windows guard in `Start-DoctorSwinux.ps1`, so this condition now produces a clear supported-platform message instead of an opaque `ScriptHalted`/native failure.
+6. Project decision after this test: **32-bit Windows is excluded from Dr.Swinux support and this blocker will not be developed around.**
 
 Important lessons: executable existence is not executability; bootstrap must not rely on legacy TLS defaults; and Dr.Swinux must detect unsupported platform/runtime combinations before attempting the agent.
 
@@ -236,7 +237,7 @@ Full Lab runtime still requires real Windows testing.
 
 ## 15. Next real development/test step
 
-**Do not continue testing this current 32-bit Windows installation as a supported Dr.Swinux target.** It has now supplied the useful evidence: current Codex runtime support is blocked by OS architecture.
+Do not continue testing the current 32-bit Windows installation as a Dr.Swinux target. 32-bit Windows is deliberately outside project scope.
 
 Create/reinstall the VM with **64-bit Windows 10** (or another supported 64-bit Windows environment), take a clean snapshot, then run the current release and continue with the same ordinary-language autonomous testing process.
 
@@ -253,6 +254,8 @@ On that 64-bit VM, first prove clean startup/bootstrap/auth. Then return to real
 7. Extract only proven cross-platform abstractions.
 8. Implement/test Linux adapter.
 9. Implement/test Android runtime.
+
+**Windows x86 support is not on the roadmap.**
 
 ## 17. New-chat continuation
 
