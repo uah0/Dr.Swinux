@@ -3,8 +3,8 @@
   "source": {
     "name": "microsoft/winget-pkgs",
     "repository": "https://github.com/microsoft/winget-pkgs",
-    "generatedAt": "2026-09-03T16:33:20.8320785Z",
-    "commit": "f9fed95cdc6ddeed488eeb8aa44b2512b667b58e",
+    "generatedAt": "2026-09-03T17:28:50.4615291Z",
+    "commit": "650de9f4811e91066bf171a199d601017abe7da9",
     "policy": "automatic-msi-wix-productcode-v1"
   },
   "packages": [
@@ -9488,15 +9488,15 @@
     },
     {
       "id": "GitHub.cli",
-      "version": "2.99.0",
+      "version": "2.100.0",
       "displayName": "GitHub.cli",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/cli/cli/releases/download/v2.99.0/gh_2.99.0_windows_386.msi",
-          "sha256": "3101209DF0B1ACD42DF0D33AFE3E659C3CE4B64DECACFBA8DA183070E330262A",
-          "productCode": "{5CDC9110-B695-41B9-8846-FD5CD77C4C7A}",
+          "url": "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_windows_386.msi",
+          "sha256": "EA2E3D9AE392B79DA610B0A12BFD1EABD7B1AE8DCE09A328C7687D8D22607A8B",
+          "productCode": "{1DBE3518-8584-434E-91FB-BDBA248129B2}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9504,9 +9504,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/cli/cli/releases/download/v2.99.0/gh_2.99.0_windows_amd64.msi",
-          "sha256": "43C2035CB8EE77CFB44462C42ECB9E409A112FF6E53AF96C19CF12BE62A4D7B1",
-          "productCode": "{B8DBD3D5-FC5D-4BAA-8A5C-BF68CFA8A42D}",
+          "url": "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_windows_amd64.msi",
+          "sha256": "989CDDA347F142CFA33C4457BE5FEC6C2E283A9A65525ADE49A36D2A6CDDB276",
+          "productCode": "{67E6AC7F-85BD-4139-B4F8-69B62D830678}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9514,9 +9514,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/cli/cli/releases/download/v2.99.0/gh_2.99.0_windows_arm64.msi",
-          "sha256": "4F5F63068EB1C1F85A9F1094E2F52B3DD3BDDE8F4E15859C60E7A337355E3DCE",
-          "productCode": "{DD49935F-6759-4303-A47D-7F73198D16D0}",
+          "url": "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_windows_arm64.msi",
+          "sha256": "3D893B3225278E809F8939A0D26BADECAC41BA521F91F4E5AFC6BAE06C683469",
+          "productCode": "{6D468BCA-E762-4AA1-B3E4-4C4943400991}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
