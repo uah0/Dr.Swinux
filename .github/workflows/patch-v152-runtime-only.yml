@@ -1,0 +1,17 @@
+name: Apply v1.5.52 runtime auto-repair wiring
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-v152-runtime-only.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - shell: pwsh
+        run: '& .github/scripts/patch-v152-runtime-only.ps1'
