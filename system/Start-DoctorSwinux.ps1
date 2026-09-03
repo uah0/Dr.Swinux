@@ -106,6 +106,29 @@ function New-PreflightSession {
     Write-PreflightLog -Stage 'preflight' -Status 'CREATED' -Detail ('session={0}; taskCharacters={1}; singleTask={2}' -f $script:preflightSession,$taskCharacters,$SingleTask)
 }
 
+function Write-PreflightEnvironmentSnapshot {
+    $snapshot=Join-Path $script:preflightSession 'environment.log'
+    $pwdText=''
+    try { $pwdText=(Get-Location).Path } catch {}
+    $values=@(
+        'PWD='+$pwdText,
+        'ROOT='+$root,
+        'REPORTS_ROOT='+$reportsRoot,
+        'CODEX_HOME='+$codexHome,
+        'TEMP='+[string]$env:TEMP,
+        'TMP='+[string]$env:TMP,
+        'TMPDIR='+[string]$env:TMPDIR,
+        'USERPROFILE='+[string]$env:USERPROFILE,
+        'HOME='+[string]$env:HOME,
+        'LOCALAPPDATA='+[string]$env:LOCALAPPDATA,
+        'APPDATA='+[string]$env:APPDATA,
+        'SYSTEMDRIVE='+[string]$env:SystemDrive,
+        'SYSTEMROOT='+[string]$env:SystemRoot
+    )
+    Set-Content -LiteralPath $snapshot -Value $values -Encoding UTF8
+    Write-PreflightLog -Stage 'environment-snapshot' -Status 'SAVED' -Detail ('path={0}; rootDrive={1}; temp={2}; tmp={3}; tmpdir={4}' -f $snapshot,[IO.Path]::GetPathRoot($root),$env:TEMP,$env:TMP,$env:TMPDIR)
+}
+
 function Invoke-CodexLoginStatusWithTimeout {
     param([int]$TimeoutSeconds=8)
     $result=[ordered]@{TimedOut=$false;ExitCode=-1;Stdout='';Stderr='';ElapsedMs=0}
@@ -142,22 +165,17 @@ function Invoke-CodexLoginStatusWithTimeout {
     return [pscustomobject]$result
 }
 
-function New-PrevalidatedRuntimeAgent {
-    param([string]$PreflightDisposition='confirmed')
+function New-RuntimeAgent {
+    param([string]$PreflightDisposition='not confirmed',[switch]$SkipStartupAuth)
     $source=Get-Content -LiteralPath $legacyAgent -Raw -Encoding UTF8
     $authNeedle="Ensure-CodexAuthentication -Reason 'startup-check'"
     if(-not $source.Contains($authNeedle)){ throw 'Start-Agent startup authentication call was not found.' }
-    $safeDisposition=($PreflightDisposition -replace "'","''")
-    $authReplacement="Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_HANDLED' -Detail 'startup login-status preflight $safeDisposition; duplicate blocking startup check skipped; task/server auth recovery remains active'"
-    $source=$source.Replace($authNeedle,$authReplacement)
+    if($SkipStartupAuth){
+        $safeDisposition=($PreflightDisposition -replace "'","''")
+        $authReplacement="Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_HANDLED' -Detail 'startup login-status preflight $safeDisposition; duplicate blocking startup check skipped; task/server auth recovery remains active'"
+        $source=$source.Replace($authNeedle,$authReplacement)
+    }
 
-    # Codex 0.151.0 on the unelevated Windows restricted-token backend rejects
-    # execution when its modern permission profile and the legacy WorkspaceWrite
-    # projection resolve different writable-root sets. On Windows, TEMP/TMP can
-    # resolve to C: while the Dr.Swinux task workspace lives on Z:. Keep all temp
-    # aliases used by the Codex child inside the already-writable task session.
-    # Only the Codex ProcessStartInfo is modified; the launcher and elevated broker
-    # keep their original environment.
     $psiPattern='(?m)^(\s*)\$psi=\[System\.Diagnostics\.ProcessStartInfo\]::new\(\)\r?\n\1\$psi\.FileName=\$codex\r?\n\1\$psi\.UseShellExecute=\$false\r?\n\1\$psi\.CreateNoWindow=\$true'
     $psiMatches=[regex]::Matches($source,$psiPattern)
     if($psiMatches.Count -ne 1){ throw ('Expected exactly one Codex ProcessStartInfo block, found {0}.' -f $psiMatches.Count) }
@@ -172,7 +190,7 @@ function New-PrevalidatedRuntimeAgent {
         ($indent+"`$psi.Environment['TEMP']=`$codexSessionTemp"),
         ($indent+"`$psi.Environment['TMP']=`$codexSessionTemp"),
         ($indent+"`$psi.Environment['TMPDIR']=`$codexSessionTemp"),
-        ($indent+"Set-Content -LiteralPath (Join-Path `$session 'sandbox-env.log') -Encoding UTF8 -Value @('TEMP='+`$codexSessionTemp,'TMP='+`$codexSessionTemp,'TMPDIR='+`$codexSessionTemp,'CODEX_HOME='+`$codexHome)")
+        ($indent+"Set-Content -LiteralPath (Join-Path `$session 'sandbox-env.log') -Encoding UTF8 -Value @('TEMP='+`$codexSessionTemp,'TMP='+`$codexSessionTemp,'TMPDIR='+`$codexSessionTemp,'CODEX_HOME='+`$codexHome,'USERPROFILE='+[string]`$env:USERPROFILE,'LOCALAPPDATA='+[string]`$env:LOCALAPPDATA)")
     ) -join "`r`n"
     $source=[regex]::Replace($source,$psiPattern,[System.Text.RegularExpressions.MatchEvaluator]{ param($m) $psiReplacement },1)
 
@@ -184,7 +202,7 @@ function New-PrevalidatedRuntimeAgent {
     $id=[guid]::NewGuid().ToString('N')
     $script:runtimeAgent=Join-Path $PSScriptRoot ('Start-Agent.runtime.{0}.ps1' -f $id)
     Set-Content -LiteralPath $script:runtimeAgent -Value $source -Encoding UTF8
-    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}; authDisposition={2}; codexTemp=session-local' -f $script:runtimeAgent,$wrapperPath,$PreflightDisposition)
+    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}; authDisposition={2}; skipStartupAuth={3}; codexTemp=session-local' -f $script:runtimeAgent,$wrapperPath,$PreflightDisposition,$SkipStartupAuth.IsPresent)
     return $script:runtimeAgent
 }
 
@@ -208,6 +226,7 @@ try {
     }
 
     New-PreflightSession
+    Write-PreflightEnvironmentSnapshot
     Ensure-PortableCodexConfig
     $agentToRun=$legacyAgent
     if(Test-Path -LiteralPath $codex -PathType Leaf){
@@ -220,12 +239,16 @@ try {
         if($authResult.TimedOut){
             Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'TIMEOUT_CONTINUE' -Detail ('elapsedMs={0}; duplicate startup auth check will be skipped; real Codex task will validate server auth' -f $authResult.ElapsedMs)
             Microsoft.PowerShell.Utility\Write-Host '• Проверка входа отвечает медленно. Продолжаю запуск задачи...'
-            $agentToRun=New-PrevalidatedRuntimeAgent -PreflightDisposition 'timed out; status unknown'
+            $agentToRun=New-RuntimeAgent -PreflightDisposition 'timed out; status unknown' -SkipStartupAuth
         } else {
             $combined=$authResult.Stdout+"`n"+$authResult.Stderr
             $loggedIn=($authResult.ExitCode -eq 0)-and($combined -match '(?im)^\s*Logged in(?:\s+using\s+.+)?\s*$')
             Write-PreflightLog -Stage 'codex-auth-preflight' -Status $(if($loggedIn){'OK'}else{'LOGIN_REQUIRED'}) -Detail ('exit={0}; elapsedMs={1}' -f $authResult.ExitCode,$authResult.ElapsedMs)
-            if($loggedIn){ $agentToRun=New-PrevalidatedRuntimeAgent -PreflightDisposition 'confirmed logged in' }
+            if($loggedIn){
+                $agentToRun=New-RuntimeAgent -PreflightDisposition 'confirmed logged in' -SkipStartupAuth
+            } else {
+                $agentToRun=New-RuntimeAgent -PreflightDisposition 'login required; Start-Agent auth retained'
+            }
         }
     } else { Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'SKIP' -Detail 'codex.exe not present yet; Start-Agent will prepare runtime' }
     Write-PreflightLog -Stage 'agent-launch' -Status 'BEGIN' -Detail ('agent={0}' -f $agentToRun)
