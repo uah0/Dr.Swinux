@@ -1,10 +1,10 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
 
 $RootPath=Split-Path -Parent $PSScriptRoot
 if(-not (Test-Path -LiteralPath $RootPath -PathType Container)){
-    throw ("SWINTUS root does not exist: {0}" -f $RootPath)
+    throw ("Dr.Swinux root does not exist: {0}" -f $RootPath)
 }
 
 $toolsRoot=Join-Path $RootPath 'tools'
@@ -15,7 +15,7 @@ $pwsh=Join-Path $psDir 'pwsh.exe'
 # A release ZIP can legitimately contain no tools directory at all because
 # empty directories are not guaranteed to survive ZIP creation/extraction.
 # Bootstrap must therefore create its own parent directories before moving
-# the extracted portable PowerShell tree into Dr.Swintus\tools.
+# the extracted portable PowerShell tree into Dr.Swinux\tools.
 New-Item -ItemType Directory -Path $toolsRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
 
@@ -23,7 +23,7 @@ if(Test-Path -LiteralPath $pwsh -PathType Leaf){
     try {
         $v=& $pwsh -NoLogo -NoProfile -Command '$PSVersionTable.PSVersion.ToString()' 2>&1
         if($LASTEXITCODE -eq 0){
-            Write-Host ("SWINTUS portable PowerShell is ready: {0}" -f ($v | Out-String).Trim())
+            Write-Host ("Dr.Swinux portable PowerShell is ready: {0}" -f ($v | Out-String).Trim())
             exit 0
         }
     } catch {}
@@ -57,7 +57,7 @@ switch -Regex ($arch){
 }
 
 $url="https://github.com/PowerShell/PowerShell/releases/download/v$version/$asset"
-$tmpRoot=Join-Path $reportsRoot '_SWINTUS-bootstrap'
+$tmpRoot=Join-Path $reportsRoot '_DrSwinux-bootstrap'
 $zipPath=Join-Path $tmpRoot $asset
 $extract=Join-Path $tmpRoot 'extract'
 
@@ -67,6 +67,16 @@ New-Item -ItemType Directory -Path $tmpRoot -Force | Out-Null
 Write-Host ("Downloading portable PowerShell {0} for {1}..." -f $version,$arch)
 
 try {
+    # Windows PowerShell 5.1 can inherit an old TLS default on some Windows 10
+    # systems. GitHub requires TLS 1.2+, so explicitly enable TLS 1.2 before
+    # Invoke-WebRequest. Preserve any protocols already enabled by the host.
+    try {
+        $tls12=[System.Net.SecurityProtocolType]::Tls12
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor $tls12
+    } catch {
+        throw ("Unable to enable TLS 1.2 for PowerShell bootstrap: {0}" -f $_.Exception.Message)
+    }
+
     Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing -TimeoutSec 240
     $actual=(Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToUpperInvariant()
     if($actual -ne $sha){
@@ -82,15 +92,15 @@ try {
     Move-Item -LiteralPath $extract -Destination $psDir
 
     if(-not (Test-Path -LiteralPath $pwsh -PathType Leaf)){
-        throw ("SWINTUS portable PowerShell extraction completed but pwsh.exe is missing: {0}" -f $pwsh)
+        throw ("Dr.Swinux portable PowerShell extraction completed but pwsh.exe is missing: {0}" -f $pwsh)
     }
 
     $v=& $pwsh -NoLogo -NoProfile -Command '$PSVersionTable.PSVersion.ToString()' 2>&1
     if($LASTEXITCODE -ne 0){
-        throw ("SWINTUS portable PowerShell failed its startup test: {0}" -f (($v | Out-String).Trim()))
+        throw ("Dr.Swinux portable PowerShell failed its startup test: {0}" -f (($v | Out-String).Trim()))
     }
 
-    Write-Host ("SWINTUS portable PowerShell ready: {0}" -f (($v | Out-String).Trim()))
+    Write-Host ("Dr.Swinux portable PowerShell ready: {0}" -f (($v | Out-String).Trim()))
 } finally {
     Remove-Item -LiteralPath $tmpRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
