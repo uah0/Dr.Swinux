@@ -35,15 +35,37 @@ function Get-NaturalVersionKey {
 
 $root=[IO.Path]::GetFullPath($WingetManifestRoot)
 if(-not(Test-Path -LiteralPath $root -PathType Container)){throw "Manifest root not found: $root"}
-
 $allowedTypes=if($AutomaticSafeSubset){@('msi','wix')}else{@('msi','wix','exe')}
+
+# WinGet installer manifests live under .../<package-path>/<version>/*.installer.yaml.
+# Choose the newest-looking version directory for each package path before parsing YAML.
+# This avoids parsing the complete historical version set on every catalog refresh.
+$fileRows=@(
+    Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | ForEach-Object {
+        $versionDir=$_.Directory
+        if($null -eq $versionDir -or $null -eq $versionDir.Parent){return}
+        [pscustomobject]@{
+            File=$_
+            PackagePath=$versionDir.Parent.FullName
+            VersionDir=$versionDir.Name
+            VersionKey=(Get-NaturalVersionKey $versionDir.Name)
+        }
+    }
+)
+if($fileRows.Count -eq 0){throw 'No WinGet installer manifests were found.'}
+$selectedFiles=@()
+foreach($group in ($fileRows | Group-Object PackagePath)){
+    $selectedFiles += ($group.Group | Sort-Object VersionKey -Descending | Select-Object -First 1).File
+}
+Write-Host ("Installer manifests discovered: {0}; newest package paths selected: {1}" -f $fileRows.Count,$selectedFiles.Count)
+
 $rows=@()
-Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | ForEach-Object {
-    try {$m=Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Yaml} catch {return}
+foreach($file in $selectedFiles){
+    try {$m=Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Yaml} catch {continue}
     $id=[string](Get-OptionalProperty $m 'PackageIdentifier')
     $version=[string](Get-OptionalProperty $m 'PackageVersion')
-    if([string]::IsNullOrWhiteSpace($id)-or[string]::IsNullOrWhiteSpace($version)){return}
-    if($id.Length -gt 200 -or $version.Length -gt 100){return}
+    if([string]::IsNullOrWhiteSpace($id)-or[string]::IsNullOrWhiteSpace($version)){continue}
+    if($id.Length -gt 200 -or $version.Length -gt 100){continue}
 
     $rootType=([string](Get-OptionalProperty $m 'InstallerType')).ToLowerInvariant()
     $rootSwitches=Get-OptionalProperty $m 'InstallerSwitches'
@@ -89,9 +111,6 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
             if([string]::IsNullOrWhiteSpace($productCode)){$productCode=[string](Get-OptionalProperty $afe[0] 'ProductCode')}
         }
 
-        # Automatic snapshots are intentionally stricter: MSI/WiX must have a ProductCode.
-        # This gives the broker a deterministic identity for post-install verification and
-        # prevents broad regex-only upstream entries from entering the unattended catalog.
         if($AutomaticSafeSubset -and [string]::IsNullOrWhiteSpace($productCode)){continue}
         if([string]::IsNullOrWhiteSpace($productCode)-and[string]::IsNullOrWhiteSpace($displayPattern)){continue}
         if(-not[string]::IsNullOrWhiteSpace($productCode) -and ($productCode.Length -gt 200 -or $productCode -match '[\x00-\x1F\x7F]')){continue}
@@ -119,6 +138,8 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
     }
 }
 
+# Keep one deterministic newest-looking entry per PackageIdentifier as a second safety net
+# for unusual repository layouts where multiple package paths resolve to the same ID.
 $packages=@()
 foreach($g in ($rows | Group-Object id | Sort-Object Name)){
     $chosen=$g.Group | Sort-Object versionKey -Descending | Select-Object -First 1
