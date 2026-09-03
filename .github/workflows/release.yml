@@ -1,5 +1,5 @@
 name: Build and publish Dr.Swinux
-# Triggered for the audited v1.5.49 trusted registered-package uninstall fallback.
+# Triggered for the audited v1.5.50 PowerShell automatic Matches collision fix.
 
 on:
   push:
@@ -96,6 +96,10 @@ jobs:
             if($trustedUninstallBlock-notmatch[regex]::Escape($hostName)){throw "Trusted uninstall shell denylist missing: $hostName"}
           }
           if($trustedUninstallBlock-notmatch'TRUSTED_UNINSTALL_VERIFY'){throw 'Trusted uninstall post-change verification missing'}
+          $trustedHklmHelper=[regex]::Match($broker,'(?s)function Get-TrustedHklmInstalledMatches \{.*?function Convert-TrustedQuietUninstallCommand \{').Value
+          if([string]::IsNullOrWhiteSpace($trustedHklmHelper)){throw 'Trusted HKLM uninstall helper missing'}
+          if($trustedHklmHelper-match '(?i)\$matches\s*(?:=|\+=)'){throw 'Regression: trusted HKLM helper reuses PowerShell automatic $Matches variable'}
+          if($trustedHklmHelper-notmatch '\$entries=@\(\)' -or $trustedHklmHelper-notmatch '\$entries \+= \[pscustomobject\]' -or $trustedHklmHelper-notmatch 'return @\(\$entries\)'){throw 'Trusted HKLM accumulator fix missing'}
           if($broker-match'Invoke-Expression'){throw 'Invoke-Expression is forbidden in broker'}
           if($agent-notmatch'EnsureWinget at most once per task'){throw 'Agent deterministic EnsureWinget retry guard missing'}
           if($agent-notmatch'UninstallTrustedPackage correlates the packaged catalog with an HKLM uninstall entry'){throw 'Agent trusted uninstall boundary missing'}
