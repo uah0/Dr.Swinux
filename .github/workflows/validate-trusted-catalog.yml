@@ -1,0 +1,67 @@
+name: Validate trusted catalog PR
+
+on:
+  pull_request:
+    paths:
+      - 'system/catalog/trusted-packages.json'
+      - 'system/tools/Build-TrustedPackageCatalog.ps1'
+      - 'system/VERSION.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate catalog security invariants
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+
+          $parseErrors=@()
+          foreach($file in @('system/tools/Build-TrustedPackageCatalog.ps1','system/Privileged-Broker.ps1','system/Broker-Request.ps1')){
+            $tok=$null;$err=$null
+            [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file),[ref]$tok,[ref]$err)
+            if($err){$parseErrors+=$err}
+          }
+          if($parseErrors){throw 'PowerShell parser validation failed.'}
+
+          $catalog=Get-Content system/catalog/trusted-packages.json -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+          if([int]$catalog.schemaVersion -ne 1){throw 'Catalog schema mismatch.'}
+          if([string]$catalog.source.repository -ne 'https://github.com/microsoft/winget-pkgs'){throw 'Catalog source repository mismatch.'}
+          $automatic=([string]$catalog.source.policy -eq 'automatic-msi-wix-productcode-v1')
+          if($automatic){
+            if([string]$catalog.source.commit -notmatch '^[0-9a-f]{40}$'){throw 'Automatic catalog must pin a winget-pkgs commit.'}
+            if(@($catalog.packages).Count -lt 100){throw 'Automatic catalog is unexpectedly small.'}
+          }
+
+          $seen=@{}
+          foreach($pkg in @($catalog.packages)){
+            $id=[string]$pkg.id
+            if([string]::IsNullOrWhiteSpace($id) -or $id.Length -gt 200){throw 'Invalid package id.'}
+            $key=$id.ToLowerInvariant(); if($seen.ContainsKey($key)){throw "Duplicate package id: $id"}; $seen[$key]=$true
+            foreach($i in @($pkg.installers)){
+              $arch=([string]$i.architecture).ToLowerInvariant()
+              $type=([string]$i.installerType).ToLowerInvariant()
+              if($arch -notin @('x64','x86','arm64')){throw "Invalid architecture: $id/$arch"}
+              if($automatic -and $type -notin @('msi','wix')){throw "Automatic catalog contains non-MSI/WiX installer: $id/$type"}
+              if(-not $automatic -and $type -notin @('msi','wix','exe')){throw "Invalid installer type: $id/$type"}
+              $url=[string]$i.url; try{$uri=[Uri]$url}catch{throw "Invalid URL: $id"}
+              if($uri.Scheme -ne 'https' -or [string]::IsNullOrWhiteSpace($uri.Host)){throw "Non-HTTPS URL: $id"}
+              if([string]$i.sha256 -notmatch '^[A-Fa-f0-9]{64}$'){throw "Invalid SHA-256: $id"}
+              if($automatic -and [string]::IsNullOrWhiteSpace([string]$i.productCode)){throw "Automatic catalog missing ProductCode: $id"}
+              if($automatic -and @($i.silentArgs).Count -ne 0){throw "Automatic catalog contains executable argument data: $id"}
+              foreach($name in @('displayNamePattern','publisherPattern')){
+                $pattern=[string]$i.$name
+                if(-not[string]::IsNullOrWhiteSpace($pattern)){try{[void][regex]::new($pattern)}catch{throw "Invalid regex $name for $id"}}
+              }
+            }
+          }
+
+          $broker=Get-Content system/Privileged-Broker.ps1 -Raw -Encoding UTF8
+          if($broker -match 'Invoke-Expression'){throw 'Broker must not use Invoke-Expression.'}
+          if($broker -notmatch 'Install-TrustedPackageCatalog'){throw 'Trusted package broker engine missing.'}
+          if($broker -notmatch 'Confirm-TrustedPackageInstall'){throw 'Broker-owned install confirmation missing.'}
