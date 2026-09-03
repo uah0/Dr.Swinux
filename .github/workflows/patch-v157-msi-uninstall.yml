@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
       - name: Apply migration
         shell: pwsh
-        run: ./ .github/scripts/patch-v157-msi-uninstall.ps1
+        run: '& ./.github/scripts/patch-v157-msi-uninstall.ps1'
       - name: Audit and commit
         shell: pwsh
         run: |
@@ -27,7 +27,7 @@ jobs:
           if($parseErrors){throw 'PowerShell parser audit failed.'}
           $broker=Get-Content system/Privileged-Broker.ps1 -Raw
           if($broker -notmatch 'CatalogPinnedMsiProductCode'){throw 'MSI uninstall path missing.'}
-          if($broker -notmatch "@\('/x',\$code,'/qn','/norestart'\)"){throw 'Broker-owned MSI quiet args missing.'}
+          if($broker -notmatch [regex]::Escape("@('/x',`$code,'/qn','/norestart')")){throw 'Broker-owned MSI quiet args missing.'}
           if($broker -match 'Invoke-Expression'){throw 'Unsafe Invoke-Expression detected.'}
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
