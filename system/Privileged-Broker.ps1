@@ -820,9 +820,16 @@ function Search-TrustedPackages {
     if($Query.Length -gt 200){throw 'Query is too long.'}
     if($Query -match '[\x00-\x1F\x7F]'){throw 'Query contains control characters.'}
     $needle=$Query.Trim()
+    $normalize={param([string]$Value) if([string]::IsNullOrWhiteSpace($Value)){return ''}; return (($Value.ToLowerInvariant() -replace '[^\p{L}\p{Nd}]+',' ').Trim() -replace '\s+',' ')}
+    $normalizedNeedle=& $normalize $needle
+    $tokens=@($normalizedNeedle -split ' ' | Where-Object {-not [string]::IsNullOrWhiteSpace($_)})
     $catalog=Get-TrustedPackageCatalog
     @($catalog.packages | Where-Object {
-        ([string]$_.id -like ('*'+$needle+'*')) -or ([string]$_.displayName -like ('*'+$needle+'*'))
+        $id=[string]$_.id
+        $display=[string]$_.displayName
+        $haystack=& $normalize ($id+' '+$display)
+        ($id -like ('*'+$needle+'*')) -or ($display -like ('*'+$needle+'*')) -or
+            ($tokens.Count -gt 0 -and @($tokens | Where-Object {$haystack -notlike ('*'+$_+'*')}).Count -eq 0)
     } | Select-Object -First 50 | ForEach-Object {
         [pscustomobject]@{Id=[string]$_.id;Version=[string]$_.version;DisplayName=[string]$_.displayName;Architectures=@($_.installers|ForEach-Object{[string]$_.architecture}|Sort-Object -Unique)}
     })
