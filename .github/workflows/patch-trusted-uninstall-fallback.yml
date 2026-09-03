@@ -1,0 +1,21 @@
+name: Apply trusted registered-package uninstall fallback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-trusted-uninstall-fallback.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited trusted uninstall fallback
+        shell: pwsh
+        run: '& .github/scripts/patch-trusted-uninstall-fallback.ps1'
