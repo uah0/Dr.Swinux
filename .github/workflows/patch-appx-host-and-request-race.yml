@@ -1,0 +1,21 @@
+name: Apply AppX host and broker request race fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-appx-host-and-request-race.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited fix
+        shell: pwsh
+        run: '& .github/scripts/patch-appx-host-and-request-race.ps1'
