@@ -30,7 +30,7 @@ $codexHome=Join-Path $toolsRoot 'CodexHome'
 $setup=Join-Path $systemRoot 'Setup-PortableCodex.ps1'
 $brokerServer=Join-Path $systemRoot 'Privileged-Broker.ps1'
 $brokerClient=Join-Path $systemRoot 'Broker-Request.ps1'
-$failureReporter=Join-Path $systemRoot 'Failure-Reporter.ps1'
+$failureReporter=Join-Path $systemRoot 'Failure-Reporter.ps1'`r`n$autoRepair=Join-Path $systemRoot 'Auto-Repair.ps1'`r`n$repairSubmitter=Join-Path $systemRoot 'Submit-RepairCandidate.ps1'`r`n$autoRepairConfig=Join-Path $systemRoot 'auto-repair.json'
 $reportsRoot=Join-Path $root 'reports'
 New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
 $preAgentLog=Join-Path $reportsRoot 'pre-agent.log'
@@ -735,6 +735,30 @@ if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
             Write-PreAgentLog -Stage 'failure-reporter' -Status $(if([bool]$reportObject.Sent){'SENT'}else{'OUTBOX'}) -Detail ('bundle={0}; transport={1}; sendError={2}' -f $reportObject.Bundle,$reportObject.Transport,$reportObject.SendError)
             Show-Status ('Диагностический пакет ошибки подготовлен автоматически: {0}' -f $reportObject.Bundle)
             if([bool]$reportObject.Sent){Show-Status 'Диагностический пакет отправлен настроенному HTTPS relay.'}
+
+            $repairConfig=$null
+            try {if(Test-Path -LiteralPath $autoRepairConfig -PathType Leaf){$repairConfig=Get-Content -LiteralPath $autoRepairConfig -Raw -Encoding UTF8|ConvertFrom-Json -ErrorAction Stop}} catch {}
+            $repairEnabled=($null -ne $repairConfig -and $repairConfig.PSObject.Properties['enabled'] -and [bool]$repairConfig.enabled)
+            if($repairEnabled -and (Test-Path -LiteralPath $autoRepair -PathType Leaf)){
+                Show-Status 'Запускаю изолированного repair-agent для анализа ошибки и подготовки исправления...'
+                try {
+                    $repairOutput=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autoRepair -Session $session -Bundle ([string]$reportObject.Bundle) -ReportsRoot $reportsRoot -ProjectRoot $root -Codex $codex -CodexHome $codexHome)
+                    $repair=@($repairOutput|Where-Object{$_ -and $_.PSObject.Properties['Candidate']})|Select-Object -Last 1
+                    if($null -eq $repair){throw 'Auto-Repair.ps1 returned no repair candidate.'}
+                    Write-PreAgentLog -Stage 'auto-repair' -Status 'CANDIDATE' -Detail ('candidate={0}; changedFiles={1}' -f $repair.Candidate,$repair.ChangedFiles)
+                    Show-Status ('Repair-agent подготовил проверенный кандидат: {0}' -f $repair.Candidate)
+                    $submitWhenToken=($repairConfig.PSObject.Properties['autoSubmitWhenTokenPresent'] -and [bool]$repairConfig.autoSubmitWhenTokenPresent)
+                    $repairToken=[Environment]::GetEnvironmentVariable('DRSW_GITHUB_TOKEN','Process')
+                    if($submitWhenToken -and -not[string]::IsNullOrWhiteSpace($repairToken) -and (Test-Path -LiteralPath $repairSubmitter -PathType Leaf)){
+                        try {
+                            $repo=if($repairConfig.PSObject.Properties['repository']){[string]$repairConfig.repository}else{'uah0/Dr.Swinux'}
+                            $baseBranch=if($repairConfig.PSObject.Properties['baseBranch']){[string]$repairConfig.baseBranch}else{'main'}
+                            $submitted=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairSubmitter -CandidateDirectory ([string]$repair.CandidateDirectory) -Repository $repo -BaseBranch $baseBranch)|Where-Object{$_ -and $_.PSObject.Properties['PullRequest']}|Select-Object -Last 1
+                            if($null -ne $submitted){Write-PreAgentLog -Stage 'auto-repair' -Status 'PR_SUBMITTED' -Detail ('pr={0}; branch={1}' -f $submitted.PullRequest,$submitted.Branch);Show-Status ('Кандидат автоматически отправлен в GitHub как draft PR: {0}' -f $submitted.PullRequest)}
+                        } catch {Write-PreAgentLog -Stage 'auto-repair' -Status 'PR_SUBMIT_ERROR' -Detail $_.Exception.Message;Show-Status 'Кандидат сохранён локально; автоматическая отправка PR не удалась.'}
+                    } else {Write-PreAgentLog -Stage 'auto-repair' -Status 'LOCAL_ONLY' -Detail 'DRSW_GITHUB_TOKEN is not configured; validated candidate remains in repair outbox'}
+                } catch {Write-PreAgentLog -Stage 'auto-repair' -Status 'ERROR' -Detail $_.Exception.Message;Show-Status 'Repair-agent не смог подготовить безопасный кандидат. Исходный failure bundle сохранён.'}
+            }
         } else {Write-PreAgentLog -Stage 'failure-reporter' -Status 'WARN' -Detail 'reporter returned no structured result'}
     } catch {
         Write-PreAgentLog -Stage 'failure-reporter' -Status 'ERROR' -Detail $_.Exception.Message
