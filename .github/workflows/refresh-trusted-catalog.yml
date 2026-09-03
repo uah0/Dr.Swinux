@@ -1,6 +1,11 @@
 name: Refresh trusted package catalog
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refresh-trusted-catalog.yml'
+      - 'system/tools/Build-TrustedPackageCatalog.ps1'
   workflow_dispatch:
   schedule:
     - cron: '17 4 * * 1'
