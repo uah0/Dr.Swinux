@@ -4,9 +4,9 @@ Set-StrictMode -Version Latest
 function Insert-BeforeExactlyOnce([string]$Path,[string]$Marker,[string]$Insert) {
     $text=Get-Content -LiteralPath $Path -Raw -Encoding UTF8
     $first=$text.IndexOf($Marker,[StringComparison]::Ordinal)
-    if($first -lt 0){throw "Marker not found in $Path: $Marker"}
+    if($first -lt 0){throw "Marker not found in ${Path}: $Marker"}
     $second=$text.IndexOf($Marker,$first+$Marker.Length,[StringComparison]::Ordinal)
-    if($second -ge 0){throw "Marker occurs more than once in $Path: $Marker"}
+    if($second -ge 0){throw "Marker occurs more than once in ${Path}: $Marker"}
     $newText=$text.Substring(0,$first)+$Insert+$text.Substring($first)
     Set-Content -LiteralPath $Path -Value $newText -Encoding UTF8 -NoNewline
 }
@@ -14,9 +14,9 @@ function Insert-BeforeExactlyOnce([string]$Path,[string]$Marker,[string]$Insert)
 function Replace-ExactlyOnce([string]$Path,[string]$Old,[string]$New) {
     $text=Get-Content -LiteralPath $Path -Raw -Encoding UTF8
     $first=$text.IndexOf($Old,[StringComparison]::Ordinal)
-    if($first -lt 0){throw "Text not found in $Path: $Old"}
+    if($first -lt 0){throw "Text not found in ${Path}: $Old"}
     $second=$text.IndexOf($Old,$first+$Old.Length,[StringComparison]::Ordinal)
-    if($second -ge 0){throw "Text occurs more than once in $Path: $Old"}
+    if($second -ge 0){throw "Text occurs more than once in ${Path}: $Old"}
     $newText=$text.Substring(0,$first)+$New+$text.Substring($first+$Old.Length)
     Set-Content -LiteralPath $Path -Value $newText -Encoding UTF8 -NoNewline
 }
