@@ -6,8 +6,8 @@ on:
     - cron: '17 4 * * 1'
 
 permissions:
+  actions: write
   contents: write
-  pull-requests: write
 
 concurrency:
   group: trusted-catalog-refresh
@@ -74,8 +74,8 @@ jobs:
           $ids=@{}
           foreach($package in @($catalog.packages)){
             $id=[string]$package.id
-            if([string]::IsNullOrWhiteSpace($id) -or $ids.ContainsKey($id)){throw "Invalid or duplicate package id: $id"}
-            $ids[$id]=$true
+            if([string]::IsNullOrWhiteSpace($id) -or $ids.ContainsKey($id.ToLowerInvariant())){throw "Invalid or duplicate package id: $id"}
+            $ids[$id.ToLowerInvariant()]=$true
             foreach($installer in @($package.installers)){
               if([string]$installer.installerType -notin @('msi','wix')){throw "Unsafe installer type in automatic catalog: $id"}
               if([string]$installer.architecture -notin @('x64','x86','arm64')){throw "Unsafe architecture in automatic catalog: $id"}
@@ -105,28 +105,27 @@ jobs:
           Set-Content ./system/VERSION.txt $next -Encoding UTF8 -NoNewline
           "NEXT_VERSION=$next" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Create audited draft PR
+      - name: Commit audited catalog refresh
+        if: env.CATALOG_CHANGED == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          git fetch origin main
+          $remote=(git rev-parse origin/main).Trim()
+          if($remote -ne $env:GITHUB_SHA){throw "main moved during catalog generation; refusing stale automatic commit ($env:GITHUB_SHA -> $remote)"}
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add system/catalog/trusted-packages.json system/VERSION.txt
+          $changed=@(git diff --cached --name-only)
+          if($changed.Count -ne 2 -or $changed -notcontains 'system/catalog/trusted-packages.json' -or $changed -notcontains 'system/VERSION.txt'){throw 'Automatic refresh attempted to modify unexpected files.'}
+          git commit -m "Refresh trusted catalog from winget-pkgs $env:WINGET_COMMIT"
+          git push origin HEAD:main
+
+      - name: Dispatch independent release audit
         if: env.CATALOG_CHANGED == 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference='Stop'
-          $branch="automation/trusted-catalog-$env:GITHUB_RUN_ID"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c $branch
-          git add system/catalog/trusted-packages.json system/VERSION.txt
-          git commit -m "Refresh trusted catalog from winget-pkgs $env:WINGET_COMMIT"
-          git push --set-upstream origin $branch
-          $body=@"
-          Automated safe trusted-catalog refresh.
-
-          Source: microsoft/winget-pkgs@$env:WINGET_COMMIT
-          Installer manifests scanned: $env:WINGET_INSTALLER_MANIFESTS
-          Policy: MSI/WiX only; x64/x86/ARM64; HTTPS; SHA-256; ProductCode required; no upstream executable arguments.
-          Proposed version: $env:NEXT_VERSION
-
-          Merge remains the release authorization boundary. The independent trusted-catalog PR validator and normal release audit must pass.
-          "@
-          gh pr create --draft --base main --head $branch --title "Refresh trusted package catalog ($env:NEXT_VERSION)" --body $body
+          gh workflow run release.yml --repo $env:GITHUB_REPOSITORY --ref main
