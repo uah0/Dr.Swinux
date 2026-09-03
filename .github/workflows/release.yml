@@ -1,5 +1,5 @@
 name: Build and publish Dr.Swinux
-# Triggered for the audited v1.5.50 PowerShell automatic Matches collision fix.
+# Release audit for portable runtime, broker security invariants, and trusted catalog policy.
 
 on:
   push:
@@ -107,8 +107,13 @@ jobs:
           $catalog=Get-Content 'system/catalog/trusted-packages.json' -Raw | ConvertFrom-Json -ErrorAction Stop
           if([int]$catalog.schemaVersion-ne 1){throw 'Trusted catalog schema mismatch'}
           if([string]$catalog.source.repository-ne'https://github.com/microsoft/winget-pkgs'){throw 'Trusted catalog source mismatch'}
+          $automatic=([string]$catalog.source.policy -eq 'automatic-msi-wix-productcode-v1')
           $packages=@($catalog.packages)
           if($packages.Count-lt 1){throw 'Trusted catalog is empty'}
+          if($automatic){
+            if([string]$catalog.source.commit-notmatch'^[0-9a-f]{40}$'){throw 'Automatic trusted catalog must pin a winget-pkgs commit'}
+            if($packages.Count-lt 100){throw 'Automatic trusted catalog is unexpectedly small'}
+          }
           $seen=@{}
           foreach($pkg in $packages){
             $id=[string]$pkg.id
@@ -123,21 +128,27 @@ jobs:
               $arch=([string]$i.architecture).ToLowerInvariant()
               $type=([string]$i.installerType).ToLowerInvariant()
               if($arch-notin@('x64','x86','arm64')){throw "Invalid catalog architecture: $id/$arch"}
-              if($type-notin@('msi','wix','exe')){throw "Invalid catalog installer type: $id/$type"}
+              if($automatic){if($type-notin@('msi','wix')){throw "Automatic catalog contains unsafe installer type: $id/$type"}}
+              elseif($type-notin@('msi','wix','exe')){throw "Invalid catalog installer type: $id/$type"}
               $url=[string]$i.url
               try{$uri=[Uri]$url}catch{throw "Invalid catalog URL: $id"}
               if($uri.Scheme-ne'https'){throw "Non-HTTPS catalog URL: $id"}
               $sha=([string]$i.sha256).ToUpperInvariant()
               if($sha-notmatch'^[A-F0-9]{64}$'){throw "Invalid catalog SHA256: $id"}
-              if([string]::IsNullOrWhiteSpace([string]$i.productCode)-and[string]::IsNullOrWhiteSpace([string]$i.displayNamePattern)){throw "Catalog verification metadata missing: $id"}
+              if($automatic){
+                if([string]::IsNullOrWhiteSpace([string]$i.productCode)){throw "Automatic catalog ProductCode missing: $id"}
+                if(@($i.silentArgs).Count-ne0){throw "Automatic catalog carries executable argument data: $id"}
+              } elseif([string]::IsNullOrWhiteSpace([string]$i.productCode)-and[string]::IsNullOrWhiteSpace([string]$i.displayNamePattern)){throw "Catalog verification metadata missing: $id"}
               if($type-eq'exe'-and@($i.silentArgs).Count-lt 1){throw "Catalog EXE silent args missing: $id"}
               $publisherPattern=[string]$i.publisherPattern
               if(-not[string]::IsNullOrWhiteSpace($publisherPattern)){try{[void][regex]::new($publisherPattern)}catch{throw "Invalid catalog publisherPattern: $id"}}
             }
           }
-          $seven=@($packages|Where-Object{[string]$_.id-ieq'7zip.7zip'})
-          if($seven.Count-ne1){throw '7-Zip trusted catalog entry missing'}
-          foreach($i in @($seven[0].installers)){if([string]$i.publisherPattern-ne'^Igor Pavlov$'){throw '7-Zip trusted publisher pin missing'}}
+          if(-not $automatic){
+            $seven=@($packages|Where-Object{[string]$_.id-ieq'7zip.7zip'})
+            if($seven.Count-ne1){throw '7-Zip trusted catalog entry missing'}
+            foreach($i in @($seven[0].installers)){if([string]$i.publisherPattern-ne'^Igor Pavlov$'){throw '7-Zip trusted publisher pin missing'}}
+          }
 
           $up=Get-Content 'system/Update-DrSwintus.ps1' -Raw
           if($up-notmatch'uah0/Dr\.Swinux'){throw 'Updater repo mismatch'}
