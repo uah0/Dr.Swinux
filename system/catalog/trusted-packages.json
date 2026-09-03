@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "microsoft/winget-pkgs",
+    "repository": "https://github.com/microsoft/winget-pkgs",
+    "note": "Runtime broker trusts only this packaged snapshot; Codex cannot supply installer URLs, hashes, or switches."
+  },
+  "packages": [
+    {
+      "id": "7zip.7zip",
+      "version": "26.02",
+      "displayName": "7-Zip",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602-x64.msi",
+          "sha256": "DB407A4F6D4999E5C7BC00CE8A882BE94717B56E7FA68140FE3F12605D91643E",
+          "productCode": "{23170F69-40C1-2702-2602-000001000000}",
+          "displayNamePattern": "^7-Zip 26\\.02"
+        },
+        {
+          "architecture": "x86",
+          "installerType": "wix",
+          "url": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602.msi",
+          "sha256": "55171BB369D0375AE0E6E8F6CCCFFFB112C8B13E5C991C4D1F6B21AD968C1AF0",
+          "productCode": "{23170F69-40C1-2701-2602-000001000000}",
+          "displayNamePattern": "^7-Zip 26\\.02"
+        }
+      ]
+    }
+  ]
+}
