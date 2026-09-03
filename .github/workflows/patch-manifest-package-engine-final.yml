@@ -1,0 +1,21 @@
+name: Apply manifest-driven package engine patch final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-manifest-package-engine-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply audited manifest package engine patch
+        shell: pwsh
+        run: '& .github/scripts/patch-manifest-package-engine-final.ps1'
