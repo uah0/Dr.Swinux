@@ -1,0 +1,40 @@
+name: Fix v1.5.53 auto-repair runtime wiring
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-v153-auto-repair-newlines.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - shell: pwsh
+        run: |
+          $p='system/Start-Agent.ps1'
+          $t=Get-Content $p -Raw -Encoding UTF8
+          $old='$failureReporter=Join-Path $systemRoot ''Failure-Reporter.ps1''`r`n$autoRepair=Join-Path $systemRoot ''Auto-Repair.ps1''`r`n$repairSubmitter=Join-Path $systemRoot ''Submit-RepairCandidate.ps1''`r`n$autoRepairConfig=Join-Path $systemRoot ''auto-repair.json'''
+          $new=@'
+          $failureReporter=Join-Path $systemRoot 'Failure-Reporter.ps1'
+          $autoRepair=Join-Path $systemRoot 'Auto-Repair.ps1'
+          $repairSubmitter=Join-Path $systemRoot 'Submit-RepairCandidate.ps1'
+          $autoRepairConfig=Join-Path $systemRoot 'auto-repair.json'
+          '@
+          $new=$new.Trim()
+          if(([regex]::Matches($t,[regex]::Escape($old))).Count-ne1){throw 'Auto-repair newline marker mismatch'}
+          $t=$t.Replace($old,$new)
+          Set-Content $p $t -Encoding UTF8 -NoNewline
+          Set-Content 'system/VERSION.txt' 'Dr.Swinux v1.5.53-final' -Encoding UTF8 -NoNewline
+          $parseErrors=@();Get-ChildItem system -Recurse -Filter '*.ps1'|ForEach-Object{$tok=$null;$err=$null;[void][Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tok,[ref]$err);if($err){$parseErrors+=$err}};if($parseErrors){throw 'Parser audit failed'}
+          $final=Get-Content $p -Raw
+          if($final-match [regex]::Escape("'Failure-Reporter.ps1'``r``n")){throw 'Literal newline escape remains'}
+          foreach($n in @('$failureReporter=Join-Path $systemRoot ''Failure-Reporter.ps1''','$autoRepair=Join-Path $systemRoot ''Auto-Repair.ps1''','$repairSubmitter=Join-Path $systemRoot ''Submit-RepairCandidate.ps1''','$autoRepairConfig=Join-Path $systemRoot ''auto-repair.json''')){if($final-notmatch[regex]::Escape($n)){throw "Missing runtime wiring: $n"}}
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add system/Start-Agent.ps1 system/VERSION.txt
+          git commit -m 'Fix auto-repair runtime wiring newlines'
+          git push
