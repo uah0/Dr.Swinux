@@ -148,7 +148,8 @@ function New-PreflightSession {
     $script:preflightSession=Join-Path $reportsRoot $name
     New-Item -ItemType Directory -Path $script:preflightSession -Force | Out-Null
     $script:preflightLog=Join-Path $script:preflightSession 'preflight.log'
-    Write-PreflightLog -Stage 'preflight' -Status 'CREATED' -Detail ('session={0}; taskCharacters={1}' -f $script:preflightSession,$Task.Length)
+    $taskCharacters=if($null -eq $Task){0}else{$Task.Length}
+    Write-PreflightLog -Stage 'preflight' -Status 'CREATED' -Detail ('session={0}; taskCharacters={1}' -f $script:preflightSession,$taskCharacters)
 }
 
 function New-PrevalidatedRuntimeAgent {
