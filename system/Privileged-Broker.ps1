@@ -757,7 +757,7 @@ function Get-TrustedPackageDefinition {
                 DisplayName='7-Zip 26.02 (x64)'
                 Url='https://github.com/ip7z/7zip/releases/download/26.02/7z2602-x64.exe'
                 FileName='7z2602-x64.exe'
-                SignerPattern='(?i)Igor Pavlov'
+                Sha256='6745FA76DC2EA031596D8678F6F6B99C3C1B435B4164A63485ADBBC7B8D82EF0'
                 InstallerArguments=@('/S')
                 VerifyPath=(Join-Path $env:ProgramFiles '7-Zip\7z.exe')
                 MinFileBytes=1000000
@@ -769,7 +769,7 @@ function Get-TrustedPackageDefinition {
 
 function Confirm-TrustedPackageInstall {
     param($Definition)
-    $message="Установить программу напрямую из доверенного источника?`r`n`r`nНазвание: $($Definition.DisplayName)`r`nPackage ID: $($Definition.Id)`r`nИсточник: $($Definition.Url)`r`n`r`nDr.Swinux проверит цифровую подпись перед запуском установщика.`r`nДействие будет выполнено с правами администратора."
+    $message="Установить программу напрямую из доверенного источника?`r`n`r`nНазвание: $($Definition.DisplayName)`r`nPackage ID: $($Definition.Id)`r`nИсточник: $($Definition.Url)`r`n`r`nDr.Swinux проверит закреплённый SHA-256 перед запуском установщика.`r`nДействие будет выполнено с правами администратора."
     Write-BrokerLog ("TRUSTED_PACKAGE_CONFIRM_DIALOG_SHOW id={0}" -f $Definition.Id)
     Initialize-BrokerMessageBox
     $flags=[uint32](0x00000004 -bor 0x00000020 -bor 0x00000100 -bor 0x00001000 -bor 0x00010000 -bor 0x00040000)
@@ -794,11 +794,10 @@ function Install-TrustedPackageFallback {
         if(-not (Test-Path -LiteralPath $installer -PathType Leaf)){throw 'Trusted package download did not create a file.'}
         $length=(Get-Item -LiteralPath $installer).Length
         if($length -lt [int64]$definition.MinFileBytes){throw ("Downloaded trusted package is unexpectedly small: {0} bytes." -f $length)}
-        $signature=Get-AuthenticodeSignature -LiteralPath $installer -ErrorAction Stop
-        $subject=if($signature.SignerCertificate){[string]$signature.SignerCertificate.Subject}else{''}
-        Write-BrokerLog ("TRUSTED_PACKAGE_SIGNATURE id={0} status={1} signer={2}" -f $definition.Id,$signature.Status,$subject)
-        if($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid){throw ("Trusted package signature is not valid: {0}" -f $signature.Status)}
-        if($subject -notmatch $definition.SignerPattern){throw ("Unexpected trusted package signer: {0}" -f $subject)}
+        $actualHash=(Get-FileHash -LiteralPath $installer -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
+        $expectedHash=([string]$definition.Sha256).ToUpperInvariant()
+        Write-BrokerLog ("TRUSTED_PACKAGE_SHA256 id={0} expected={1} actual={2}" -f $definition.Id,$expectedHash,$actualHash)
+        if($actualHash -ne $expectedHash){throw ("Trusted package SHA-256 mismatch. Expected {0}, got {1}." -f $expectedHash,$actualHash)}
 
         Write-BrokerLog ("TRUSTED_PACKAGE_INSTALL_BEGIN id={0}" -f $definition.Id)
         $process=Start-Process -FilePath $installer -ArgumentList $definition.InstallerArguments -Wait -PassThru -WindowStyle Hidden
