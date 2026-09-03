@@ -2,12 +2,14 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
 function Replace-ExactlyOnce([string]$Path,[string]$Old,[string]$New) {
-    $text=Get-Content -LiteralPath $Path -Raw -Encoding UTF8
-    $first=$text.IndexOf($Old,[StringComparison]::Ordinal)
-    if($first -lt 0){throw ("Text not found in {0}" -f $Path)}
-    $second=$text.IndexOf($Old,$first+$Old.Length,[StringComparison]::Ordinal)
+    $text=(Get-Content -LiteralPath $Path -Raw -Encoding UTF8) -replace "`r`n","`n"
+    $oldLf=$Old -replace "`r`n","`n"
+    $newLf=$New -replace "`r`n","`n"
+    $first=$text.IndexOf($oldLf,[StringComparison]::Ordinal)
+    if($first -lt 0){throw ("Text not found in {0}: {1}" -f $Path,($oldLf.Substring(0,[Math]::Min(80,$oldLf.Length))))}
+    $second=$text.IndexOf($oldLf,$first+$oldLf.Length,[StringComparison]::Ordinal)
     if($second -ge 0){throw ("Text occurs more than once in {0}" -f $Path)}
-    $updated=$text.Substring(0,$first)+$New+$text.Substring($first+$Old.Length)
+    $updated=$text.Substring(0,$first)+$newLf+$text.Substring($first+$oldLf.Length)
     Set-Content -LiteralPath $Path -Value $updated -Encoding UTF8 -NoNewline
 }
 
