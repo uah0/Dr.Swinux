@@ -1,0 +1,29 @@
+name: Fix v1.5.52 repair audit literal
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-v152-audit-literal.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - shell: pwsh
+        run: |
+          $p='system/Auto-Repair.ps1'
+          $t=Get-Content $p -Raw -Encoding UTF8
+          $old="if(`$allText-match'danger-full-access'){throw 'Repair candidate introduced an unrestricted sandbox configuration.'}"
+          $new="`$forbiddenSandbox=('danger'+'-full-access');if(`$allText-match[regex]::Escape(`$forbiddenSandbox)){throw 'Repair candidate introduced an unrestricted sandbox configuration.'}"
+          if(([regex]::Matches($t,[regex]::Escape($old))).Count-ne1){throw 'Forbidden-mode validator marker mismatch'}
+          $t=$t.Replace($old,$new)
+          Set-Content $p $t -Encoding UTF8 -NoNewline
+          $tokens=$null;$errors=$null;[void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $p),[ref]$tokens,[ref]$errors);if($errors){throw 'Auto-Repair parser audit failed'}
+          if((Get-Content $p -Raw)-match'danger-full-access'){throw 'Forbidden sandbox literal remains in Auto-Repair.ps1'}
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $p
+          git commit -m 'Harden auto-repair sandbox invariant audit'
+          git push
