@@ -25,7 +25,6 @@ set "LOG=%REPORTS%\startup-error.log"
 set "PRELOG=%REPORTS%\pre-agent.log"
 set "SYSLOG=%SYSTEM%launcher-trace.log"
 set "RC=0"
-set "PWSH_VALID=0"
 
 >>"%TEMPLOG%" echo ROOT=%ROOT%
 >>"%TEMPLOG%" echo SYSTEM=%SYSTEM%
@@ -85,74 +84,69 @@ if exist "%SYSTEM%Create-Shortcut.ps1" if exist "%WINPS%" (
 rem Existing pwsh.exe must be executable, not merely present. A stale, corrupt or
 rem wrong-architecture binary can otherwise fail immediately with a Windows
 rem loader exit code such as 216 and leave no PowerShell exception behind.
-if exist "%PWSH%" (
-  >>"%PRELOG%" echo [%date% %time%] [powershell-probe] BEGIN :: %PWSH%
-  >>"%TEMPLOG%" echo POWERSHELL_PROBE_BEGIN
-  >>"%SYSLOG%" echo POWERSHELL_PROBE_BEGIN
-  "%PWSH%" -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion.ToString()" 1>>"%LOG%" 2>&1
-  set "RC=%errorlevel%"
-  if "%RC%"=="0" (
-    set "PWSH_VALID=1"
-    >>"%PRELOG%" echo [%date% %time%] [powershell-probe] OK
-    >>"%TEMPLOG%" echo POWERSHELL_PROBE_OK
-    >>"%SYSLOG%" echo POWERSHELL_PROBE_OK
-  ) else (
-    >>"%PRELOG%" echo [%date% %time%] [powershell-probe] FAIL :: rc=%RC%; bootstrap repair required; see %LOG%
-    >>"%TEMPLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
-    >>"%SYSLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
-    >>"%LOG%" echo Existing portable PowerShell failed startup validation with exit code %RC%. Repairing runtime...
-  )
-)
+if not exist "%PWSH%" goto :bootstrap_pwsh
 
-if "%PWSH_VALID%"=="0" (
-  echo Preparing portable PowerShell...
-  >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] BEGIN :: portable pwsh missing or invalid
-  >>"%LOG%" echo Portable PowerShell is missing or invalid. Starting bootstrap...
-  >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
-  >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
+>>"%PRELOG%" echo [%date% %time%] [powershell-probe] BEGIN :: %PWSH%
+>>"%TEMPLOG%" echo POWERSHELL_PROBE_BEGIN
+>>"%SYSLOG%" echo POWERSHELL_PROBE_BEGIN
+"%PWSH%" -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion.ToString()" 1>>"%LOG%" 2>&1
+set "RC=%errorlevel%"
+if not "%RC%"=="0" goto :pwsh_probe_failed
+>>"%PRELOG%" echo [%date% %time%] [powershell-probe] OK
+>>"%TEMPLOG%" echo POWERSHELL_PROBE_OK
+>>"%SYSLOG%" echo POWERSHELL_PROBE_OK
+goto :powershell_final_probe
 
-  if not exist "%WINPS%" (
-    >>"%LOG%" echo Windows PowerShell bootstrap host was not found: %WINPS%
-    >>"%TEMPLOG%" echo FAIL Windows PowerShell host missing: %WINPS%
-    >>"%SYSLOG%" echo FAIL Windows PowerShell host missing
-    set "RC=3"
-    goto :show
-  )
+:pwsh_probe_failed
+>>"%PRELOG%" echo [%date% %time%] [powershell-probe] FAIL :: rc=%RC%; bootstrap repair required; see %LOG%
+>>"%TEMPLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
+>>"%SYSLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
+>>"%LOG%" echo Existing portable PowerShell failed startup validation with exit code %RC%. Repairing runtime...
 
-  "%WINPS%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SYSTEM%Bootstrap-PortablePowerShell.ps1" 1>>"%LOG%" 2>&1
-  set "RC=%errorlevel%"
-  if not "%RC%"=="0" (
-    >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] FAIL :: rc=%RC%; see %LOG%
-    >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
-    >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
-    set "RC=5"
-    goto :show
-  ) else (
-    >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] OK
-    >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_OK
-    >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_OK
-  )
-)
+:bootstrap_pwsh
+echo Preparing portable PowerShell...
+>>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] BEGIN :: portable pwsh missing or invalid
+>>"%LOG%" echo Portable PowerShell is missing or invalid. Starting bootstrap...
+>>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
+>>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
 
-if not exist "%PWSH%" (
-  >>"%PRELOG%" echo [%date% %time%] [powershell] FAIL :: missing after bootstrap %PWSH%
-  >>"%LOG%" echo Bootstrap finished but pwsh.exe is still missing: %PWSH%
-  >>"%TEMPLOG%" echo FAIL pwsh missing after bootstrap
-  set "RC=4"
-  goto :show
-)
+if not exist "%WINPS%" goto :bootstrap_host_missing
+"%WINPS%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SYSTEM%Bootstrap-PortablePowerShell.ps1" 1>>"%LOG%" 2>&1
+set "RC=%errorlevel%"
+if not "%RC%"=="0" goto :bootstrap_failed
+>>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] OK
+>>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_OK
+>>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_OK
+goto :powershell_exists_check
 
-rem Always validate the final binary again after bootstrap/repair.
+:bootstrap_host_missing
+>>"%LOG%" echo Windows PowerShell bootstrap host was not found: %WINPS%
+>>"%TEMPLOG%" echo FAIL Windows PowerShell host missing: %WINPS%
+>>"%SYSLOG%" echo FAIL Windows PowerShell host missing
+set "RC=3"
+goto :show
+
+:bootstrap_failed
+>>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] FAIL :: rc=%RC%; see %LOG%
+>>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
+>>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
+set "RC=5"
+goto :show
+
+:powershell_exists_check
+if exist "%PWSH%" goto :powershell_final_probe
+>>"%PRELOG%" echo [%date% %time%] [powershell] FAIL :: missing after bootstrap %PWSH%
+>>"%LOG%" echo Bootstrap finished but pwsh.exe is still missing: %PWSH%
+>>"%TEMPLOG%" echo FAIL pwsh missing after bootstrap
+set "RC=4"
+goto :show
+
+:powershell_final_probe
+rem Always validate the final binary immediately before the agent launch.
 >>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] BEGIN :: %PWSH%
 "%PWSH%" -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion.ToString()" 1>>"%LOG%" 2>&1
 set "RC=%errorlevel%"
-if not "%RC%"=="0" (
-  >>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] FAIL :: rc=%RC%; see %LOG%
-  >>"%TEMPLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
-  >>"%SYSLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
-  >>"%LOG%" echo Portable PowerShell still cannot start after validation/repair. Exit code: %RC%.
-  goto :show
-)
+if not "%RC%"=="0" goto :powershell_final_probe_failed
 >>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] OK
 >>"%TEMPLOG%" echo POWERSHELL_READY
 >>"%SYSLOG%" echo POWERSHELL_READY
@@ -161,6 +155,15 @@ if not "%RC%"=="0" (
 >>"%PRELOG%" echo [%date% %time%] [start-agent] LAUNCH :: detailed PowerShell logging continues in this file
 >>"%TEMPLOG%" echo START_AGENT_BEGIN
 >>"%SYSLOG%" echo START_AGENT_BEGIN
+goto :start_agent
+
+:powershell_final_probe_failed
+>>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] FAIL :: rc=%RC%; see %LOG%
+>>"%TEMPLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
+>>"%SYSLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
+>>"%LOG%" echo Portable PowerShell still cannot start after validation/repair. Exit code: %RC%.
+goto :show
+
 :start_agent
 "%PWSH%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SYSTEM%Start-DoctorSwinux.ps1"
 set "RC=%errorlevel%"
