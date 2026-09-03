@@ -1032,7 +1032,8 @@ function Invoke-BrokerAction {
         }
         'SearchPackage' { return Search-Package -Query ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')) }
         'SearchTrustedPackages' { return Search-TrustedPackages -Query ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')) }
-        'InstallTrustedPackage' { return Install-TrustedPackageCatalog -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }
+        'InstallTrustedPackage' { return Install-TrustedPackageCatalog -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }
+        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }
         'InstallPackage' {
             $name=[string](Get-BrokerParameter -Parameters $Parameters -Name 'DisplayName' -Default '')
             return Install-Package -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) -DisplayName $name
