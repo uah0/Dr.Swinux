@@ -6,6 +6,8 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+$validatedRemoteHashes=@{}
+$mutableInstallerUrls=@{}
 
 if(-not (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)){
     throw 'ConvertFrom-Yaml is required to build the catalog. Install the powershell-yaml module in the catalog-generation environment.'
@@ -37,6 +39,26 @@ function Get-NaturalVersionKey {
     return $builder.ToString()
 }
 
+function Assert-RemoteInstallerHash {
+    param([Uri]$Uri,[string]$ExpectedSha256)
+    $cacheKey=$Uri.AbsoluteUri+'|'+$ExpectedSha256
+    if($validatedRemoteHashes.ContainsKey($cacheKey)){return}
+    $temporaryPath=[IO.Path]::Combine([IO.Path]::GetTempPath(),('drswinux-catalog-{0}.download' -f [guid]::NewGuid().ToString('N')))
+    try {
+        Invoke-WebRequest -Uri $Uri -OutFile $temporaryPath -UseBasicParsing -MaximumRedirection 10 -ErrorAction Stop
+        if(-not(Test-Path -LiteralPath $temporaryPath -PathType Leaf)){throw 'download did not create a file'}
+        $length=(Get-Item -LiteralPath $temporaryPath).Length
+        if($length -lt 32768){throw ("download was unexpectedly small: {0} bytes" -f $length)}
+        $actual=(Get-FileHash -LiteralPath $temporaryPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
+        if($actual -ne $ExpectedSha256){throw ("SHA-256 mismatch: expected {0}, got {1}" -f $ExpectedSha256,$actual)}
+        $validatedRemoteHashes[$cacheKey]=$true
+    } catch {
+        throw ("Remote installer validation failed for {0}: {1}" -f $Uri.AbsoluteUri,$_.Exception.Message)
+    } finally {
+        Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 $root=[IO.Path]::GetFullPath($WingetManifestRoot)
 if(-not(Test-Path -LiteralPath $root -PathType Container)){throw "Manifest root not found: $root"}
 $allowedTypes=if($AutomaticSafeSubset){@('msi','wix')}else{@('msi','wix','exe')}
@@ -59,6 +81,21 @@ foreach($group in ($fileRows | Group-Object PackagePath)){
     $selectedFiles += ($group.Group | Sort-Object VersionKey -Descending | Select-Object -First 1).File
 }
 Write-Host ("Installer manifests discovered: {0}; newest package paths selected: {1}" -f $fileRows.Count,$selectedFiles.Count)
+
+if($AutomaticSafeSubset){
+    $seenUrlHashes=@{}
+    foreach($row in $fileRows){
+        $raw=Get-Content -LiteralPath $row.File.FullName -Raw -Encoding UTF8
+        foreach($match in [regex]::Matches($raw,'(?mi)^\s*InstallerUrl:\s*(?<url>https://\S+)\s*\r?\n\s*InstallerSha256:\s*(?<sha>[A-Fa-f0-9]{64})\s*$')){
+            $url=$match.Groups['url'].Value.Trim()
+            $sha=$match.Groups['sha'].Value.ToUpperInvariant()
+            if($seenUrlHashes.ContainsKey($url)){
+                if($seenUrlHashes[$url] -ne $sha){$mutableInstallerUrls[$url]=$true}
+            } else {$seenUrlHashes[$url]=$sha}
+        }
+    }
+    Write-Host ("Historically mutable installer URLs detected: {0}" -f $mutableInstallerUrls.Count)
+}
 
 $rows=@()
 foreach($file in $selectedFiles){
@@ -89,6 +126,12 @@ foreach($file in $selectedFiles){
         if($uri.Scheme -ne 'https' -or [string]::IsNullOrWhiteSpace($uri.Host)){continue}
         if($url.Length -gt 2048){continue}
         if($sha -notmatch '^[A-F0-9]{64}$'){continue}
+
+        # A URL that has carried different hashes across WinGet history is mutable.
+        # For automatic catalogs, verify its live bytes before trusting the manifest hash.
+        if($AutomaticSafeSubset -and $mutableInstallerUrls.ContainsKey($url)){
+            Assert-RemoteInstallerHash -Uri $uri -ExpectedSha256 $sha
+        }
 
         $silent=@()
         if($type -eq 'exe'){
@@ -153,7 +196,7 @@ $out=[ordered]@{
         repository='https://github.com/microsoft/winget-pkgs'
         generatedAt=(Get-Date).ToUniversalTime().ToString('o')
         commit=$SourceCommit
-        policy=if($AutomaticSafeSubset){'automatic-msi-wix-productcode-v1'}else{'reviewed-generator-v1'}
+        policy=if($AutomaticSafeSubset){'automatic-msi-wix-productcode-mutable-url-live-hash-v2'}else{'reviewed-generator-v1'}
     }
     packages=$packages
 }
