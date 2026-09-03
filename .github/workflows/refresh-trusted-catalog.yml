@@ -72,7 +72,7 @@ jobs:
           $catalog=Get-Content $candidate -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
           if($catalog.schemaVersion -ne 1){throw 'Unexpected catalog schema.'}
           if([string]$catalog.source.name -ne 'microsoft/winget-pkgs'){throw 'Unexpected catalog source.'}
-          if([string]$catalog.source.policy -ne 'automatic-msi-wix-productcode-v1'){throw 'Unexpected catalog policy.'}
+          if([string]$catalog.source.policy -ne 'automatic-msi-wix-productcode-mutable-url-live-hash-v2'){throw 'Unexpected catalog policy.'}
           if([string]$catalog.source.commit -ne $env:WINGET_COMMIT){throw 'Catalog source commit mismatch.'}
           if(@($catalog.packages).Count -lt 100){throw 'Generated catalog is unexpectedly small.'}
 
