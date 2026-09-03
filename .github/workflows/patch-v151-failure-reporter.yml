@@ -18,4 +18,6 @@ jobs:
           fetch-depth: 0
       - name: Apply audited failure reporter integration
         shell: pwsh
-        run: '& .github/scripts/patch-v151-failure-reporter.ps1'
+        run: |
+          $brokerClient='$brokerClient'
+          & .github/scripts/patch-v151-failure-reporter.ps1
