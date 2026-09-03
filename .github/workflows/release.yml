@@ -1,6 +1,6 @@
 name: Build and publish Dr.Swinux
 # This workflow is also intentionally touch-triggered when a release migration commit was authored by GitHub Actions.
-# Triggered for the audited v1.5.45 trusted 7-Zip fallback release.
+# Triggered for the audited v1.5.46 pinned 7-Zip SHA256 release.
 
 on:
   push:
