@@ -76,11 +76,14 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
         }
 
         $displayPattern=''
+        $publisherPattern=''
         $afe=@(Get-OptionalProperty $i 'AppsAndFeaturesEntries')
         if($afe.Count -eq 0){$afe=$rootAfe}
         if($afe.Count -gt 0 -and $null -ne $afe[0]){
             $displayName=[string](Get-OptionalProperty $afe[0] 'DisplayName')
             if(-not [string]::IsNullOrWhiteSpace($displayName)){$displayPattern='^'+[regex]::Escape($displayName)}
+            $publisher=[string](Get-OptionalProperty $afe[0] 'Publisher')
+            if(-not [string]::IsNullOrWhiteSpace($publisher)){$publisherPattern='^'+[regex]::Escape($publisher)+'$'}
             if([string]::IsNullOrWhiteSpace($productCode)){$productCode=[string](Get-OptionalProperty $afe[0] 'ProductCode')}
         }
         if([string]::IsNullOrWhiteSpace($productCode)-and[string]::IsNullOrWhiteSpace($displayPattern)){continue}
@@ -92,6 +95,7 @@ Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | For
             sha256=$sha
             productCode=$productCode
             displayNamePattern=$displayPattern
+            publisherPattern=$publisherPattern
             silentArgs=$silent
         }
     }

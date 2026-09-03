@@ -525,7 +525,7 @@ param(
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
         'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
-        'SearchTrustedPackages','InstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
+        'SearchTrustedPackages','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
     [int]$TimeoutSeconds=45
@@ -601,9 +601,11 @@ PRIVILEGED BROKER:
 
 PACKAGE MANAGEMENT:
 - You may search installed/available software and install or uninstall a program when that is part of the user's task.
-- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, SearchTrustedPackages, InstallTrustedPackage.
+- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, SearchTrustedPackages, InstallTrustedPackage, UninstallTrustedPackage.
 - If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available, use SearchTrustedPackages with the program name. If it returns an exact catalog Id, call InstallTrustedPackage with that Id. The trusted catalog is packaged with Dr.Swinux and contains broker-owned HTTPS URLs, SHA-256 hashes, installer types, fixed silent arguments, and verification metadata generated from WinGet manifests; Codex cannot supply or override those fields. Call InstallTrustedPackage at most once per exact Id per task; if it returns an error, report that concrete blocker instead of retrying the same deterministic action.
 - Before InstallPackage, use SearchPackage and identify an exact package Id. Before UninstallPackage, use GetInstalledPackages and identify an exact installed package Id.
+- Call EnsureWinget at most once per task. If it fails deterministically, do not retry it.
+- For an uninstall task when winget is unavailable, use SearchTrustedPackages to resolve an exact trusted catalog Id, then call UninstallTrustedPackage with only that Id. UninstallTrustedPackage correlates the packaged catalog with an HKLM uninstall entry, accepts only a quoted EXE under Program Files with narrowly allowlisted silent switches, shows a broker-owned Yes/No confirmation, executes without cmd.exe or another shell, and verifies that the uninstall entry disappeared. Call it at most once per exact Id per task.
 - InstallPackage, UninstallPackage, and InstallTrustedPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
 - After a confirmed install/uninstall, verify the requested result with GetInstalledPackages or another direct observation.
 
