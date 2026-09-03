@@ -524,7 +524,7 @@ param(
         'GetWifiDetails','GetNetworkExtended','GetProcessExtended','GetDriverInventory',
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
-        'GetScheduledTaskSnapshot','GetRegistryRead','GetInstalledPackages','SearchPackage',
+        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
         'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
@@ -601,7 +601,8 @@ PRIVILEGED BROKER:
 
 PACKAGE MANAGEMENT:
 - You may search installed/available software and install or uninstall a program when that is part of the user's task.
-- Use the broker's typed winget actions instead of arbitrary installer commands: GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage.
+- Use the broker's typed winget actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage.
+- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget. EnsureWinget shows its own broker-owned Yes/No confirmation before any repair/download/install and only uses the official Microsoft App Installer source.
 - Before InstallPackage, use SearchPackage and identify an exact package Id. Before UninstallPackage, use GetInstalledPackages and identify an exact installed package Id.
 - InstallPackage and UninstallPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
 - After a confirmed install/uninstall, verify the requested result with GetInstalledPackages or another direct observation.

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(Mandatory=$true)][string]$Session
 )
 
@@ -626,6 +626,66 @@ function Set-RegistryValueConfirmed {
     [pscustomobject]@{Confirmed=$true;Changed=$true;Path=$normalized;Name=$Name;Type=$Type;OldValue=$oldValue;NewValue=$typedValue;ActualValue=$actual;Verified=$true;ShellNotified=$NotifyShell}
 }
 
+function Confirm-WingetBootstrap {
+    $message="Windows Package Manager (winget) недоступен.`r`n`r`nУстановить или восстановить официальный Microsoft App Installer?`r`nИсточник загрузки: https://aka.ms/getwinget`r`n`r`nПосле установки Dr.Swinux продолжит управление пакетами через typed broker."
+    Write-BrokerLog 'WINGET_BOOTSTRAP_CONFIRM_DIALOG_SHOW'
+    Initialize-BrokerMessageBox
+    $flags=[uint32](0x00000004 -bor 0x00000020 -bor 0x00000100 -bor 0x00001000 -bor 0x00010000 -bor 0x00040000)
+    $answer=[DrSwintus.NativeMessageBox]::MessageBoxW([IntPtr]::Zero,$message,'Dr.Swinux',$flags)
+    if($answer -eq 6){Write-BrokerLog 'WINGET_BOOTSTRAP_CONFIRM_USER_YES';return $true}
+    Write-BrokerLog ("WINGET_BOOTSTRAP_CONFIRM_USER_NO result={0}" -f $answer)
+    return $false
+}
+
+function Test-WingetReady {
+    try {$null=Get-WingetPath;return $true}catch{return $false}
+}
+
+function Ensure-Winget {
+    if(Test-WingetReady){
+        $path=Get-WingetPath
+        Write-BrokerLog ("WINGET_BOOTSTRAP_ALREADY_READY path={0}" -f $path)
+        return [pscustomobject]@{Confirmed=$null;Changed=$false;Ready=$true;Method='AlreadyAvailable';Path=$path}
+    }
+    if(-not (Confirm-WingetBootstrap)){
+        return [pscustomobject]@{Confirmed=$false;Changed=$false;Ready=$false;Method='Declined';Path=$null}
+    }
+    Write-BrokerLog 'WINGET_BOOTSTRAP_BEGIN'
+    try {
+        Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction Stop
+        Write-BrokerLog 'WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_OK'
+    } catch {
+        Write-BrokerLog ("WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_SKIPPED error={0}" -f $_.Exception.Message)
+    }
+    if(Test-WingetReady){
+        $path=Get-WingetPath
+        Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=RegisterByFamilyName path={0}" -f $path)
+        return [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='RegisterByFamilyName';Path=$path}
+    }
+    $bundle=Join-Path $brokerRoot 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'
+    try {
+        Write-BrokerLog 'WINGET_BOOTSTRAP_DOWNLOAD_BEGIN source=https://aka.ms/getwinget'
+        Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $bundle -UseBasicParsing -MaximumRedirection 10 -ErrorAction Stop
+        if(-not (Test-Path -LiteralPath $bundle -PathType Leaf)){throw 'App Installer download did not create a file.'}
+        $length=(Get-Item -LiteralPath $bundle).Length
+        if($length -lt 1MB){throw ("Downloaded App Installer bundle is unexpectedly small: {0} bytes." -f $length)}
+        Write-BrokerLog ("WINGET_BOOTSTRAP_DOWNLOAD_OK bytes={0}" -f $length)
+        Add-AppxPackage -Path $bundle -ForceApplicationShutdown -ErrorAction Stop
+        Write-BrokerLog 'WINGET_BOOTSTRAP_ADD_APPX_OK'
+    } finally {
+        Remove-Item -LiteralPath $bundle -Force -ErrorAction SilentlyContinue
+    }
+    try {Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction SilentlyContinue} catch {}
+    if(-not (Test-WingetReady)){throw 'Microsoft App Installer was installed/registered, but winget is still unavailable.'}
+    $package=Get-AppxPackage Microsoft.DesktopAppInstaller -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
+    if($null -eq $package){throw 'winget became available but Microsoft.DesktopAppInstaller package verification failed.'}
+    $publisher=[string]$package.Publisher
+    if($publisher -notmatch '(?i)Microsoft Corporation'){throw ("Unexpected App Installer publisher: {0}" -f $publisher)}
+    $path=Get-WingetPath
+    Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=OfficialMicrosoftBundle version={0} path={1}" -f $package.Version,$path)
+    [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='OfficialMicrosoftBundle';Path=$path;Version=[string]$package.Version;Publisher=$publisher}
+}
+
 function Get-WingetPath {
     $cmd=Get-Command winget.exe -ErrorAction SilentlyContinue
     if($cmd -and $cmd.Source -and (Test-Path -LiteralPath $cmd.Source -PathType Leaf)){
@@ -800,6 +860,7 @@ function Invoke-BrokerAction {
         'GetRegistryRead' {
             return Get-RegistryRead -Path ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Path' -Default '')) -Name ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Name' -Default ''))
         }
+        'EnsureWinget' { return Ensure-Winget }
         'GetInstalledPackages' {
             $query=[string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')
             return Get-InstalledPackages -Query $query
@@ -842,7 +903,7 @@ $ready=[pscustomobject]@{
         'GetWifiDetails','GetNetworkExtended','GetProcessExtended','GetDriverInventory',
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
-        'GetScheduledTaskSnapshot','GetRegistryRead','GetInstalledPackages','SearchPackage',
+        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
         'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )
 }

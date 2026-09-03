@@ -4,7 +4,7 @@ param(
         'GetWifiDetails','GetNetworkExtended','GetProcessExtended','GetDriverInventory',
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
-        'GetScheduledTaskSnapshot','GetRegistryRead','GetInstalledPackages','SearchPackage',
+        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
         'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
