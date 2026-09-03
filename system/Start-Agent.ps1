@@ -30,6 +30,7 @@ $codexHome=Join-Path $toolsRoot 'CodexHome'
 $setup=Join-Path $systemRoot 'Setup-PortableCodex.ps1'
 $brokerServer=Join-Path $systemRoot 'Privileged-Broker.ps1'
 $brokerClient=Join-Path $systemRoot 'Broker-Request.ps1'
+$failureReporter=Join-Path $systemRoot 'Failure-Reporter.ps1'
 $reportsRoot=Join-Path $root 'reports'
 New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
 $preAgentLog=Join-Path $reportsRoot 'pre-agent.log'
@@ -618,6 +619,14 @@ STRICT BOUNDARY:
 
 Finish with the result, evidence/verification, any remaining uncertainty, and the next useful step only if needed.
 Reply in the same language as the user's task.
+
+TASK OUTCOME PROTOCOL:
+- Your final answer MUST end with exactly one machine-readable line: DRSW_TASK_STATUS: SUCCESS, DRSW_TASK_STATUS: FAILURE, DRSW_TASK_STATUS: BLOCKED, or DRSW_TASK_STATUS: DECLINED.
+- SUCCESS means the user's requested goal was actually completed and verified, not merely investigated.
+- FAILURE means an attempted task/action failed and the user's requested goal remains incomplete.
+- BLOCKED means a concrete external/system prerequisite prevents completion after the allowed recovery paths were exhausted.
+- DECLINED means the user explicitly declined a broker-owned confirmation; do not classify that as a software failure.
+- Do not mention or explain this protocol line elsewhere in the answer. Dr.Swinux removes it before displaying the answer to the user.
 "@
 
 Set-Content -LiteralPath $promptPath -Value $instructions -Encoding UTF8
@@ -702,6 +711,35 @@ if(($codexExit -ne 0) -and (Test-CodexAuthenticationFailure -ErrorLogPath $codex
 }
 
 try { New-Item -ItemType File -Path $brokerStop -Force | Out-Null } catch {}
+
+$taskOutcome='UNKNOWN'
+$finalText=''
+if(Test-Path -LiteralPath $finalPath -PathType Leaf){
+    try {$finalText=Get-Content -LiteralPath $finalPath -Raw -Encoding UTF8} catch {$finalText=''}
+    $statusMatches=[regex]::Matches($finalText,'(?im)^\s*DRSW_TASK_STATUS:\s*(SUCCESS|FAILURE|BLOCKED|DECLINED)\s*$')
+    if($statusMatches.Count -eq 1){
+        $taskOutcome=$statusMatches[0].Groups[1].Value.ToUpperInvariant()
+        $finalText=[regex]::Replace($finalText,'(?im)^\s*DRSW_TASK_STATUS:\s*(?:SUCCESS|FAILURE|BLOCKED|DECLINED)\s*\r?\n?','').TrimEnd()
+        Set-Content -LiteralPath $finalPath -Value $finalText -Encoding UTF8 -NoNewline
+    }
+}
+if($codexExit -ne 0){$taskOutcome='FAILURE'}
+Write-PreAgentLog -Stage 'task-outcome' -Status $taskOutcome -Detail ('codexExit={0}; finalExists={1}' -f $codexExit,(Test-Path -LiteralPath $finalPath -PathType Leaf))
+
+if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
+    try {
+        if(-not(Test-Path -LiteralPath $failureReporter -PathType Leaf)){throw 'Failure-Reporter.ps1 not found.'}
+        $report=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $failureReporter -Session $session -Status $taskOutcome -CodexExit $codexExit -Task $Task -ReportsRoot $reportsRoot -ProjectRoot $root)
+        $reportObject=@($report | Where-Object {$_ -and $_.PSObject.Properties['Bundle']}) | Select-Object -Last 1
+        if($null -ne $reportObject){
+            Write-PreAgentLog -Stage 'failure-reporter' -Status $(if([bool]$reportObject.Sent){'SENT'}else{'OUTBOX'}) -Detail ('bundle={0}; transport={1}; sendError={2}' -f $reportObject.Bundle,$reportObject.Transport,$reportObject.SendError)
+            Show-Status ('Диагностический пакет ошибки подготовлен автоматически: {0}' -f $reportObject.Bundle)
+            if([bool]$reportObject.Sent){Show-Status 'Диагностический пакет отправлен настроенному HTTPS relay.'}
+        } else {Write-PreAgentLog -Stage 'failure-reporter' -Status 'WARN' -Detail 'reporter returned no structured result'}
+    } catch {
+        Write-PreAgentLog -Stage 'failure-reporter' -Status 'ERROR' -Detail $_.Exception.Message
+    }
+}
 
 if(Test-Path -LiteralPath $finalPath -PathType Leaf){
     Show-ResultHeader

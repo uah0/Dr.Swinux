@@ -880,13 +880,13 @@ function Find-TrustedInstalledPackage {
         foreach($key in @(Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)){
             $keyName=[string]$key.PSChildName
             $item=$null;try{$item=Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction Stop}catch{continue}
-            $display=[string]$item.DisplayName
+            $display=Get-RegistryStringProperty -Object $item -Name 'DisplayName'
             $codeMatch=(-not[string]::IsNullOrWhiteSpace($ProductCode))-and($keyName -ieq $ProductCode)
             $nameMatch=$false
             if(-not[string]::IsNullOrWhiteSpace($DisplayNamePattern)-and-not[string]::IsNullOrWhiteSpace($display)){
                 try {$nameMatch=($display -match $DisplayNamePattern)} catch {throw 'Trusted catalog displayNamePattern is invalid.'}
             }
-            if($codeMatch -or $nameMatch){return [pscustomobject]@{DisplayName=$display;DisplayVersion=[string]$item.DisplayVersion;Publisher=[string]$item.Publisher;RegistryKey=$key.PSPath}}
+            if($codeMatch -or $nameMatch){return [pscustomobject]@{DisplayName=$display;DisplayVersion=(Get-RegistryStringProperty -Object $item -Name 'DisplayVersion');Publisher=[string]$item.Publisher;RegistryKey=$key.PSPath}}
         }
     }
     return $null
@@ -955,6 +955,13 @@ function Install-TrustedPackageFallback {
     param([string]$Id)
     Install-TrustedPackageCatalog -Id $Id
 }
+function Get-RegistryStringProperty {
+    param($Object,[string]$Name)
+    if($null -eq $Object){return ''}
+    $property=$Object.PSObject.Properties[$Name]
+    if($null -eq $property -or $null -eq $property.Value){return ''}
+    return [string]$property.Value
+}
 function Get-TrustedHklmInstalledMatches {
     param($Package)
     $productCodes=@($Package.installers | ForEach-Object {[string]$_.productCode} | Where-Object {-not [string]::IsNullOrWhiteSpace($_)} | Sort-Object -Unique)
@@ -974,8 +981,8 @@ function Get-TrustedHklmInstalledMatches {
             $item=$null
             try {$item=Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction Stop} catch {continue}
             $keyName=[string]$key.PSChildName
-            $display=[string]$item.DisplayName
-            $publisher=[string]$item.Publisher
+            $display=Get-RegistryStringProperty -Object $item -Name 'DisplayName'
+            $publisher=Get-RegistryStringProperty -Object $item -Name 'Publisher'
             $matched=$false
             foreach($code in $productCodes){if($keyName -ieq $code){$matched=$true;break}}
             if(-not $matched -and -not [string]::IsNullOrWhiteSpace($display)){
@@ -995,9 +1002,9 @@ function Get-TrustedHklmInstalledMatches {
                 RegistryKey=[string]$key.PSPath
                 RegistryLeaf=$keyName
                 DisplayName=$display
-                DisplayVersion=[string]$item.DisplayVersion
+                DisplayVersion=(Get-RegistryStringProperty -Object $item -Name 'DisplayVersion')
                 Publisher=$publisher
-                QuietUninstallString=[string]$item.QuietUninstallString
+                QuietUninstallString=(Get-RegistryStringProperty -Object $item -Name 'QuietUninstallString')
             }
         }
     }
@@ -1058,8 +1065,8 @@ function Uninstall-TrustedPackage {
     }
 
     $fresh=Get-ItemProperty -LiteralPath $entry.RegistryKey -ErrorAction Stop
-    if([string]$fresh.DisplayName -ne $entry.DisplayName -or [string]$fresh.Publisher -ne $entry.Publisher -or [string]$fresh.QuietUninstallString -ne $entry.QuietUninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}
-    $freshCommand=Convert-TrustedQuietUninstallCommand -Command ([string]$fresh.QuietUninstallString)
+    if((Get-RegistryStringProperty -Object $fresh -Name 'DisplayName') -ne $entry.DisplayName -or (Get-RegistryStringProperty -Object $fresh -Name 'Publisher') -ne $entry.Publisher -or (Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString') -ne $entry.QuietUninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}
+    $freshCommand=Convert-TrustedQuietUninstallCommand -Command (Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString')
     if($freshCommand.FilePath -ne $command.FilePath -or (($freshCommand.Arguments -join "`n") -ne ($command.Arguments -join "`n"))){throw 'Registered uninstall command changed after confirmation; refusing to execute.'}
 
     Write-BrokerLog ("TRUSTED_UNINSTALL_EXECUTE id={0} path={1} args={2}" -f $package.id,$command.FilePath,($command.Arguments -join ' '))
