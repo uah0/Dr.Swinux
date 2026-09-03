@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 rem This file is intentionally ASCII-only and BOM-free.
 rem Flight recorder starts before cd/root discovery so a disappearing console
 rem still leaves evidence even if reports cannot be created.
-set "TEMPLOG=%TEMP%\DrSwintus-last-start.log"
->"%TEMPLOG%" echo Doctor Swinux launcher BEGIN %date% %time%
+set "TEMPLOG=%TEMP%\DrSwinux-last-start.log"
+>"%TEMPLOG%" echo Dr.Swinux launcher BEGIN %date% %time%
 >>"%TEMPLOG%" echo ENTRY=%~f0
 >>"%TEMPLOG%" echo ENTRYDIR=%~dp0
 >>"%TEMPLOG%" echo CD_BEFORE=%CD%
@@ -25,6 +25,7 @@ set "LOG=%REPORTS%\startup-error.log"
 set "PRELOG=%REPORTS%\pre-agent.log"
 set "SYSLOG=%SYSTEM%launcher-trace.log"
 set "RC=0"
+set "PWSH_VALID=0"
 
 >>"%TEMPLOG%" echo ROOT=%ROOT%
 >>"%TEMPLOG%" echo SYSTEM=%SYSTEM%
@@ -33,7 +34,7 @@ set "RC=0"
 
 rem A second persistent trace lives beside the launcher and does not depend on
 rem the reports directory. Do not delete it automatically.
->"%SYSLOG%" echo Doctor Swinux launcher BEGIN %date% %time%
+>"%SYSLOG%" echo Dr.Swinux launcher BEGIN %date% %time%
 >>"%SYSLOG%" echo ROOT=%ROOT%
 >>"%SYSLOG%" echo REPORTS=%REPORTS%
 >>"%SYSLOG%" echo TEMPLOG=%TEMPLOG%
@@ -54,7 +55,7 @@ if not exist "%TOOLS%" (
   goto :show_temp
 )
 
->"%LOG%" echo Doctor Swinux launcher started %date% %time%
+>"%LOG%" echo Dr.Swinux launcher started %date% %time%
 >>"%LOG%" echo ROOT=%ROOT%
 >>"%LOG%" echo PWSH=%PWSH%
 >>"%LOG%" echo TEMP_FLIGHT_RECORDER=%TEMPLOG%
@@ -81,32 +82,56 @@ if exist "%SYSTEM%Create-Shortcut.ps1" if exist "%WINPS%" (
   )
 )
 
-if not exist "%PWSH%" (
+rem Existing pwsh.exe must be executable, not merely present. A stale, corrupt or
+rem wrong-architecture binary can otherwise fail immediately with a Windows
+rem loader exit code such as 216 and leave no PowerShell exception behind.
+if exist "%PWSH%" (
+  >>"%PRELOG%" echo [%date% %time%] [powershell-probe] BEGIN :: %PWSH%
+  >>"%TEMPLOG%" echo POWERSHELL_PROBE_BEGIN
+  >>"%SYSLOG%" echo POWERSHELL_PROBE_BEGIN
+  "%PWSH%" -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion.ToString()" 1>>"%LOG%" 2>&1
+  set "RC=%errorlevel%"
+  if "%RC%"=="0" (
+    set "PWSH_VALID=1"
+    >>"%PRELOG%" echo [%date% %time%] [powershell-probe] OK
+    >>"%TEMPLOG%" echo POWERSHELL_PROBE_OK
+    >>"%SYSLOG%" echo POWERSHELL_PROBE_OK
+  ) else (
+    >>"%PRELOG%" echo [%date% %time%] [powershell-probe] FAIL :: rc=%RC%; bootstrap repair required; see %LOG%
+    >>"%TEMPLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
+    >>"%SYSLOG%" echo POWERSHELL_PROBE_FAIL RC=%RC%
+    >>"%LOG%" echo Existing portable PowerShell failed startup validation with exit code %RC%. Repairing runtime...
+  )
+)
+
+if "%PWSH_VALID%"=="0" (
   echo Preparing portable PowerShell...
-  >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] BEGIN :: portable pwsh missing
-  >>"%LOG%" echo Portable PowerShell is missing. Starting bootstrap...
+  >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] BEGIN :: portable pwsh missing or invalid
+  >>"%LOG%" echo Portable PowerShell is missing or invalid. Starting bootstrap...
   >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
+  >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_BEGIN
 
   if not exist "%WINPS%" (
     >>"%LOG%" echo Windows PowerShell bootstrap host was not found: %WINPS%
     >>"%TEMPLOG%" echo FAIL Windows PowerShell host missing: %WINPS%
+    >>"%SYSLOG%" echo FAIL Windows PowerShell host missing
     set "RC=3"
     goto :show
   )
 
   "%WINPS%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SYSTEM%Bootstrap-PortablePowerShell.ps1" 1>>"%LOG%" 2>&1
-  if errorlevel 1 (
-    >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] FAIL :: see %LOG%
-    >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_FAIL
+  set "RC=%errorlevel%"
+  if not "%RC%"=="0" (
+    >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] FAIL :: rc=%RC%; see %LOG%
+    >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
+    >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_FAIL RC=%RC%
     set "RC=5"
     goto :show
   ) else (
     >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] OK
     >>"%TEMPLOG%" echo POWERSHELL_BOOTSTRAP_OK
+    >>"%SYSLOG%" echo POWERSHELL_BOOTSTRAP_OK
   )
-) else (
-  >>"%PRELOG%" echo [%date% %time%] [powershell-bootstrap] SKIP :: %PWSH% already exists
-  >>"%TEMPLOG%" echo POWERSHELL_ALREADY_PRESENT
 )
 
 if not exist "%PWSH%" (
@@ -116,6 +141,21 @@ if not exist "%PWSH%" (
   set "RC=4"
   goto :show
 )
+
+rem Always validate the final binary again after bootstrap/repair.
+>>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] BEGIN :: %PWSH%
+"%PWSH%" -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion.ToString()" 1>>"%LOG%" 2>&1
+set "RC=%errorlevel%"
+if not "%RC%"=="0" (
+  >>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] FAIL :: rc=%RC%; see %LOG%
+  >>"%TEMPLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
+  >>"%SYSLOG%" echo POWERSHELL_FINAL_PROBE_FAIL RC=%RC%
+  >>"%LOG%" echo Portable PowerShell still cannot start after validation/repair. Exit code: %RC%.
+  goto :show
+)
+>>"%PRELOG%" echo [%date% %time%] [powershell-final-probe] OK
+>>"%TEMPLOG%" echo POWERSHELL_READY
+>>"%SYSLOG%" echo POWERSHELL_READY
 
 >>"%PRELOG%" echo [%date% %time%] [powershell] READY :: %PWSH%
 >>"%PRELOG%" echo [%date% %time%] [start-agent] LAUNCH :: detailed PowerShell logging continues in this file
@@ -140,7 +180,7 @@ exit /b 0
 cls
 if exist "%LOG%" type "%LOG%"
 echo.
-echo Doctor Swinux stopped. Exit code: %RC%.
+echo Dr.Swinux stopped. Exit code: %RC%.
 echo Startup log: %LOG%
 echo Flight recorder: %TEMPLOG%
 echo System trace: %SYSLOG%
@@ -153,7 +193,7 @@ exit /b %RC%
 cls
 if exist "%TEMPLOG%" type "%TEMPLOG%"
 echo.
-echo Doctor Swinux stopped before reports were ready.
+echo Dr.Swinux stopped before reports were ready.
 echo Flight recorder: %TEMPLOG%
 echo System trace: %SYSLOG%
 echo.
