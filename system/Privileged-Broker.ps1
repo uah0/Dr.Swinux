@@ -966,7 +966,8 @@ function Get-TrustedHklmInstalledMatches {
         'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
         'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
     )
-    $matches=@()
+    # Do not use $matches here: PowerShell's -match operator writes the automatic $Matches hashtable.
+    $entries=@()
     foreach($root in $roots){
         if(-not(Test-Path -LiteralPath $root -PathType Container)){continue}
         foreach($key in @(Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)){
@@ -990,7 +991,7 @@ function Get-TrustedHklmInstalledMatches {
                 }
                 if(-not $publisherMatched){continue}
             }
-            $matches += [pscustomobject]@{
+            $entries += [pscustomobject]@{
                 RegistryKey=[string]$key.PSPath
                 RegistryLeaf=$keyName
                 DisplayName=$display
@@ -1000,7 +1001,7 @@ function Get-TrustedHklmInstalledMatches {
             }
         }
     }
-    return @($matches)
+    return @($entries)
 }
 
 function Convert-TrustedQuietUninstallCommand {
@@ -1046,10 +1047,10 @@ function Uninstall-TrustedPackage {
     param([string]$Id)
     Assert-PackageId -Id $Id
     $package=Get-TrustedPackageDefinition -Id $Id
-    $matches=@(Get-TrustedHklmInstalledMatches -Package $package)
-    if($matches.Count -eq 0){return [pscustomobject]@{Confirmed=$null;Changed=$false;Verified=$true;Id=[string]$package.id;Method='RegisteredTrustedUninstall';Installed=$false}}
-    if($matches.Count -ne 1){throw ("Trusted uninstall registry match is ambiguous for {0}: {1} entries." -f $package.id,$matches.Count)}
-    $entry=$matches[0]
+    $entries=@(Get-TrustedHklmInstalledMatches -Package $package)
+    if($entries.Count -eq 0){return [pscustomobject]@{Confirmed=$null;Changed=$false;Verified=$true;Id=[string]$package.id;Method='RegisteredTrustedUninstall';Installed=$false}}
+    if($entries.Count -ne 1){throw ("Trusted uninstall registry match is ambiguous for {0}: {1} entries." -f $package.id,$entries.Count)}
+    $entry=$entries[0]
     Write-BrokerLog ("TRUSTED_UNINSTALL_MATCH id={0} key={1} display={2} version={3} publisher={4}" -f $package.id,$entry.RegistryLeaf,$entry.DisplayName,$entry.DisplayVersion,$entry.Publisher)
     $command=Convert-TrustedQuietUninstallCommand -Command $entry.QuietUninstallString
     if(-not(Confirm-TrustedPackageUninstall -Package $package -Entry $entry -Command $command)){
