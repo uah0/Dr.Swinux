@@ -37,7 +37,9 @@ $request=[pscustomobject]@{
     Parameters=$params
     Requested=(Get-Date)
 }
-$request | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestPath -Encoding UTF8
+$requestTempPath=$requestPath+'.tmp'
+$request | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestTempPath -Encoding UTF8
+Move-Item -LiteralPath $requestTempPath -Destination $requestPath -Force
 
 $deadline=(Get-Date).AddSeconds($TimeoutSeconds)
 while((Get-Date) -lt $deadline){

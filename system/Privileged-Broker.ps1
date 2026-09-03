@@ -626,6 +626,47 @@ function Set-RegistryValueConfirmed {
     [pscustomobject]@{Confirmed=$true;Changed=$true;Path=$normalized;Name=$Name;Type=$Type;OldValue=$oldValue;NewValue=$typedValue;ActualValue=$actual;Verified=$true;ShellNotified=$NotifyShell}
 }
 
+function Get-WindowsPowerShellPath {
+    $path=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    if(-not(Test-Path -LiteralPath $path -PathType Leaf)){throw 'Windows PowerShell 5.1 executable was not found.'}
+    return $path
+}
+
+function Invoke-WindowsPowerShellAppx {
+    param(
+        [Parameter(Mandatory=$true)][ValidateSet('RegisterDesktopAppInstaller','InstallBundle','GetDesktopAppInstaller')][string]$Operation,
+        [string]$BundlePath=''
+    )
+    $powershell=Get-WindowsPowerShellPath
+    $scriptText=''
+    $envName='DRSW_APPX_BUNDLE'
+    switch($Operation){
+        'RegisterDesktopAppInstaller' {
+            $scriptText="`$ErrorActionPreference='Stop'; Import-Module Appx -ErrorAction Stop; Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction Stop"
+        }
+        'InstallBundle' {
+            if([string]::IsNullOrWhiteSpace($BundlePath)){throw 'BundlePath is required for InstallBundle.'}
+            $full=[IO.Path]::GetFullPath($BundlePath)
+            if(-not(Test-Path -LiteralPath $full -PathType Leaf)){throw 'App Installer bundle file was not found.'}
+            [Environment]::SetEnvironmentVariable($envName,$full,'Process')
+            $scriptText="`$ErrorActionPreference='Stop'; Import-Module Appx -ErrorAction Stop; `$p=[Environment]::GetEnvironmentVariable('$envName','Process'); if([string]::IsNullOrWhiteSpace(`$p)){throw 'Bundle environment path missing.'}; Add-AppxPackage -Path `$p -ForceApplicationShutdown -ErrorAction Stop"
+        }
+        'GetDesktopAppInstaller' {
+            $scriptText="`$ErrorActionPreference='Stop'; Import-Module Appx -ErrorAction Stop; `$p=Get-AppxPackage Microsoft.DesktopAppInstaller -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1; if(`$null -eq `$p){exit 3}; [pscustomobject]@{Name=[string]`$p.Name;Version=[string]`$p.Version;Publisher=[string]`$p.Publisher;PackageFullName=[string]`$p.PackageFullName} | ConvertTo-Json -Compress"
+        }
+    }
+    try {
+        $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($scriptText))
+        $output=& $powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand $encoded 2>&1
+        $exit=$LASTEXITCODE
+        $text=($output | Out-String).Trim()
+        if($exit -ne 0){throw ("Windows PowerShell Appx operation {0} failed with exit code {1}: {2}" -f $Operation,$exit,(Truncate-Text $text 4000))}
+        return $text
+    } finally {
+        if($Operation -eq 'InstallBundle'){[Environment]::SetEnvironmentVariable($envName,$null,'Process')}
+    }
+}
+
 function Confirm-WingetBootstrap {
     $message="Windows Package Manager (winget) недоступен.`r`n`r`nУстановить или восстановить официальный Microsoft App Installer?`r`nИсточник загрузки: https://aka.ms/getwinget`r`n`r`nПосле установки Dr.Swinux продолжит управление пакетами через typed broker."
     Write-BrokerLog 'WINGET_BOOTSTRAP_CONFIRM_DIALOG_SHOW'
@@ -652,15 +693,15 @@ function Ensure-Winget {
     }
     Write-BrokerLog 'WINGET_BOOTSTRAP_BEGIN'
     try {
-        Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction Stop
-        Write-BrokerLog 'WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_OK'
+        $null=Invoke-WindowsPowerShellAppx -Operation RegisterDesktopAppInstaller
+        Write-BrokerLog 'WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_OK host=WindowsPowerShell'
     } catch {
-        Write-BrokerLog ("WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_SKIPPED error={0}" -f $_.Exception.Message)
+        Write-BrokerLog ("WINGET_BOOTSTRAP_REGISTER_BY_FAMILY_SKIPPED host=WindowsPowerShell error={0}" -f $_.Exception.Message)
     }
     if(Test-WingetReady){
         $path=Get-WingetPath
-        Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=RegisterByFamilyName path={0}" -f $path)
-        return [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='RegisterByFamilyName';Path=$path}
+        Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=RegisterByFamilyName host=WindowsPowerShell path={0}" -f $path)
+        return [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='RegisterByFamilyNameWindowsPowerShell';Path=$path}
     }
     $bundle=Join-Path $brokerRoot 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'
     try {
@@ -670,20 +711,22 @@ function Ensure-Winget {
         $length=(Get-Item -LiteralPath $bundle).Length
         if($length -lt 1MB){throw ("Downloaded App Installer bundle is unexpectedly small: {0} bytes." -f $length)}
         Write-BrokerLog ("WINGET_BOOTSTRAP_DOWNLOAD_OK bytes={0}" -f $length)
-        Add-AppxPackage -Path $bundle -ForceApplicationShutdown -ErrorAction Stop
-        Write-BrokerLog 'WINGET_BOOTSTRAP_ADD_APPX_OK'
+        $null=Invoke-WindowsPowerShellAppx -Operation InstallBundle -BundlePath $bundle
+        Write-BrokerLog 'WINGET_BOOTSTRAP_ADD_APPX_OK host=WindowsPowerShell'
     } finally {
         Remove-Item -LiteralPath $bundle -Force -ErrorAction SilentlyContinue
     }
-    try {Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction SilentlyContinue} catch {}
-    if(-not (Test-WingetReady)){throw 'Microsoft App Installer was installed/registered, but winget is still unavailable.'}
-    $package=Get-AppxPackage Microsoft.DesktopAppInstaller -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
-    if($null -eq $package){throw 'winget became available but Microsoft.DesktopAppInstaller package verification failed.'}
+    try {$null=Invoke-WindowsPowerShellAppx -Operation RegisterDesktopAppInstaller} catch {
+        Write-BrokerLog ("WINGET_BOOTSTRAP_POST_REGISTER_SKIPPED host=WindowsPowerShell error={0}" -f $_.Exception.Message)
+    }
+    if(-not (Test-WingetReady)){throw 'Microsoft App Installer was installed/registered through Windows PowerShell, but winget is still unavailable.'}
+    $packageText=Invoke-WindowsPowerShellAppx -Operation GetDesktopAppInstaller
+    try {$package=$packageText | ConvertFrom-Json -ErrorAction Stop} catch {throw 'winget became available but App Installer package verification output was invalid.'}
     $publisher=[string]$package.Publisher
     if($publisher -notmatch '(?i)Microsoft Corporation'){throw ("Unexpected App Installer publisher: {0}" -f $publisher)}
     $path=Get-WingetPath
-    Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=OfficialMicrosoftBundle version={0} path={1}" -f $package.Version,$path)
-    [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='OfficialMicrosoftBundle';Path=$path;Version=[string]$package.Version;Publisher=$publisher}
+    Write-BrokerLog ("WINGET_BOOTSTRAP_READY method=OfficialMicrosoftBundle host=WindowsPowerShell version={0} path={1}" -f $package.Version,$path)
+    [pscustomobject]@{Confirmed=$true;Changed=$true;Ready=$true;Method='OfficialMicrosoftBundleWindowsPowerShell';Path=$path;Version=[string]$package.Version;Publisher=$publisher}
 }
 
 function Get-WingetPath {
