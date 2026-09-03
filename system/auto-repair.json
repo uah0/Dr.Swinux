@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "autoSubmitWhenTokenPresent": true,
+  "repository": "uah0/Dr.Swinux",
+  "baseBranch": "main"
+}
