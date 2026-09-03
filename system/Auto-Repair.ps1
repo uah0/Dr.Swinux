@@ -81,7 +81,7 @@ Get-ChildItem -LiteralPath (Join-Path $source 'system') -Recurse -Filter '*.ps1'
 if($parseErrors){throw 'Repair candidate failed PowerShell parser audit.'}
 $allText=(Get-ChildItem -LiteralPath (Join-Path $source 'system') -Recurse -File -Include '*.ps1','*.cmd'|ForEach-Object{Get-Content $_.FullName -Raw}) -join "`n"
 foreach($required in @('approval_policy="never"','windows.sandbox="unelevated"','workspace-write')){if($allText-notmatch[regex]::Escape($required)){throw "Repair candidate removed security invariant: $required"}}
-if($allText-match'danger-full-access'){throw 'Repair candidate introduced an unrestricted sandbox configuration.'}
+$forbiddenSandbox=('danger'+'-full-access');if($allText-match[regex]::Escape($forbiddenSandbox)){throw 'Repair candidate introduced an unrestricted sandbox configuration.'}
 $broker=Get-Content -LiteralPath (Join-Path $source 'system\Privileged-Broker.ps1') -Raw
 if($broker-match'Invoke-Expression'){throw 'Repair candidate introduced Invoke-Expression in broker.'}
 if($broker-notmatch'ValidateSet'){throw 'Repair candidate weakened typed broker action validation.'}
