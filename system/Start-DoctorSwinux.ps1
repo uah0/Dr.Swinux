@@ -47,6 +47,40 @@ function Write-StartupFailure {
     } catch {}
 }
 
+function Read-WrapperTaskWithHistory {
+    param([string]$HistoryPath)
+    $history=@()
+    if(Test-Path -LiteralPath $HistoryPath -PathType Leaf){
+        try { $history=@(Get-Content -LiteralPath $HistoryPath -Encoding UTF8 | Where-Object {-not [string]::IsNullOrWhiteSpace($_)}) } catch {}
+    }
+    $index=$history.Count
+    $buffer=''
+    Write-Host '↑/↓ — история задач'
+    Write-Host ''
+    Write-Host -NoNewline 'Опишите задачу: '
+    while($true){
+        $key=[Console]::ReadKey($true)
+        if($key.Key -eq [ConsoleKey]::Enter){ Write-Host ''; return $buffer }
+        if($key.Key -eq [ConsoleKey]::UpArrow){
+            if($history.Count -gt 0 -and $index -gt 0){ $index--; $buffer=$history[$index] }
+        } elseif($key.Key -eq [ConsoleKey]::DownArrow){
+            if($history.Count -gt 0 -and $index -lt $history.Count-1){ $index++; $buffer=$history[$index] }
+            elseif($index -lt $history.Count){ $index=$history.Count; $buffer='' }
+        } elseif($key.Key -eq [ConsoleKey]::Backspace){
+            if($buffer.Length -gt 0){ $buffer=$buffer.Substring(0,$buffer.Length-1) }
+        } elseif(-not [char]::IsControl($key.KeyChar)){
+            $buffer += $key.KeyChar
+        } else { continue }
+        try {
+            $top=[Console]::CursorTop
+            [Console]::SetCursorPosition(0,$top)
+            Write-Host -NoNewline ((' ' * [Math]::Max([Console]::BufferWidth-1,1)))
+            [Console]::SetCursorPosition(0,$top)
+            Write-Host -NoNewline ('Опишите задачу: ' + $buffer)
+        } catch {}
+    }
+}
+
 function Ensure-PortableCodexConfig {
     New-Item -ItemType Directory -Path $codexHome -Force | Out-Null
     $config=@'
@@ -110,22 +144,17 @@ function Invoke-CodexLoginStatusWithTimeout {
 
 function New-PrevalidatedRuntimeAgent {
     param([string]$PreflightDisposition='confirmed')
-
     $source=Get-Content -LiteralPath $legacyAgent -Raw -Encoding UTF8
     $authNeedle="Ensure-CodexAuthentication -Reason 'startup-check'"
     if(-not $source.Contains($authNeedle)){ throw 'Start-Agent startup authentication call was not found.' }
     $safeDisposition=($PreflightDisposition -replace "'","''")
     $authReplacement="Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_HANDLED' -Detail 'startup login-status preflight $safeDisposition; duplicate blocking startup check skipped; task/server auth recovery remains active'"
     $source=$source.Replace($authNeedle,$authReplacement)
-
-    # Persistent tasks must return through this wrapper so every task gets a fresh
-    # preflight log and timeout-guarded startup check.
     $dispatchNeedle='& $PSCommandPath -Task $nextTask -SingleTask'
     $escapedWrapper=$wrapperPath.Replace("'","''")
     $dispatchReplacement="& '$escapedWrapper' -Task `$nextTask -SingleTask"
     if(-not $source.Contains($dispatchNeedle)){ throw 'Start-Agent persistent dispatcher call was not found.' }
     $source=$source.Replace($dispatchNeedle,$dispatchReplacement)
-
     $id=[guid]::NewGuid().ToString('N')
     $script:runtimeAgent=Join-Path $PSScriptRoot ('Start-Agent.runtime.{0}.ps1' -f $id)
     Set-Content -LiteralPath $script:runtimeAgent -Value $source -Encoding UTF8
@@ -145,6 +174,13 @@ function global:Write-Host {
 
 try {
     if(-not [Environment]::Is64BitOperatingSystem){ throw 'Dr.Swinux requires 64-bit Windows for its current Codex runtime. This computer is running 32-bit Windows. Use a 64-bit Windows 10/11 installation or VM.' }
+
+    if([string]::IsNullOrWhiteSpace($Task)){
+        $historyPath=Join-Path $reportsRoot 'prompt-history.txt'
+        $Task=Read-WrapperTaskWithHistory -HistoryPath $historyPath
+        if([string]::IsNullOrWhiteSpace($Task)){ throw 'Задача не может быть пустой.' }
+    }
+
     New-PreflightSession
     Ensure-PortableCodexConfig
     $agentToRun=$legacyAgent
@@ -155,7 +191,6 @@ try {
         $authResult=Invoke-CodexLoginStatusWithTimeout -TimeoutSeconds 8
         Set-Content -LiteralPath (Join-Path $preflightSession 'auth-status.stdout.log') -Value $authResult.Stdout -Encoding UTF8
         Set-Content -LiteralPath (Join-Path $preflightSession 'auth-status.stderr.log') -Value $authResult.Stderr -Encoding UTF8
-
         if($authResult.TimedOut){
             Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'TIMEOUT_CONTINUE' -Detail ('elapsedMs={0}; duplicate startup auth check will be skipped; real Codex task will validate server auth' -f $authResult.ElapsedMs)
             Microsoft.PowerShell.Utility\Write-Host '• Проверка входа отвечает медленно. Продолжаю запуск задачи...'
