@@ -64,6 +64,14 @@ function global:Write-Host {
 }
 
 try {
+    # The pinned Windows Codex runtime bundled/installed by Dr.Swinux is x64.
+    # A 32-bit Windows OS cannot execute it. Detect that platform blocker before
+    # Start-Agent tries to validate/download x64 Codex binaries and fails as an
+    # opaque ScriptHalted/native-loader error.
+    if(-not [Environment]::Is64BitOperatingSystem){
+        throw 'Dr.Swinux requires 64-bit Windows for its current Codex runtime. This computer is running 32-bit Windows. Use a 64-bit Windows 10/11 installation or VM.'
+    }
+
     & $legacyAgent -Task $Task -SingleTask:$SingleTask
     $code=$LASTEXITCODE
     if($null -eq $code){ $code=0 }
