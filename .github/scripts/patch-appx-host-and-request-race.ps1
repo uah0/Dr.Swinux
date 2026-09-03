@@ -34,7 +34,7 @@ function Invoke-WindowsPowerShellAppx {
             if([string]::IsNullOrWhiteSpace($BundlePath)){throw 'BundlePath is required for InstallBundle.'}
             $full=[IO.Path]::GetFullPath($BundlePath)
             if(-not(Test-Path -LiteralPath $full -PathType Leaf)){throw 'App Installer bundle file was not found.'}
-            $env:$envName=$full
+            [Environment]::SetEnvironmentVariable($envName,$full,'Process')
             $scriptText="`$ErrorActionPreference='Stop'; Import-Module Appx -ErrorAction Stop; `$p=[Environment]::GetEnvironmentVariable('$envName','Process'); if([string]::IsNullOrWhiteSpace(`$p)){throw 'Bundle environment path missing.'}; Add-AppxPackage -Path `$p -ForceApplicationShutdown -ErrorAction Stop"
         }
         'GetDesktopAppInstaller' {
@@ -49,7 +49,7 @@ function Invoke-WindowsPowerShellAppx {
         if($exit -ne 0){throw ("Windows PowerShell Appx operation {0} failed with exit code {1}: {2}" -f $Operation,$exit,(Truncate-Text $text 4000))}
         return $text
     } finally {
-        if($Operation -eq 'InstallBundle'){Remove-Item Env:$envName -ErrorAction SilentlyContinue}
+        if($Operation -eq 'InstallBundle'){[Environment]::SetEnvironmentVariable($envName,$null,'Process')}
     }
 }
 
@@ -140,7 +140,7 @@ $bt=Get-Content $broker -Raw -Encoding UTF8
 foreach($needle in @('Get-WindowsPowerShellPath','Invoke-WindowsPowerShellAppx','RegisterDesktopAppInstaller','OfficialMicrosoftBundleWindowsPowerShell')){if($bt-notmatch[regex]::Escape($needle)){throw "Missing broker fix: $needle"}}
 if($bt-match '(?m)^\s*Add-AppxPackage '){throw 'Direct PowerShell 7 Add-AppxPackage call remains in broker'}
 $ct=Get-Content $client -Raw -Encoding UTF8
-if($ct-notmatch [regex]::Escape("$requestTempPath=$requestPath+'.tmp'")){throw 'Atomic request temp path missing'}
+if($ct-notmatch [regex]::Escape('$requestTempPath=$requestPath+''.tmp''')){throw 'Atomic request temp path missing'}
 if($ct-notmatch 'Move-Item -LiteralPath \$requestTempPath -Destination \$requestPath -Force'){throw 'Atomic request move missing'}
 
 git config user.name 'github-actions[bot]'
