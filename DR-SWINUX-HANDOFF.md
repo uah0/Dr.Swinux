@@ -2,56 +2,30 @@
 
 > Persistent context for continuing development in a new ChatGPT conversation.
 >
-> **Maintenance rule:** update this file whenever an architectural decision, safety invariant, release baseline, real-machine finding, or development-process rule changes. Do not use it as a changelog for insignificant edits.
+> Update this file when architecture, safety, release baseline, real-machine findings, development process, or the next real test materially changes.
 
 Last updated: 2026-09-03
 
-## 1. Product identity and goal
+## 1. Product identity
 
-**Dr.Swinux** is a portable AI doctor for computers and an **orchestrator for the Codex agent**. It is not an AI engineer and it does not develop AI systems.
+**Dr.Swinux** is a portable AI doctor for computers and an **orchestrator for the Codex agent**. It is not an engineer and it does not develop AI systems.
 
-The architectural identity is explicit:
+- **Codex is the agent and intelligence.** It reasons, forms hypotheses, interprets evidence and decides the next useful observation/action.
+- **Dr.Swinux is the orchestrator.** It maintains task/session context for the current computer, exposes platform capabilities, routes execution, owns the safety/privilege boundary, records results and keeps the loop tied to verification of the original user goal.
+- **Platform tools are the senses and hands.** Windows currently uses PowerShell/WMI/CIM/Event Log/winget and the typed Broker.
+- **Broker is the controlled privileged execution boundary.** Codex remains unelevated.
 
-- **Codex is the agent and intelligence.** It reasons, forms hypotheses, interprets evidence and decides what observation or action is useful next.
-- **Dr.Swinux is the orchestrator.** It creates and maintains the task/session context, provides Codex with the capabilities and relevant context of the current computer, routes execution through the appropriate platform mechanisms, enforces the privilege/safety boundary, records results and keeps the task tied to verification of the user's original goal.
-- **Platform tools are the senses and hands.** Windows currently provides PowerShell/WMI/CIM/Event Log/winget and the typed Broker; future platforms provide their own adapters.
-- **The Broker is the controlled privileged execution boundary.** Codex itself remains unelevated.
-
-Canonical product formulation:
+Canonical formulation:
 
 > **Dr.Swinux is a portable orchestrator that turns the general Codex agent into the autonomous doctor of a particular computer.**
 
-Codex is therefore not Dr.Swinux itself. Conversely, Dr.Swinux must not become merely a launcher/wrapper around Codex. Its product value is the orchestration layer above the agent: machine context, capabilities, lifecycle, execution policy, verification and longitudinal machine/case history.
-
-Target user experience:
-
-```text
-ordinary-language task
-  -> Dr.Swinux starts and maintains the task context on this computer
-  -> Codex forms hypotheses
-  -> Codex chooses the smallest useful observation
-  -> Dr.Swinux exposes/routes the appropriate local capability
-  -> evidence returns to Codex
-  -> Codex confirms/rejects/refines hypotheses
-  -> Dr.Swinux routes an allowed action when justified
-  -> result returns to Codex
-  -> Dr.Swinux keeps the loop tied to verification of the original goal
-  -> continue until solved or a concrete blocker is identified
-```
-
-The user should normally describe the goal once rather than manually guide the doctor through diagnostic commands.
-
 ## 2. Fundamental development rule
 
-Do not build Dr.Swinux around invented narrow workflows.
-
-**Real tasks drive development.** Tools/capabilities are created or improved when a real task exposes a missing observation, action, verification mechanism, reasoning/tool-discovery problem, orchestration problem, or platform limitation.
-
-Preferred development cycle:
+Do not invent narrow workflows. Real user tasks drive development.
 
 ```text
 real task
-  -> autonomous orchestrated attempt
+  -> autonomous attempt
   -> solved: record result
   -> blocked: classify the actual gap
   -> make the smallest generic improvement
@@ -60,61 +34,39 @@ real task
   -> run the SAME original task again
 ```
 
-Do not make the retry easier by rewriting the user's task with diagnostic hints. Otherwise it is impossible to distinguish an improved Dr.Swinux from improved prompting by the developer.
+Do not make retries easier by rewriting the user's task with hints.
 
-## 3. Orchestrator model vs. plain Codex
+## 3. Product value above plain Codex
 
-If Dr.Swinux becomes only a Codex launcher plus PowerShell scripts, it has little fundamental value over launching Codex directly.
+Dr.Swinux must not become only a launcher plus scripts. Its product layer is:
 
-The product layer above Codex should provide:
-
-- a portable ready-to-run orchestration environment;
-- task/session lifecycle and machine context;
-- standardized, structured OS observation;
-- reusable capabilities rather than task-specific workflows;
-- controlled privilege separation;
-- autonomous symptom/goal -> hypotheses -> evidence -> action -> verification behavior;
-- reports and structured case history;
-- eventually a longitudinal local record of the particular computer;
-- platform adapters for Windows, Linux, and Android rather than pretending all operating systems expose the same mechanisms.
-
-The strongest long-term differentiator may be longitudinal knowledge of a particular machine: hardware, OS, drivers, installed software, storage/network/services/updates, previous symptoms, investigations, changes, reasons for changes, and verification results. Dr.Swinux should make relevant history available to Codex as context while keeping prior conclusions as evidence rather than dogma.
+- portable orchestration environment;
+- task/session lifecycle and current-machine context;
+- structured OS observations/actions;
+- reusable capabilities discovered through real work;
+- privilege separation and confirmation policy;
+- symptom/goal -> hypotheses -> evidence -> action -> verification loop;
+- reports and longitudinal machine/case history;
+- platform adapters.
 
 ## 4. Platform strategy
 
 Current status:
 
 ```text
-Windows: supported
-Linux:   planned
-Android: planned
+Windows 64-bit: supported reference implementation
+Windows 32-bit: unsupported by the current Codex runtime
+Linux:          planned
+Android:        planned
 ```
 
-Windows is the reference implementation and must be exercised on enough real tasks before aggressively extracting abstractions.
+A real 2026-09-03 test proved that a 32-bit Windows installation cannot run the current pinned Windows Codex runtime. Dr.Swinux v1.5.35 detects this explicitly and reports a concrete platform blocker instead of proceeding into an opaque Codex/native-loader failure.
 
-Common/core orchestration concepts:
+The current `Setup-PortableCodex.ps1` installs pinned Codex `0.151.0` from official Windows **x86_64** assets. Do not claim Windows x86 support unless a real compatible Codex runtime exists and passes startup/auth/task testing.
 
-- natural-language task lifecycle;
-- Codex agent lifecycle;
-- autonomous reasoning loop coordination;
-- capability contracts/discovery;
-- evidence/history model;
-- result and verification semantics;
-- machine/session context.
+## 5. Safety invariants
 
-Platform-specific concepts belong behind adapters:
-
-- Windows: Broker, winget, WMI/CIM, Event Log, Windows services/settings/etc.;
-- Linux future: sudo broker, apt/dnf/pacman, /proc, /sys, systemd/journal, nmcli, lsblk, smartctl, lspci, ip, ss, etc.;
-- Android future: Android APIs and platform-specific privilege model, optionally extended by mechanisms such as Shizuku/root where appropriate.
-
-**Migration rule:** do not move proven Windows runtime wholesale merely to make the directory tree cleaner. Move behavior behind a platform boundary when a real task requires touching that area and the move can be audited without changing proven behavior.
-
-## 5. Safety architecture — invariants
-
-Reasoning authority and privileged execution authority are deliberately separated.
-
-Codex itself remains **unelevated**. Current intended execution invariants include:
+Codex remains unelevated. Intended baseline includes:
 
 ```text
 approval_policy="never"
@@ -124,24 +76,19 @@ windows.sandbox="unelevated"
 
 Do not introduce `danger-full-access`.
 
-Dr.Swinux owns/orchestrates the execution boundary. Privileged operations go through the elevated **typed allowlisted Broker**. UAC remains real Windows consent. Do not hide or bypass it.
+Privileged actions go only through the typed allowlisted Broker. UAC remains real Windows consent. Do not add an arbitrary elevated shell/script facility.
 
-Do not add an arbitrary unrestricted elevated command/script facility.
+Critical/destructive/security-sensitive operations remain denied or explicitly gated. Do not silently enable formatting/partitioning, BCD/BitLocker changes, user deletion, security disabling, mass deletion, startup persistence creation, etc. DISM/SFC remain disabled unless explicitly reconsidered.
 
-Critical/destructive/security-sensitive operations remain denied or require explicit policy/confirmation. Examples that must not silently become autonomous include disk formatting/partition changes, BCD changes, BitLocker changes, deleting users, disabling security, mass deletion, or startup persistence mechanisms.
+Self-modification must not weaken the Broker/safety boundary.
 
-DISM/SFC remain disabled unless explicitly reconsidered.
+## 6. Layout and branding
 
-Self-modification must not be allowed to rewrite the safety boundary merely because a task is blocked. Dr.Swinux may develop new senses/hands, but it must not autonomously remove confirmation, grant Codex an elevated shell, disable audits/deny rules, or turn the Broker into arbitrary command execution.
-
-## 6. Current portable layout and compatibility
-
-Current conceptual package layout:
+Conceptual package layout:
 
 ```text
 Dr.Swinux/
   ASK-AGENT.cmd.lnk
-  LAB-SWINUX.cmd
   README.md
   DR-SWINUX-HANDOFF.md
   tools/
@@ -162,75 +109,46 @@ Dr.Swinux/
   reports/
 ```
 
-Some legacy internal filenames remain intentionally for compatibility, including `Start-Agent.ps1`, `Start-DoctorSwinux.ps1`, and `Update-DrSwintus.ps1`. Public branding is **Dr.Swinux**.
+Legacy internal filenames may remain for compatibility. Public branding is **Dr.Swinux**. Do not use `Doctor Swinux`, `DOCTOR SWINUX`, or describe the product as an engineer.
 
-`RUN-DR-SWINTUS.cmd` was removed and must not return.
+`RUN-DR-SWINTUS.cmd` must not return.
 
-The root `ASK-AGENT.cmd.lnk` targets `system/ASK-AGENT.cmd`.
+## 7. Current release baseline
 
-## 7. Branding rules
+Repository: `uah0/Dr.Swinux`
 
-Final public name: **Dr.Swinux**.
-
-Do not use `Doctor Swinux`, `DOCTOR SWINUX`, or describe the product as an engineer.
-
-Public concept: doctor. Architectural role: orchestrator for the Codex agent.
-
-Current branding assets are under `system/assets/branding/` and include:
-
-- `dr-swinux.png`
-- `dr-swinux-icon.png`
-- `dr-swinux.ico`
-
-There is also a root `Dr.Swinux.png` used by README.
-
-The Windows launcher and its user-visible startup logs use `Dr.Swinux`; the current temp flight recorder is `%TEMP%\DrSwinux-last-start.log`. Shortcut description is `Dr.Swinux portable AI doctor`.
-
-Known technical debt: inspect `Create-Shortcut.ps1` before claiming the repository-supplied `.ico` survives packaging byte-for-byte. The shortcut script currently regenerates/overwrites the ICO from the approved icon PNG.
-
-## 8. GitHub repository and release baseline
-
-Repository:
-
-`uah0/Dr.Swinux`
-
-Repository URL:
-
-`https://github.com/uah0/Dr.Swinux`
-
-The repository was deliberately recreated on 2026-09-02 as a clean repository because the previous Git history and releases were no longer required. The current repository history is the new source of truth; old repository commit IDs and old release hashes must not be used as the current baseline.
-
-Current release baseline:
+Current stable release:
 
 ```text
-Dr.Swinux v1.5.34-final
-Tag: v1.5.34
-Release target commit: bb3df54419679dbda8dde6778a6a69ee0cc6bac5
-Asset: Dr.Swinux-v1.5.34-final.zip
-SHA-256: c3a999a9a744a227ee3e0c73a4f510edc9839dbcaa6d025e073d4885052be2e7
+Dr.Swinux v1.5.35-final
+Tag: v1.5.35
+Release target commit: f5315cfc0a3c4f38b06402ac4912d9158b0ec6e7
+Asset: Dr.Swinux-v1.5.35-final.zip
+SHA-256: b2dbf5ba04671840e5e45d72ac3dc17ffd900dcb26988fc167f57007a35e76f4
+GitHub Actions run: 33735823383
 ```
 
-GitHub Actions run `33734840830` completed successfully. Source audit, portable ZIP build, ZIP verification and GitHub Release publication all passed.
-
-v1.5.33 added executable probes around portable PowerShell so a present but unusable `pwsh.exe` is no longer treated as healthy. A real rerun then proved the underlying startup condition: the existing `Z:\Dr.Swinux\tools\PowerShell\pwsh.exe` was incompatible with the Windows instance and returned loader exit code `216`. The repair path correctly selected the x86 PowerShell package, but Windows PowerShell 5.1 then failed to download it because it could not establish the required SSL/TLS channel to GitHub.
-
-v1.5.34 fixes that second real startup blocker. `Bootstrap-PortablePowerShell.ps1` explicitly enables TLS 1.2 (while preserving already-enabled protocols) before `Invoke-WebRequest`, so older Windows PowerShell 5.1 defaults do not prevent the verified PowerShell package download. The bootstrap still verifies the pinned SHA-256 before installation and then runs the downloaded `pwsh.exe` as a startup test.
+The run completed successfully through source audit, portable ZIP build, ZIP verification and GitHub Release publication.
 
 The canonical runtime version is read from `system/VERSION.txt`. Do not hardcode the current version into `Start-Agent.ps1`.
 
-Legacy internal filenames may remain for compatibility, but do not reintroduce old public branding. The obsolete `.mailmap` from the previous-history cleanup was removed after the repository was recreated; it is not needed for the clean history.
+## 8. Startup-failure history from real Windows testing
 
-## 9. Mandatory development/audit process
+The same `Z:\Dr.Swinux\` test sequence exposed three distinct real conditions:
 
-**After every code change, audit before handing over a build. Repeat as many iterations as required.**
+1. Initial launcher reached `START_AGENT_BEGIN` and returned native exit code `216` without useful diagnostic detail.
+2. v1.5.33 added executable probes and proved the existing portable `pwsh.exe` was incompatible with that Windows installation. The launcher correctly routed to bootstrap repair.
+3. Bootstrap selected `PowerShell-7.6.5-win-x86.zip`, proving the tested Windows installation itself is 32-bit. Windows PowerShell 5.1 initially failed the GitHub download because it could not establish the SSL/TLS channel; v1.5.34 explicitly enabled TLS 1.2 and the repair then succeeded.
+4. After x86 PowerShell 7.6.5 started successfully, startup advanced into Codex preparation and failed in `Start-Agent.ps1` while invoking `Setup-PortableCodex.ps1`. The setup code only uses official Codex Windows x86_64 assets. This established the actual platform blocker: **the tested Windows installation is 32-bit and cannot run the current Codex runtime.**
+5. v1.5.35 adds an explicit early 32-bit-Windows guard in `Start-DoctorSwinux.ps1`, so this condition now produces a clear supported-platform message instead of an opaque `ScriptHalted`/native failure.
 
-If an audit reports a real product defect: fix the defect and rerun.
+Important lessons: executable existence is not executability; bootstrap must not rely on legacy TLS defaults; and Dr.Swinux must detect unsupported platform/runtime combinations before attempting the agent.
 
-If an audit reports a false positive caused by an obsolete/incorrect audit rule: fix the audit rule, clearly distinguish that from a product defect, and rerun the complete relevant audit.
+## 9. Mandatory audit process
 
-Do not offload obvious defects to the user's Windows test merely because the current environment cannot execute the whole Windows runtime.
+After every code change, audit before handing over a build. Repeat until clean.
 
-If the build environment cannot reproduce real Windows/UAC/Codex behavior, say explicitly that a real Windows runtime test remains required.
+If an audit finds a real defect, fix it and rerun. If an audit rule is false-positive/obsolete, fix the rule and rerun the complete relevant audit.
 
 Mandatory regression scans include at least:
 
@@ -238,56 +156,42 @@ Mandatory regression scans include at least:
 =\s*try\s*\{
 ```
 
-and unsafe interpolated `$variable:` forms, except valid PowerShell scopes such as env/global/script/local/private/using.
+and unsafe interpolated `$variable:` forms except valid PowerShell scopes.
 
-Historical path regression — do not regress:
+Historical path regression must not return:
 
 ```text
 NO: -RootPath "%ROOT%"
 NO: -UsbRoot "%USBROOT%"
 ```
 
-Do not pass root paths ending in backslash through CMD to PowerShell. Bootstrap/setup should derive roots from `$PSScriptRoot` where applicable. This regression caused repeated real Windows failures in the past.
-
-Release audit also protects the unelevated Codex sandbox, updater/repository invariants, manifests, absence of `auth.json`, removed launchers, and other packaging rules.
+Do not pass root paths ending in backslash through CMD to PowerShell.
 
 ## 10. Codex/auth baseline
 
-Current pinned Codex CLI baseline: **0.151.0**. Version 0.152.0 previously caused device-auth problems in real testing, so do not casually bump it without a real reason and test.
+Pinned Codex CLI: **0.151.0** (`rust-v0.151.0`). Do not casually bump; 0.152.0 previously caused device-auth problems in real testing.
 
-Authentication baseline:
+Auth baseline:
 
-- normal `codex login` browser OAuth is primary;
-- `codex login status` confirms login;
-- do not copy host `%USERPROFILE%\.codex\auth.json`;
-- do not inspect/log token contents;
-- inherited process-only `CODEX_ACCESS_TOKEN` / `OPENAI_API_KEY` are cleared inside the process;
-- `CODEX_HOME` remains portable.
+- normal `codex login` browser OAuth;
+- `codex login status` confirmation;
+- no copying host `auth.json`;
+- no token inspection/logging;
+- clear inherited process-only `CODEX_ACCESS_TOKEN` / `OPENAI_API_KEY`;
+- portable `CODEX_HOME`.
 
-`Setup-PortableCodex.ps1` is pinned to 0.151.0 / `rust-v0.151.0` and verifies official GitHub assets via digest.
-
-Relevant config baseline:
+Config baseline:
 
 ```text
 cli_auth_credentials_store = "file"
 forced_login_method = "chatgpt"
 ```
 
-Do not rewrite auth/bootstrap without a new real failure report.
-
 ## 11. Updater lifecycle
 
-The updater checks for updates before the first task prompt.
+Updater checks before the first task prompt. Successful install exits code `23`; `system/ASK-AGENT.cmd` restarts the agent in the same console. `SingleTask` skips updater. Release asset SHA-256 is verified.
 
-A successful update exits with code 23; `system/ASK-AGENT.cmd` restarts `Start-Agent` in the same console. `SingleTask` child execution skips updater.
-
-The updater verifies the GitHub Release `asset.digest` SHA-256 and updates only the intended project runtime while preserving portable tools/CodexHome/reports as designed.
-
-A real update from v1.5.25 to v1.5.26 was successfully tested on Windows.
-
-Current updater repository is `uah0/Dr.Swinux` and Dr.Swinux-named release assets are preferred while transitional legacy package names may still be recognized for compatibility.
-
-## 12. Current Broker capability baseline
+## 12. Broker baseline
 
 Known read capabilities:
 
@@ -307,162 +211,53 @@ Known read capabilities:
 14. GetInstalledPackages
 15. SearchPackage
 
-Known confirmed write capabilities:
+Known confirmed writes:
 
 16. InstallPackage
 17. UninstallPackage
 18. SetRegistryValue
 19. RemoveRegistryValue
 
-Package management is winget-only, uses exact package IDs, does not accept arbitrary installer paths/arguments, requires appropriate confirmation, and requires post-action verification.
-
-Registry writes are constrained to the supported hives/existing keys and supported value types, with confirmation/reread verification and deny rules for sensitive/security/persistence/execution-hijack areas.
-
-Ordinary removal of existing Run/RunOnce/StartupApproved entries may be allowed under policy; creation/modification of startup persistence remains denied.
+No arbitrary elevated command/script parameter.
 
 ## 13. Proven real-task behavior
 
-Past real Windows work demonstrated generic reasoning rather than hardcoded workflows, including:
+Real tasks have already demonstrated generic reasoning for Wi-Fi inspection, crash diagnosis, filling C: drive investigation, winget installs, Explorer hidden-files setting, startup removal, firewall port inspection and a slow external-drive investigation.
 
-- Wi-Fi Broker inspection;
-- crash diagnosis;
-- investigation of a filling C: drive that found a large VDI clone and duplicate archives;
-- reaching the real winget installation path;
-- Explorer hidden-files configuration leading to a generic registry capability;
-- an Edge startup problem leading to startup-removal and Scheduled Task capability work;
-- firewall allowed-ports investigation where Codex corrected its own parser mistake;
-- a real slow-storage investigation that independently progressed through storage/reliability/event/driver/device evidence and exposed a genuine missing repair capability instead of a hardcoded workflow.
+Do not hardcode those cases as workflows.
 
-Do not hardcode these cases as workflows. They are evidence that generic reasoning/capabilities can solve real tasks.
+The slow external-drive case also exposed a genuine missing controlled filesystem-repair capability. Do not implement repair blindly; it must be typed, constrained, confirmation-gated, backup-aware and followed by verification if/when the real task is resumed.
 
-## 14. Windows test-machine and startup-failure history
+## 14. LAB MODE
 
-A previously used physical test laptop was:
+v1.5.32 introduced LAB MODE (`system/Lab-Loop.ps1`, `system/Audit-LabCandidate.ps1`, `system/LAB-SWINUX.cmd`). It uses real tasks, isolated candidate self-modification, guarded audit and retry of the same original task. Safety/Broker/update/auth boundaries are protected from autonomous rewriting.
 
-```text
-HP EliteBook 840 G8
-Windows 10 Pro 19045
-~15.69 GB RAM
-KIOXIA 256 GB NVMe
-Intel AX201 Wi-Fi
-```
+Full Lab runtime still requires real Windows testing.
 
-This information is historical test context only. Never hardcode expected answers for that machine.
+## 15. Next real development/test step
 
-On 2026-09-03 a real Windows launch from `Z:\Dr.Swinux\` first failed after `START_AGENT_BEGIN` with exit code `216`. The v1.5.33 diagnostic repair made the failure observable. The next real log proved that Windows rejected the existing portable `pwsh.exe` as incompatible with that Windows instance. Dr.Swinux then entered the intended bootstrap repair path and selected `PowerShell-7.6.5-win-x86.zip`, but the Windows PowerShell 5.1 host failed at `Invoke-WebRequest` with “could not create SSL/TLS secure channel.”
+**Do not continue testing this current 32-bit Windows installation as a supported Dr.Swinux target.** It has now supplied the useful evidence: current Codex runtime support is blocked by OS architecture.
 
-This establishes two separate startup lessons: existence checks are insufficient for portable executables, and bootstrap networking cannot rely on legacy Windows PowerShell TLS defaults. v1.5.34 explicitly enables TLS 1.2 before downloading from GitHub. Do not remove the executable probes or TLS 1.2 bootstrap setup without a newer real-machine reason.
+Create/reinstall the VM with **64-bit Windows 10** (or another supported 64-bit Windows environment), take a clean snapshot, then run the current release and continue with the same ordinary-language autonomous testing process.
 
-The Windows 10 VM remains useful for repeatable Lab testing. VM snapshots should preserve/reproduce a problem state before Dr.Swinux attempts treatment.
+On that 64-bit VM, first prove clean startup/bootstrap/auth. Then return to real tasks. If a new failure occurs, preserve the exact task, snapshot/state and Dr.Swinux logs, patch only the real failing stage, audit, restore/reproduce and retry the same original task.
 
-## 15. LAB MODE — introduced in v1.5.32
+## 16. Longer roadmap
 
-v1.5.32 introduced the first autonomous development/lab loop; it remains present in the current release.
-
-Launcher:
-
-`LAB-SWINUX.cmd`
-
-Core files:
-
-- `system/Lab-Loop.ps1`
-- `system/Audit-LabCandidate.ps1`
-
-Intended cycle:
-
-```text
-TASK
-  -> ATTEMPT
-  -> SOLVED -> DONE
-  -> otherwise classify blocker
-       -> reasoning retry where appropriate
-       -> or real generic capability/tool/protocol/verification gap
-            -> create isolated candidate copy of system/
-            -> Codex makes the smallest generic patch
-            -> guarded audit
-            -> if audit fails: repair/reject candidate
-            -> if audit passes: promote permitted changes locally
-            -> restart/retry the SAME original task
-```
-
-Default maximum is three iterations so a bad self-improvement loop cannot run forever.
-
-The Lab loop must distinguish at least these failure classes conceptually:
-
-- existing capability not yet tried -> continue reasoning;
-- existing tool available but not discovered/selected -> reasoning/tool-discovery issue;
-- existing implementation broken -> tool bug;
-- genuine missing observation capability -> capability gap;
-- genuine missing action capability -> capability/policy gap;
-- action executed but original symptom not rechecked -> verification gap;
-- platform cannot provide required evidence/action -> concrete blocker;
-- user decision/permission is genuinely required -> ask user.
-
-Self-modification uses an isolated candidate and a guarded audit rather than blindly rewriting the running stable process.
-
-Protected Lab/safety/update/auth/Broker files are not autonomously modifiable by the Lab candidate. A new privileged capability may be identified as a real gap, but the Lab must not autonomously weaken or expand the privilege boundary to solve it.
-
-The current release workflow audit/build/package publication has passed, but **the full Lab runtime still requires real Windows 10 VM testing; CI cannot validate the complete Codex/UAC/local-machine interaction.**
-
-## 16. Next real development step
-
-Re-run **v1.5.34** on the same Windows machine/state. The expected startup path is now:
-
-```text
-existing incompatible pwsh detected
-  -> bootstrap repair
-  -> TLS 1.2 enabled in Windows PowerShell
-  -> correct PowerShell package downloaded
-  -> SHA-256 verified
-  -> portable PowerShell replaced
-  -> startup probe
-  -> Dr.Swinux agent launch
-```
-
-If startup fails again, use the newly preserved `startup-error.log`, `pre-agent.log`, `%TEMP%\DrSwinux-last-start.log` and `system\launcher-trace.log` to patch only the next real failing stage.
-
-If startup succeeds, return to real ordinary-language tasks. The slow-storage case exposed a genuine capability gap around controlled filesystem repair; do not add a repair operation merely from theory. Use the same real symptom/problem state, determine exactly what safe typed action and verification would have been required, then implement only that generic capability under the existing Broker safety model.
-
-For Lab-mode testing, use a Windows 10 VM snapshot and preserve the original task, snapshot/state, report/session directory, Lab classification and exact console/startup error when present. Patch only the real failing stage, audit, restore/reproduce the same initial state, and retry the exact same task.
-
-## 17. Longer roadmap
-
-Current direction, in order of evidence rather than rigid calendar milestones:
-
-1. Prove the autonomous doctor loop across varied real Windows tasks.
+1. Prove the autonomous doctor loop across varied real Windows 64-bit tasks.
 2. Make observations/actions increasingly capability-driven where real tasks justify it.
-3. Close action -> verification so command success is not confused with task success.
-4. Build a structured local machine/case record from real sessions.
-5. Use recorded capability gaps to drive self-extension rather than inventing a plugin catalogue.
-6. Harden portable operation across unfamiliar Windows machines/removable media.
-7. Extract only the platform-independent abstractions proven by Windows experience.
-8. Implement/test a real Linux adapter.
-9. Implement/test an Android-specific runtime under Android's actual capability/privilege model.
+3. Close action -> verification.
+4. Build a structured local machine/case record.
+5. Use recorded capability gaps to drive self-extension.
+6. Harden portability across unfamiliar Windows 64-bit machines/removable media.
+7. Extract only proven cross-platform abstractions.
+8. Implement/test Linux adapter.
+9. Implement/test Android runtime.
 
-## 18. How to use this handoff in a new chat
+## 17. New-chat continuation
 
-At the start of a new ChatGPT conversation, provide this file or point the assistant to it and say approximately:
+Use:
 
-> Continue development of Dr.Swinux. Read `DR-SWINUX-HANDOFF.md` and the current repository before changing anything. Treat the repository as current source of truth for code and this handoff as source of truth for project decisions/history unless newer real test evidence supersedes it. After every code change, audit and iterate until clean.
+> Continue development of Dr.Swinux. Read `DR-SWINUX-HANDOFF.md` and the current repository before changing anything. Treat the repository as source of truth for code and this handoff as source of truth for project decisions/history unless newer real test evidence supersedes it. After every code change, audit and iterate until clean.
 
-Then provide the newest real test report/log/task if one exists.
-
-The assistant should fetch current repository files before editing them because code may have changed since this handoff was last updated.
-
-## 19. Handoff maintenance policy
-
-Update this file when any of the following changes materially:
-
-- product identity/goal;
-- architectural definition of Dr.Swinux as the Codex-agent orchestrator;
-- architecture or platform boundary;
-- safety/privilege invariants;
-- mandatory audit/process rules;
-- Codex/auth/updater baseline;
-- current stable release baseline;
-- Lab-loop semantics/protected boundary;
-- important real-machine findings that affect future decisions;
-- next concrete development stage;
-- a known technical debt item is resolved or a new important one is discovered.
-
-Do not turn this into a duplicate of Git history. Git records what changed; this file records **what the next development conversation must know and why**.
+Git records what changed. This file records what the next development conversation must know and why.
