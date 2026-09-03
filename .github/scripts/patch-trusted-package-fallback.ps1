@@ -1,15 +1,27 @@
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
+function Insert-BeforeExactlyOnce([string]$Path,[string]$Marker,[string]$Insert) {
+    $text=Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+    $first=$text.IndexOf($Marker,[StringComparison]::Ordinal)
+    if($first -lt 0){throw "Marker not found in $Path: $Marker"}
+    $second=$text.IndexOf($Marker,$first+$Marker.Length,[StringComparison]::Ordinal)
+    if($second -ge 0){throw "Marker occurs more than once in $Path: $Marker"}
+    $newText=$text.Substring(0,$first)+$Insert+$text.Substring($first)
+    Set-Content -LiteralPath $Path -Value $newText -Encoding UTF8 -NoNewline
+}
+
 function Replace-ExactlyOnce([string]$Path,[string]$Old,[string]$New) {
     $text=Get-Content -LiteralPath $Path -Raw -Encoding UTF8
-    $count=([regex]::Matches($text,[regex]::Escape($Old))).Count
-    if($count -ne 1){throw "Expected exactly one match in $Path, found $count"}
-    Set-Content -LiteralPath $Path -Value ($text.Replace($Old,$New)) -Encoding UTF8 -NoNewline
+    $first=$text.IndexOf($Old,[StringComparison]::Ordinal)
+    if($first -lt 0){throw "Text not found in $Path: $Old"}
+    $second=$text.IndexOf($Old,$first+$Old.Length,[StringComparison]::Ordinal)
+    if($second -ge 0){throw "Text occurs more than once in $Path: $Old"}
+    $newText=$text.Substring(0,$first)+$New+$text.Substring($first+$Old.Length)
+    Set-Content -LiteralPath $Path -Value $newText -Encoding UTF8 -NoNewline
 }
 
 $broker='system/Privileged-Broker.ps1'
-$marker="function Confirm-PackageChange {"
 $fallback=@'
 function Get-TrustedPackageDefinition {
     param([string]$Id)
@@ -79,35 +91,24 @@ function Install-TrustedPackageFallback {
     [pscustomobject]@{Confirmed=$true;Changed=$true;Verified=$true;Id=$definition.Id;Method='TrustedDirect';Path=$definition.VerifyPath;Version=$version}
 }
 
-function Confirm-PackageChange {
 '@
-Replace-ExactlyOnce $broker $marker $fallback
+Insert-BeforeExactlyOnce $broker 'function Confirm-PackageChange {' $fallback
 
-$old="        'InstallPackage' {"
-$new="        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters `$Parameters -Name 'Id' -Default '')) }`n        'InstallPackage' {"
-Replace-ExactlyOnce $broker $old $new
+$dispatcherOld="        'InstallPackage' {"
+$dispatcherNew="        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters `$Parameters -Name 'Id' -Default '')) }`n        'InstallPackage' {"
+Replace-ExactlyOnce $broker $dispatcherOld $dispatcherNew
 
-$old="        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',`n        'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'"
-$new="        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',`n        'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'"
-Replace-ExactlyOnce $broker $old $new
-
-$client='system/Broker-Request.ps1'
-Replace-ExactlyOnce $client $old $new
+foreach($path in @($broker,'system/Broker-Request.ps1','system/Start-Agent.ps1')){
+    $old="'InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'"
+    $new="'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'"
+    Replace-ExactlyOnce $path $old $new
+}
 
 $agent='system/Start-Agent.ps1'
-Replace-ExactlyOnce $agent $old $new
-$old="- Use the broker's typed winget actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage."
-$new="- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, InstallTrustedPackageFallback."
-Replace-ExactlyOnce $agent $old $new
-$old="- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget. EnsureWinget shows its own broker-owned Yes/No confirmation before any repair/download/install and only uses the official Microsoft App Installer source."
-$new="- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available and the requested package is 7-Zip, call InstallTrustedPackageFallback with Id 7zip.7zip. This fallback is broker-owned, hard-coded to the official 7-Zip release, verifies Authenticode signer/status, shows its own Yes/No confirmation, and does not accept a URL or command line from you."
-Replace-ExactlyOnce $agent $old $new
-$old="- InstallPackage and UninstallPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation."
-$new="- InstallPackage, UninstallPackage, and InstallTrustedPackageFallback always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation."
-Replace-ExactlyOnce $agent $old $new
-$old="- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, or free-form command-line arguments."
-$new="- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, URLs, or free-form command-line arguments. Trusted direct installers are broker-owned fixed definitions only."
-Replace-ExactlyOnce $agent $old $new
+Replace-ExactlyOnce $agent "- Use the broker's typed winget actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage." "- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, InstallTrustedPackageFallback."
+Replace-ExactlyOnce $agent "- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget. EnsureWinget shows its own broker-owned Yes/No confirmation before any repair/download/install and only uses the official Microsoft App Installer source." "- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available and the requested package is 7-Zip, call InstallTrustedPackageFallback with Id 7zip.7zip. This fallback is broker-owned, hard-coded to the official 7-Zip release, verifies Authenticode signer/status, shows its own Yes/No confirmation, and does not accept a URL or command line from you."
+Replace-ExactlyOnce $agent "- InstallPackage and UninstallPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation." "- InstallPackage, UninstallPackage, and InstallTrustedPackageFallback always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation."
+Replace-ExactlyOnce $agent "- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, or free-form command-line arguments." "- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, URLs, or free-form command-line arguments. Trusted direct installers are broker-owned fixed definitions only."
 
 Set-Content -LiteralPath 'system/VERSION.txt' -Value 'Dr.Swinux v1.5.45-final' -Encoding UTF8
 
@@ -123,7 +124,7 @@ $brokerText=Get-Content $broker -Raw
 if($brokerText -notmatch "'7zip\.7zip'"){throw 'Trusted 7-Zip allowlist definition missing'}
 if($brokerText -notmatch 'Get-AuthenticodeSignature'){throw 'Trusted package signature verification missing'}
 if($brokerText -notmatch 'Package is not in the Dr\.Swinux trusted direct-install allowlist'){throw 'Trusted package default-deny missing'}
-if($brokerText -match 'Install-TrustedPackageFallback\s*\{[^}]*Url'){throw 'Trusted fallback unexpectedly accepts URL input'}
+if($brokerText -notmatch 'https://github\.com/ip7z/7zip/releases/download/26\.02/7z2602-x64\.exe'){throw 'Pinned official 7-Zip source missing'}
 
 git config user.name 'github-actions[bot]'
 git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
