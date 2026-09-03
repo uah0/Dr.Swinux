@@ -8,26 +8,35 @@ Last updated: 2026-09-03
 
 ## 1. Product identity and goal
 
-**Dr.Swinux** is a portable AI doctor for computers. It is not an AI engineer and it does not develop AI systems.
+**Dr.Swinux** is a portable AI doctor for computers and an **orchestrator for the Codex agent**. It is not an AI engineer and it does not develop AI systems.
 
-Codex is the intelligence/brain inside Dr.Swinux, but Codex is not Dr.Swinux itself.
+The architectural identity is explicit:
 
-A useful product formulation is:
+- **Codex is the agent and intelligence.** It reasons, forms hypotheses, interprets evidence and decides what observation or action is useful next.
+- **Dr.Swinux is the orchestrator.** It creates and maintains the task/session context, provides Codex with the capabilities and relevant context of the current computer, routes execution through the appropriate platform mechanisms, enforces the privilege/safety boundary, records results and keeps the task tied to verification of the user's original goal.
+- **Platform tools are the senses and hands.** Windows currently provides PowerShell/WMI/CIM/Event Log/winget and the typed Broker; future platforms provide their own adapters.
+- **The Broker is the controlled privileged execution boundary.** Codex itself remains unelevated.
 
-> **Dr.Swinux is a portable autonomous environment that turns a general AI agent into the doctor of a particular computer.**
+Canonical product formulation:
+
+> **Dr.Swinux is a portable orchestrator that turns the general Codex agent into the autonomous doctor of a particular computer.**
+
+Codex is therefore not Dr.Swinux itself. Conversely, Dr.Swinux must not become merely a launcher/wrapper around Codex. Its product value is the orchestration layer above the agent: machine context, capabilities, lifecycle, execution policy, verification and longitudinal machine/case history.
 
 Target user experience:
 
 ```text
 ordinary-language task
-  -> Dr.Swinux immediately starts working on this computer
-  -> forms hypotheses
-  -> chooses the smallest useful local observation
-  -> gathers evidence
-  -> confirms/rejects/refines hypotheses
-  -> performs an allowed action when justified
-  -> verifies the original symptom or goal
-  -> continues until solved or a concrete blocker is identified
+  -> Dr.Swinux starts and maintains the task context on this computer
+  -> Codex forms hypotheses
+  -> Codex chooses the smallest useful observation
+  -> Dr.Swinux exposes/routes the appropriate local capability
+  -> evidence returns to Codex
+  -> Codex confirms/rejects/refines hypotheses
+  -> Dr.Swinux routes an allowed action when justified
+  -> result returns to Codex
+  -> Dr.Swinux keeps the loop tied to verification of the original goal
+  -> continue until solved or a concrete blocker is identified
 ```
 
 The user should normally describe the goal once rather than manually guide the doctor through diagnostic commands.
@@ -36,13 +45,13 @@ The user should normally describe the goal once rather than manually guide the d
 
 Do not build Dr.Swinux around invented narrow workflows.
 
-**Real tasks drive development.** Tools/capabilities are created or improved when a real task exposes a missing observation, action, verification mechanism, reasoning/tool-discovery problem, or platform limitation.
+**Real tasks drive development.** Tools/capabilities are created or improved when a real task exposes a missing observation, action, verification mechanism, reasoning/tool-discovery problem, orchestration problem, or platform limitation.
 
 Preferred development cycle:
 
 ```text
 real task
-  -> autonomous attempt
+  -> autonomous orchestrated attempt
   -> solved: record result
   -> blocked: classify the actual gap
   -> make the smallest generic improvement
@@ -53,13 +62,14 @@ real task
 
 Do not make the retry easier by rewriting the user's task with diagnostic hints. Otherwise it is impossible to distinguish an improved Dr.Swinux from improved prompting by the developer.
 
-## 3. Doctor model vs. plain Codex
+## 3. Orchestrator model vs. plain Codex
 
 If Dr.Swinux becomes only a Codex launcher plus PowerShell scripts, it has little fundamental value over launching Codex directly.
 
 The product layer above Codex should provide:
 
-- a portable ready-to-run environment;
+- a portable ready-to-run orchestration environment;
+- task/session lifecycle and machine context;
 - standardized, structured OS observation;
 - reusable capabilities rather than task-specific workflows;
 - controlled privilege separation;
@@ -68,9 +78,7 @@ The product layer above Codex should provide:
 - eventually a longitudinal local record of the particular computer;
 - platform adapters for Windows, Linux, and Android rather than pretending all operating systems expose the same mechanisms.
 
-The strongest long-term differentiator may be longitudinal knowledge of a particular machine: hardware, OS, drivers, installed software, storage/network/services/updates, previous symptoms, investigations, changes, reasons for changes, and verification results.
-
-Prior conclusions are evidence, not dogma. Current observations still have to be checked.
+The strongest long-term differentiator may be longitudinal knowledge of a particular machine: hardware, OS, drivers, installed software, storage/network/services/updates, previous symptoms, investigations, changes, reasons for changes, and verification results. Dr.Swinux should make relevant history available to Codex as context while keeping prior conclusions as evidence rather than dogma.
 
 ## 4. Platform strategy
 
@@ -84,14 +92,15 @@ Android: planned
 
 Windows is the reference implementation and must be exercised on enough real tasks before aggressively extracting abstractions.
 
-Common/core concepts:
+Common/core orchestration concepts:
 
 - natural-language task lifecycle;
-- autonomous reasoning loop;
-- capability contracts;
+- Codex agent lifecycle;
+- autonomous reasoning loop coordination;
+- capability contracts/discovery;
 - evidence/history model;
 - result and verification semantics;
-- Codex lifecycle.
+- machine/session context.
 
 Platform-specific concepts belong behind adapters:
 
@@ -115,7 +124,7 @@ windows.sandbox="unelevated"
 
 Do not introduce `danger-full-access`.
 
-Privileged operations go through the elevated **typed allowlisted Broker**. UAC remains real Windows consent. Do not hide or bypass it.
+Dr.Swinux owns/orchestrates the execution boundary. Privileged operations go through the elevated **typed allowlisted Broker**. UAC remains real Windows consent. Do not hide or bypass it.
 
 Do not add an arbitrary unrestricted elevated command/script facility.
 
@@ -134,12 +143,14 @@ Dr.Swinux/
   ASK-AGENT.cmd.lnk
   LAB-SWINUX.cmd
   README.md
+  DR-SWINUX-HANDOFF.md
   tools/
     Codex/
     CodexHome/
     PowerShell/
   system/
     ASK-AGENT.cmd
+    LAB-SWINUX.cmd
     Start-Agent.ps1
     Start-DoctorSwinux.ps1
     Update-DrSwintus.ps1
@@ -163,7 +174,7 @@ Final public name: **Dr.Swinux**.
 
 Do not use `Doctor Swinux`, `DOCTOR SWINUX`, or describe the product as an engineer.
 
-Public concept: doctor, not engineer.
+Public concept: doctor. Architectural role: orchestrator for the Codex agent.
 
 Current branding assets are under `system/assets/branding/` and include:
 
@@ -428,6 +439,7 @@ The assistant should fetch current repository files before editing them because 
 Update this file when any of the following changes materially:
 
 - product identity/goal;
+- architectural definition of Dr.Swinux as the Codex-agent orchestrator;
 - architecture or platform boundary;
 - safety/privilege invariants;
 - mandatory audit/process rules;
