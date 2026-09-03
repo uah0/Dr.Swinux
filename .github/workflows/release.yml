@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Audit source and resolve version
         id: meta
@@ -211,4 +213,18 @@ jobs:
           TAG: '${{ steps.meta.outputs.tag }}'
           ASSET: '${{ steps.meta.outputs.asset }}'
         run: |
-          gh release create $env:TAG $env:ASSET "$env:ASSET.sha256" --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Dr.Swinux $env:TAG-final" --notes "Dr.Swinux release. SHA-256: $env:SHA256" --latest
+          $ErrorActionPreference='Stop'
+          git fetch origin --tags
+          $existing=''
+          try {$existing=(git rev-list -n 1 $env:TAG 2>$null).Trim()} catch {}
+          if(-not [string]::IsNullOrWhiteSpace($existing)){
+            if($existing -ne $env:GITHUB_SHA){throw "Release tag $env:TAG points to $existing instead of $env:GITHUB_SHA"}
+          } else {
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag $env:TAG $env:GITHUB_SHA
+            git push origin "refs/tags/$env:TAG"
+          }
+          $resolved=(git rev-list -n 1 $env:TAG).Trim()
+          if($resolved -ne $env:GITHUB_SHA){throw "Release tag verification failed: $resolved"}
+          gh release create $env:TAG $env:ASSET "$env:ASSET.sha256" --repo $env:GITHUB_REPOSITORY --verify-tag --title "Dr.Swinux $env:TAG-final" --notes "Dr.Swinux release. SHA-256: $env:SHA256" --latest
