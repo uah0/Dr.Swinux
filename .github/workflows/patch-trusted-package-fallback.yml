@@ -19,3 +19,6 @@ jobs:
       - name: Apply audited trusted package fallback patch
         shell: pwsh
         run: '& .github/scripts/patch-trusted-package-fallback.ps1'
+      - name: Record migration success
+        shell: pwsh
+        run: 'Write-Host "Trusted package fallback source migration completed."'
