@@ -1,5 +1,5 @@
 name: Apply v1.5.52 auto-repair pipeline
-# Retry after removing a false-positive sandbox audit string from the repair prompt.
+# Run after hardening the forbidden sandbox validator literal.
 
 on:
   push:
