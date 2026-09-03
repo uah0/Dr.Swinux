@@ -24,6 +24,10 @@ if(-not (Test-Path -LiteralPath $readyPath -PathType Leaf)){
     throw 'SWINTUS privileged broker is not ready.'
 }
 
+if($TimeoutSeconds -eq 45){
+    if($Action -eq 'EnsureWinget'){$TimeoutSeconds=180}
+    elseif($Action -in @('InstallPackage','UninstallPackage','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback')){$TimeoutSeconds=300}
+}
 if($TimeoutSeconds -lt 5){$TimeoutSeconds=5}
 if($TimeoutSeconds -gt 1800){$TimeoutSeconds=1800}
 

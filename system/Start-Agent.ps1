@@ -732,7 +732,7 @@ Write-PreAgentLog -Stage 'task-outcome' -Status $taskOutcome -Detail ('codexExit
 if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
     try {
         if(-not(Test-Path -LiteralPath $failureReporter -PathType Leaf)){throw 'Failure-Reporter.ps1 not found.'}
-        $report=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $failureReporter -Session $session -Status $taskOutcome -CodexExit $codexExit -Task $Task -ReportsRoot $reportsRoot -ProjectRoot $root)
+        $report=@(& $failureReporter -Session $session -Status $taskOutcome -CodexExit $codexExit -Task $Task -ReportsRoot $reportsRoot -ProjectRoot $root)
         $reportObject=@($report | Where-Object {$_ -and $_.PSObject.Properties['Bundle']}) | Select-Object -Last 1
         if($null -ne $reportObject){
             Write-PreAgentLog -Stage 'failure-reporter' -Status $(if([bool]$reportObject.Sent){'SENT'}else{'OUTBOX'}) -Detail ('bundle={0}; transport={1}; sendError={2}' -f $reportObject.Bundle,$reportObject.Transport,$reportObject.SendError)
@@ -745,7 +745,7 @@ if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
             if($repairEnabled -and (Test-Path -LiteralPath $autoRepair -PathType Leaf)){
                 Show-Status 'Запускаю изолированного repair-agent для анализа ошибки и подготовки исправления...'
                 try {
-                    $repairOutput=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autoRepair -Session $session -Bundle ([string]$reportObject.Bundle) -ReportsRoot $reportsRoot -ProjectRoot $root -Codex $codex -CodexHome $codexHome)
+                    $repairOutput=@(& $autoRepair -Session $session -Bundle ([string]$reportObject.Bundle) -ReportsRoot $reportsRoot -ProjectRoot $root -Codex $codex -CodexHome $codexHome)
                     $repair=@($repairOutput|Where-Object{$_ -and $_.PSObject.Properties['Candidate']})|Select-Object -Last 1
                     if($null -eq $repair){throw 'Auto-Repair.ps1 returned no repair candidate.'}
                     Write-PreAgentLog -Stage 'auto-repair' -Status 'CANDIDATE' -Detail ('candidate={0}; changedFiles={1}' -f $repair.Candidate,$repair.ChangedFiles)
@@ -756,7 +756,7 @@ if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
                         try {
                             $repo=if($repairConfig.PSObject.Properties['repository']){[string]$repairConfig.repository}else{'uah0/Dr.Swinux'}
                             $baseBranch=if($repairConfig.PSObject.Properties['baseBranch']){[string]$repairConfig.baseBranch}else{'main'}
-                            $submitted=@(& $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairSubmitter -CandidateDirectory ([string]$repair.CandidateDirectory) -Repository $repo -BaseBranch $baseBranch)|Where-Object{$_ -and $_.PSObject.Properties['PullRequest']}|Select-Object -Last 1
+                            $submitted=@(& $repairSubmitter -CandidateDirectory ([string]$repair.CandidateDirectory) -Repository $repo -BaseBranch $baseBranch)|Where-Object{$_ -and $_.PSObject.Properties['PullRequest']}|Select-Object -Last 1
                             if($null -ne $submitted){Write-PreAgentLog -Stage 'auto-repair' -Status 'PR_SUBMITTED' -Detail ('pr={0}; branch={1}' -f $submitted.PullRequest,$submitted.Branch);Show-Status ('Кандидат автоматически отправлен в GitHub как draft PR: {0}' -f $submitted.PullRequest)}
                         } catch {Write-PreAgentLog -Stage 'auto-repair' -Status 'PR_SUBMIT_ERROR' -Detail $_.Exception.Message;Show-Status 'Кандидат сохранён локально; автоматическая отправка PR не удалась.'}
                     } else {Write-PreAgentLog -Stage 'auto-repair' -Status 'LOCAL_ONLY' -Detail 'DRSW_GITHUB_TOKEN is not configured; validated candidate remains in repair outbox'}
