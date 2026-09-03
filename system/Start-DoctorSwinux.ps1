@@ -46,8 +46,8 @@ function Ensure-PortableCodexConfig {
     # restricted-token workspace-write sandbox. Dr.Swinux only needs the current
     # report session writable; privileged/state-changing work goes through Broker.
     # Excluding generic temp roots keeps the managed sandbox's writable-root set
-    # aligned with the legacy Windows restricted-token projection without turning
-    # sandboxing off or granting danger-full-access.
+    # aligned with the legacy Windows restricted-token projection while keeping
+    # the Codex sandbox enabled and unelevated.
     New-Item -ItemType Directory -Path $codexHome -Force | Out-Null
     $config=@'
 cli_auth_credentials_store = "file"
