@@ -1005,12 +1005,37 @@ function Get-TrustedHklmInstalledMatches {
                 DisplayVersion=(Get-RegistryStringProperty -Object $item -Name 'DisplayVersion')
                 Publisher=$publisher
                 QuietUninstallString=(Get-RegistryStringProperty -Object $item -Name 'QuietUninstallString')
+                UninstallString=(Get-RegistryStringProperty -Object $item -Name 'UninstallString')
             }
         }
     }
     return @($entries)
 }
 
+function Get-TrustedMsiUninstallCommand {
+    param($Package,$Entry,[string]$UninstallString)
+    $productCodes=@($Package.installers | ForEach-Object {[string]$_.productCode} | Where-Object {$_ -match '^\{[0-9A-Fa-f-]{36}\}$'} | ForEach-Object {$_.ToUpperInvariant()} | Sort-Object -Unique)
+    if($productCodes.Count -eq 0){throw 'Trusted package has no catalog-pinned MSI ProductCode.'}
+    if([string]::IsNullOrWhiteSpace($UninstallString)){throw 'Registered package has neither QuietUninstallString nor a trusted MSI uninstall registration.'}
+    if($UninstallString.Length -gt 500 -or $UninstallString -match '[\x00-\x1F\x7F]'){throw 'Registered MSI UninstallString is invalid.'}
+    $m=[regex]::Match($UninstallString,'^\s*"?(?:[A-Za-z]:\\Windows\\System32\\)?msiexec(?:\.exe)?"?\s+/[xX]\s*(?<code>\{[0-9A-Fa-f-]{36}\})\s*$',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if(-not $m.Success){throw 'Registered package has no allowlisted quiet uninstall command and is not an exact MSI /X ProductCode registration.'}
+    $code=$m.Groups['code'].Value.ToUpperInvariant()
+    if($code -notin $productCodes){throw 'Registered MSI ProductCode is not pinned by the trusted catalog.'}
+    $msiexec=Join-Path $env:SystemRoot 'System32\msiexec.exe'
+    if(-not(Test-Path -LiteralPath $msiexec -PathType Leaf)){throw 'System msiexec.exe was not found.'}
+    [pscustomobject]@{FilePath=$msiexec;Arguments=@('/x',$code,'/qn','/norestart');Raw=$UninstallString;Method='CatalogPinnedMsiProductCode';ProductCode=$code}
+}
+
+function Get-TrustedUninstallCommand {
+    param($Package,$Entry)
+    if(-not [string]::IsNullOrWhiteSpace([string]$Entry.QuietUninstallString)){
+        $cmd=Convert-TrustedQuietUninstallCommand -Command ([string]$Entry.QuietUninstallString)
+        $cmd | Add-Member -NotePropertyName Method -NotePropertyValue 'RegisteredQuietUninstall' -Force
+        return $cmd
+    }
+    return Get-TrustedMsiUninstallCommand -Package $Package -Entry $Entry -UninstallString ([string]$Entry.UninstallString)
+}
 function Convert-TrustedQuietUninstallCommand {
     param([string]$Command)
     if([string]::IsNullOrWhiteSpace($Command)){throw 'Registered package has no QuietUninstallString.'}
@@ -1040,7 +1065,7 @@ function Convert-TrustedQuietUninstallCommand {
 function Confirm-TrustedPackageUninstall {
     param($Package,$Entry,$Command)
     $display=if([string]::IsNullOrWhiteSpace($Entry.DisplayName)){[string]$Package.id}else{$Entry.DisplayName}
-    $message="Удалить установленную программу через её зарегистрированный тихий деинсталлятор?`r`n`r`nНазвание: $display`r`nВерсия: $($Entry.DisplayVersion)`r`nИздатель: $($Entry.Publisher)`r`nPackage ID: $($Package.id)`r`nДеинсталлятор: $($Command.FilePath)`r`n`r`nКоманда взята только из HKLM uninstall registry после сопоставления с доверенным каталогом Dr.Swinux.`r`nCodex не может передать путь или аргументы.`r`nДействие будет выполнено с правами администратора."
+    $message="Удалить установленную программу через её зарегистрированный тихий деинсталлятор?`r`n`r`nНазвание: $display`r`nВерсия: $($Entry.DisplayVersion)`r`nИздатель: $($Entry.Publisher)`r`nPackage ID: $($Package.id)`r`nДеинсталлятор: $($Command.FilePath)`r`n`r`nКоманда разрешена только после сопоставления HKLM uninstall registry с доверенным каталогом Dr.Swinux. Для MSI broker сам строит msiexec /x из catalog-pinned ProductCode; registry не может задавать исполняемый файл или дополнительные аргументы.`r`nCodex не может передать путь или аргументы.`r`nДействие будет выполнено с правами администратора."
     Write-BrokerLog ("TRUSTED_UNINSTALL_CONFIRM_DIALOG_SHOW id={0} display={1}" -f $Package.id,$display)
     Initialize-BrokerMessageBox
     $flags=[uint32](0x00000004 -bor 0x00000020 -bor 0x00000100 -bor 0x00001000 -bor 0x00010000 -bor 0x00040000)
@@ -1059,14 +1084,15 @@ function Uninstall-TrustedPackage {
     if($entries.Count -ne 1){throw ("Trusted uninstall registry match is ambiguous for {0}: {1} entries." -f $package.id,$entries.Count)}
     $entry=$entries[0]
     Write-BrokerLog ("TRUSTED_UNINSTALL_MATCH id={0} key={1} display={2} version={3} publisher={4}" -f $package.id,$entry.RegistryLeaf,$entry.DisplayName,$entry.DisplayVersion,$entry.Publisher)
-    $command=Convert-TrustedQuietUninstallCommand -Command $entry.QuietUninstallString
+    $command=Get-TrustedUninstallCommand -Package $package -Entry $entry
     if(-not(Confirm-TrustedPackageUninstall -Package $package -Entry $entry -Command $command)){
         return [pscustomobject]@{Confirmed=$false;Changed=$false;Verified=$false;Id=[string]$package.id;Method='RegisteredTrustedUninstall'}
     }
 
     $fresh=Get-ItemProperty -LiteralPath $entry.RegistryKey -ErrorAction Stop
-    if((Get-RegistryStringProperty -Object $fresh -Name 'DisplayName') -ne $entry.DisplayName -or (Get-RegistryStringProperty -Object $fresh -Name 'Publisher') -ne $entry.Publisher -or (Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString') -ne $entry.QuietUninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}
-    $freshCommand=Convert-TrustedQuietUninstallCommand -Command (Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString')
+    if((Get-RegistryStringProperty -Object $fresh -Name 'DisplayName') -ne $entry.DisplayName -or (Get-RegistryStringProperty -Object $fresh -Name 'Publisher') -ne $entry.Publisher -or (Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString') -ne $entry.QuietUninstallString -or (Get-RegistryStringProperty -Object $fresh -Name 'UninstallString') -ne $entry.UninstallString){throw 'Registered uninstall metadata changed after confirmation; refusing to execute.'}
+    $freshEntry=[pscustomobject]@{QuietUninstallString=(Get-RegistryStringProperty -Object $fresh -Name 'QuietUninstallString');UninstallString=(Get-RegistryStringProperty -Object $fresh -Name 'UninstallString')}
+    $freshCommand=Get-TrustedUninstallCommand -Package $package -Entry $freshEntry
     if($freshCommand.FilePath -ne $command.FilePath -or (($freshCommand.Arguments -join "`n") -ne ($command.Arguments -join "`n"))){throw 'Registered uninstall command changed after confirmation; refusing to execute.'}
 
     Write-BrokerLog ("TRUSTED_UNINSTALL_EXECUTE id={0} path={1} args={2}" -f $package.id,$command.FilePath,($command.Arguments -join ' '))
