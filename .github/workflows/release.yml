@@ -1,6 +1,5 @@
 name: Build and publish Dr.Swinux
-# This workflow is also intentionally touch-triggered when a release migration commit was authored by GitHub Actions.
-# Triggered for the audited v1.5.48 AppX host compatibility and broker request race fix.
+# Triggered for the audited v1.5.49 trusted registered-package uninstall fallback.
 
 on:
   push:
@@ -10,47 +9,191 @@ on:
       - '.github/workflows/release.yml'
       - 'system/assets/branding/**'
   workflow_dispatch:
+
 permissions:
   contents: write
+
 concurrency:
   group: dr-swinux-release
   cancel-in-progress: false
+
 jobs:
   audit-build-release:
     runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Audit source and resolve version
         id: meta
         shell: pwsh
         run: |
-          $ErrorActionPreference='Stop'; Set-StrictMode -Version Latest
-          $versionLine=(Get-Content 'system/VERSION.txt' -Raw).Trim(); if($versionLine -notmatch '^Dr\.Swinux v(?<version>\d+\.\d+\.\d+)-final$'){throw "Invalid VERSION: $versionLine"}; $version=$Matches.version; "version=$version" >> $env:GITHUB_OUTPUT; "tag=v$version" >> $env:GITHUB_OUTPUT; $asset="Dr.Swinux-v$version-final.zip"; "asset=$asset" >> $env:GITHUB_OUTPUT
-          foreach($p in @('README.md','system/ASK-AGENT.cmd','system/LAB-SWINUX.cmd','system/Lab-Loop.ps1','system/Audit-LabCandidate.ps1','system/Start-DoctorSwinux.ps1','system/Start-Agent.ps1','system/Update-DrSwintus.ps1','system/Privileged-Broker.ps1','system/Broker-Request.ps1','system/Create-Shortcut.ps1','system/core/ARCHITECTURE.md','system/core/Get-PlatformManifest.ps1','system/platform/windows/manifest.json','system/platform/linux/manifest.json','system/platform/android/manifest.json','system/catalog/trusted-packages.json','system/tools/Build-TrustedPackageCatalog.ps1','system/assets/branding/dr-swinux.png','system/assets/branding/dr-swinux-icon.png')){if(-not(Test-Path $p -PathType Leaf)){throw "Missing: $p"}}
-          $parseErrors=@(); Get-ChildItem system -Recurse -Filter '*.ps1'|%{$t=$null;$e=$null;[void][Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e);if($e){$parseErrors+=$e}};if($parseErrors){$parseErrors|%{Write-Error $_};throw 'PowerShell parser audit failed'}
-          $allText=(Get-ChildItem system -Recurse -File -Include '*.ps1','*.cmd'|%{Get-Content $_.FullName -Raw}) -join "`n"; if($allText-match'=\s*try\s*\{'){throw 'Regression: assignment to try'};if($allText-match'\$(?!env:|global:|script:|local:|private:|using:)[A-Za-z_][A-Za-z0-9_]*:'){throw 'Regression: interpolated variable-colon'};if($allText-match'-RootPath\s+"%ROOT%"'){throw 'Regression: CMD RootPath forwarding'};if($allText-match'-UsbRoot\s+"%USBROOT%"'){throw 'Regression: CMD UsbRoot forwarding'};if($allText-match'danger-full-access'){throw 'Unsafe Codex sandbox'};if($allText-notmatch'approval_policy="never"'){throw 'Missing approval policy'};if($allText-notmatch'windows\.sandbox="unelevated"'){throw 'Missing unelevated sandbox'};if($allText-notmatch'workspace-write'){throw 'Missing workspace-write'}
-          $broker=Get-Content 'system/Privileged-Broker.ps1' -Raw; $client=Get-Content 'system/Broker-Request.ps1' -Raw; $agent=Get-Content 'system/Start-Agent.ps1' -Raw
-          foreach($needle in @('SearchTrustedPackages','InstallTrustedPackage')){if($broker-notmatch[regex]::Escape($needle)-or$client-notmatch[regex]::Escape($needle)-or$agent-notmatch[regex]::Escape($needle)){throw "Trusted package action is not fully allowlisted: $needle"}}
-          if($broker-match 'switch\(\$Id\.ToLowerInvariant\(\)\)'){throw 'Package-specific trusted installer switch returned'};if($broker-notmatch 'catalog\\trusted-packages\.json'){throw 'Broker does not load packaged trusted catalog'};if($broker-notmatch 'Get-FileHash.*SHA256'){throw 'Trusted package SHA-256 verification missing'};if($broker-notmatch 'msiexec\.exe'){throw 'Trusted MSI execution path missing'};if($agent-notmatch 'package Id is the only installer-selection input accepted from Codex'){throw 'Agent trusted-catalog boundary missing'}
-          if($broker-notmatch 'System32\\WindowsPowerShell\\v1\.0\\powershell\.exe'){throw 'AppX compatibility host is not Windows PowerShell'};if($broker-notmatch 'Invoke-WindowsPowerShellAppx'){throw 'Typed Windows PowerShell AppX helper missing'};if($broker-match '(?m)^\s*Add-AppxPackage\s'){throw 'Direct PowerShell 7 Add-AppxPackage invocation returned'};if($client-notmatch '\$requestTempPath=\$requestPath\+''\.tmp'''){throw 'Atomic broker request temp publication missing'};if($client-notmatch 'Move-Item -LiteralPath \$requestTempPath -Destination \$requestPath -Force'){throw 'Atomic broker request move missing'}
-          $catalog=Get-Content 'system/catalog/trusted-packages.json' -Raw | ConvertFrom-Json -ErrorAction Stop;if([int]$catalog.schemaVersion-ne 1){throw 'Trusted catalog schema mismatch'};if([string]$catalog.source.repository-ne'https://github.com/microsoft/winget-pkgs'){throw 'Trusted catalog source mismatch'};$packages=@($catalog.packages);if($packages.Count-lt 1){throw 'Trusted catalog is empty'};$seen=@{}
-          foreach($pkg in $packages){$id=[string]$pkg.id;if([string]::IsNullOrWhiteSpace($id)-or$id.Length-gt 200){throw 'Trusted catalog package id invalid'};$key=$id.ToLowerInvariant();if($seen.ContainsKey($key)){throw "Duplicate trusted catalog id: $id"};$seen[$key]=$true;if([string]::IsNullOrWhiteSpace([string]$pkg.version)){throw "Trusted catalog version missing: $id"};$installers=@($pkg.installers);if($installers.Count-lt 1){throw "Trusted catalog installers missing: $id"};foreach($i in $installers){$arch=([string]$i.architecture).ToLowerInvariant();$type=([string]$i.installerType).ToLowerInvariant();if($arch-notin@('x64','x86','arm64')){throw "Invalid catalog architecture: $id/$arch"};if($type-notin@('msi','wix','exe')){throw "Invalid catalog installer type: $id/$type"};$url=[string]$i.url;try{$uri=[Uri]$url}catch{throw "Invalid catalog URL: $id"};if($uri.Scheme-ne'https'){throw "Non-HTTPS catalog URL: $id"};$sha=([string]$i.sha256).ToUpperInvariant();if($sha-notmatch'^[A-F0-9]{64}$'){throw "Invalid catalog SHA256: $id"};if([string]::IsNullOrWhiteSpace([string]$i.productCode)-and[string]::IsNullOrWhiteSpace([string]$i.displayNamePattern)){throw "Catalog verification metadata missing: $id"};if($type-eq'exe'-and@($i.silentArgs).Count-lt 1){throw "Catalog EXE silent args missing: $id"}}}
-          $up=Get-Content 'system/Update-DrSwintus.ps1' -Raw;if($up-notmatch'uah0/Dr\.Swinux'){throw 'Updater repo mismatch'};if($up-notmatch'asset\.digest'){throw 'Updater digest verification missing'};if($up-notmatch'\^Dr\\\.Swinux-v'){throw 'Updater does not prefer Dr.Swinux assets'}
-          $wm=Get-Content 'system/platform/windows/manifest.json' -Raw|ConvertFrom-Json;if($wm.status-ne'supported'-or$wm.product-ne'Dr.Swinux'){throw 'Windows manifest mismatch'};foreach($id in @('linux','android')){$m=Get-Content "system/platform/$id/manifest.json" -Raw|ConvertFrom-Json;if($m.status-ne'planned'){throw "$id must remain planned"}};$resolved=& 'system/core/Get-PlatformManifest.ps1' -SystemRoot 'system';if($resolved.id-ne'windows'){throw 'Windows resolver regression'}
-          $readme=Get-Content README.md -Raw;if($readme-notmatch'(Dr\.Swinux\.png|system/assets/branding/dr-swinux\.png)'){throw 'README branding mismatch'};if($readme-match'doctor-swinux\.png'){throw 'Old branding reference'};if(Get-ChildItem -Recurse -File -Filter 'auth.json'){throw 'auth.json must never ship'};if(Test-Path 'RUN-DR-SWINTUS.cmd'){throw 'Removed legacy launcher returned'};if(Select-String -Path README.md,system/assets/branding/README.md -Pattern 'uah007' -Quiet){throw 'uah007 must not be listed as developer'}
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+
+          $versionLine=(Get-Content 'system/VERSION.txt' -Raw).Trim()
+          if($versionLine -notmatch '^Dr\.Swinux v(?<version>\d+\.\d+\.\d+)-final$'){throw "Invalid VERSION: $versionLine"}
+          $version=$Matches.version
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          $asset="Dr.Swinux-v$version-final.zip"
+          "asset=$asset" >> $env:GITHUB_OUTPUT
+
+          foreach($p in @(
+            'README.md','system/ASK-AGENT.cmd','system/LAB-SWINUX.cmd','system/Lab-Loop.ps1','system/Audit-LabCandidate.ps1',
+            'system/Start-DoctorSwinux.ps1','system/Start-Agent.ps1','system/Update-DrSwintus.ps1','system/Privileged-Broker.ps1',
+            'system/Broker-Request.ps1','system/Create-Shortcut.ps1','system/core/ARCHITECTURE.md','system/core/Get-PlatformManifest.ps1',
+            'system/platform/windows/manifest.json','system/platform/linux/manifest.json','system/platform/android/manifest.json',
+            'system/catalog/trusted-packages.json','system/tools/Build-TrustedPackageCatalog.ps1',
+            'system/assets/branding/dr-swinux.png','system/assets/branding/dr-swinux-icon.png'
+          )){if(-not(Test-Path $p -PathType Leaf)){throw "Missing: $p"}}
+
+          $parseErrors=@()
+          Get-ChildItem system -Recurse -Filter '*.ps1' | ForEach-Object {
+            $t=$null;$e=$null
+            [void][Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e)
+            if($e){$parseErrors+=$e}
+          }
+          if($parseErrors){$parseErrors|ForEach-Object{Write-Error $_};throw 'PowerShell parser audit failed'}
+
+          $allText=(Get-ChildItem system -Recurse -File -Include '*.ps1','*.cmd' | ForEach-Object {Get-Content $_.FullName -Raw}) -join "`n"
+          if($allText-match'=\s*try\s*\{'){throw 'Regression: assignment to try'}
+          if($allText-match'\$(?!env:|global:|script:|local:|private:|using:)[A-Za-z_][A-Za-z0-9_]*:'){throw 'Regression: interpolated variable-colon'}
+          if($allText-match'-RootPath\s+"%ROOT%"'){throw 'Regression: CMD RootPath forwarding'}
+          if($allText-match'-UsbRoot\s+"%USBROOT%"'){throw 'Regression: CMD UsbRoot forwarding'}
+          if($allText-match'danger-full-access'){throw 'Unsafe Codex sandbox'}
+          if($allText-notmatch'approval_policy="never"'){throw 'Missing approval policy'}
+          if($allText-notmatch'windows\.sandbox="unelevated"'){throw 'Missing unelevated sandbox'}
+          if($allText-notmatch'workspace-write'){throw 'Missing workspace-write'}
+
+          $broker=Get-Content 'system/Privileged-Broker.ps1' -Raw
+          $client=Get-Content 'system/Broker-Request.ps1' -Raw
+          $agent=Get-Content 'system/Start-Agent.ps1' -Raw
+          foreach($needle in @('SearchTrustedPackages','InstallTrustedPackage','UninstallTrustedPackage')){
+            if($broker-notmatch[regex]::Escape($needle)-or$client-notmatch[regex]::Escape($needle)-or$agent-notmatch[regex]::Escape($needle)){throw "Trusted package action is not fully allowlisted: $needle"}
+          }
+          if($broker-match 'switch\(\$Id\.ToLowerInvariant\(\)\)'){throw 'Package-specific trusted installer switch returned'}
+          if($broker-notmatch 'catalog\\trusted-packages\.json'){throw 'Broker does not load packaged trusted catalog'}
+          if($broker-notmatch 'Get-FileHash.*SHA256'){throw 'Trusted package SHA-256 verification missing'}
+          if($broker-notmatch 'msiexec\.exe'){throw 'Trusted MSI execution path missing'}
+          if($agent-notmatch 'package Id is the only installer-selection input accepted from Codex'){throw 'Agent trusted-catalog boundary missing'}
+
+          if($broker-notmatch 'System32\\WindowsPowerShell\\v1\.0\\powershell\.exe'){throw 'AppX compatibility host is not Windows PowerShell'}
+          if($broker-notmatch 'Invoke-WindowsPowerShellAppx'){throw 'Typed Windows PowerShell AppX helper missing'}
+          if($broker-match '(?m)^\s*Add-AppxPackage\s'){throw 'Direct PowerShell 7 Add-AppxPackage invocation returned'}
+          if($client-notmatch '\$requestTempPath=\$requestPath\+''\.tmp'''){throw 'Atomic broker request temp publication missing'}
+          if($client-notmatch 'Move-Item -LiteralPath \$requestTempPath -Destination \$requestPath -Force'){throw 'Atomic broker request move missing'}
+
+          $trustedUninstallBlock=[regex]::Match($broker,'(?s)function Get-TrustedHklmInstalledMatches \{.*?function Confirm-PackageChange \{').Value
+          if([string]::IsNullOrWhiteSpace($trustedUninstallBlock)){throw 'Trusted uninstall broker block missing'}
+          if($trustedUninstallBlock-match'HKEY_CURRENT_USER'){throw 'Trusted uninstall must remain HKLM-only'}
+          foreach($root in @('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')){
+            if($trustedUninstallBlock-notmatch[regex]::Escape($root)){throw "Trusted uninstall root missing: $root"}
+          }
+          if($trustedUninstallBlock-notmatch'QuietUninstallString'){throw 'Trusted uninstall QuietUninstallString gate missing'}
+          if($trustedUninstallBlock-notmatch'ProgramFiles'){throw 'Trusted uninstall Program Files boundary missing'}
+          foreach($hostName in @('cmd.exe','powershell.exe','pwsh.exe','wscript.exe','cscript.exe','mshta.exe','rundll32.exe')){
+            if($trustedUninstallBlock-notmatch[regex]::Escape($hostName)){throw "Trusted uninstall shell denylist missing: $hostName"}
+          }
+          if($trustedUninstallBlock-notmatch'TRUSTED_UNINSTALL_VERIFY'){throw 'Trusted uninstall post-change verification missing'}
+          if($broker-match'Invoke-Expression'){throw 'Invoke-Expression is forbidden in broker'}
+          if($agent-notmatch'EnsureWinget at most once per task'){throw 'Agent deterministic EnsureWinget retry guard missing'}
+          if($agent-notmatch'UninstallTrustedPackage correlates the packaged catalog with an HKLM uninstall entry'){throw 'Agent trusted uninstall boundary missing'}
+
+          $catalog=Get-Content 'system/catalog/trusted-packages.json' -Raw | ConvertFrom-Json -ErrorAction Stop
+          if([int]$catalog.schemaVersion-ne 1){throw 'Trusted catalog schema mismatch'}
+          if([string]$catalog.source.repository-ne'https://github.com/microsoft/winget-pkgs'){throw 'Trusted catalog source mismatch'}
+          $packages=@($catalog.packages)
+          if($packages.Count-lt 1){throw 'Trusted catalog is empty'}
+          $seen=@{}
+          foreach($pkg in $packages){
+            $id=[string]$pkg.id
+            if([string]::IsNullOrWhiteSpace($id)-or$id.Length-gt 200){throw 'Trusted catalog package id invalid'}
+            $key=$id.ToLowerInvariant()
+            if($seen.ContainsKey($key)){throw "Duplicate trusted catalog id: $id"}
+            $seen[$key]=$true
+            if([string]::IsNullOrWhiteSpace([string]$pkg.version)){throw "Trusted catalog version missing: $id"}
+            $installers=@($pkg.installers)
+            if($installers.Count-lt 1){throw "Trusted catalog installers missing: $id"}
+            foreach($i in $installers){
+              $arch=([string]$i.architecture).ToLowerInvariant()
+              $type=([string]$i.installerType).ToLowerInvariant()
+              if($arch-notin@('x64','x86','arm64')){throw "Invalid catalog architecture: $id/$arch"}
+              if($type-notin@('msi','wix','exe')){throw "Invalid catalog installer type: $id/$type"}
+              $url=[string]$i.url
+              try{$uri=[Uri]$url}catch{throw "Invalid catalog URL: $id"}
+              if($uri.Scheme-ne'https'){throw "Non-HTTPS catalog URL: $id"}
+              $sha=([string]$i.sha256).ToUpperInvariant()
+              if($sha-notmatch'^[A-F0-9]{64}$'){throw "Invalid catalog SHA256: $id"}
+              if([string]::IsNullOrWhiteSpace([string]$i.productCode)-and[string]::IsNullOrWhiteSpace([string]$i.displayNamePattern)){throw "Catalog verification metadata missing: $id"}
+              if($type-eq'exe'-and@($i.silentArgs).Count-lt 1){throw "Catalog EXE silent args missing: $id"}
+              $publisherPattern=[string]$i.publisherPattern
+              if(-not[string]::IsNullOrWhiteSpace($publisherPattern)){try{[void][regex]::new($publisherPattern)}catch{throw "Invalid catalog publisherPattern: $id"}}
+            }
+          }
+          $seven=@($packages|Where-Object{[string]$_.id-ieq'7zip.7zip'})
+          if($seven.Count-ne1){throw '7-Zip trusted catalog entry missing'}
+          foreach($i in @($seven[0].installers)){if([string]$i.publisherPattern-ne'^Igor Pavlov$'){throw '7-Zip trusted publisher pin missing'}}
+
+          $up=Get-Content 'system/Update-DrSwintus.ps1' -Raw
+          if($up-notmatch'uah0/Dr\.Swinux'){throw 'Updater repo mismatch'}
+          if($up-notmatch'asset\.digest'){throw 'Updater digest verification missing'}
+          if($up-notmatch'\^Dr\\\.Swinux-v'){throw 'Updater does not prefer Dr.Swinux assets'}
+
+          $wm=Get-Content 'system/platform/windows/manifest.json' -Raw|ConvertFrom-Json
+          if($wm.status-ne'supported'-or$wm.product-ne'Dr.Swinux'){throw 'Windows manifest mismatch'}
+          foreach($id in @('linux','android')){$m=Get-Content "system/platform/$id/manifest.json" -Raw|ConvertFrom-Json;if($m.status-ne'planned'){throw "$id must remain planned"}}
+          $resolved=& 'system/core/Get-PlatformManifest.ps1' -SystemRoot 'system'
+          if($resolved.id-ne'windows'){throw 'Windows resolver regression'}
+
+          $readme=Get-Content README.md -Raw
+          if($readme-notmatch'(Dr\.Swinux\.png|system/assets/branding/dr-swinux\.png)'){throw 'README branding mismatch'}
+          if($readme-match'doctor-swinux\.png'){throw 'Old branding reference'}
+          if(Get-ChildItem -Recurse -File -Filter 'auth.json'){throw 'auth.json must never ship'}
+          if(Test-Path 'RUN-DR-SWINTUS.cmd'){throw 'Removed legacy launcher returned'}
+          if(Select-String -Path README.md,system/assets/branding/README.md -Pattern 'uah007' -Quiet){throw 'uah007 must not be listed as developer'}
+
       - name: Build portable ZIP
         shell: pwsh
-        env: { ASSET: '${{ steps.meta.outputs.asset }}' }
+        env:
+          ASSET: '${{ steps.meta.outputs.asset }}'
         run: |
-          $ErrorActionPreference='Stop';$stage=Join-Path $env:RUNNER_TEMP 'Dr.Swinux';New-Item $stage -ItemType Directory -Force|Out-Null;New-Item (Join-Path $stage reports) -ItemType Directory|Out-Null;New-Item (Join-Path $stage tools) -ItemType Directory|Out-Null;Copy-Item README.md $stage;Copy-Item system $stage -Recurse;& (Join-Path $stage 'system/Create-Shortcut.ps1');if(-not(Test-Path (Join-Path $stage 'ASK-AGENT.cmd.lnk'))){throw 'Shortcut missing'};if(-not(Test-Path (Join-Path $stage 'system/assets/branding/dr-swinux.ico'))){throw 'ICO missing'};Compress-Archive -Path $stage -DestinationPath $env:ASSET -CompressionLevel Optimal -Force;$hash=(Get-FileHash $env:ASSET -Algorithm SHA256).Hash.ToLowerInvariant();"$hash  $env:ASSET"|Set-Content "$env:ASSET.sha256" -Encoding ascii;"SHA256=$hash" >> $env:GITHUB_ENV
+          $ErrorActionPreference='Stop'
+          $stage=Join-Path $env:RUNNER_TEMP 'Dr.Swinux'
+          New-Item $stage -ItemType Directory -Force|Out-Null
+          New-Item (Join-Path $stage reports) -ItemType Directory|Out-Null
+          New-Item (Join-Path $stage tools) -ItemType Directory|Out-Null
+          Copy-Item README.md $stage
+          Copy-Item system $stage -Recurse
+          & (Join-Path $stage 'system/Create-Shortcut.ps1')
+          if(-not(Test-Path (Join-Path $stage 'ASK-AGENT.cmd.lnk'))){throw 'Shortcut missing'}
+          if(-not(Test-Path (Join-Path $stage 'system/assets/branding/dr-swinux.ico'))){throw 'ICO missing'}
+          Compress-Archive -Path $stage -DestinationPath $env:ASSET -CompressionLevel Optimal -Force
+          $hash=(Get-FileHash $env:ASSET -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $env:ASSET"|Set-Content "$env:ASSET.sha256" -Encoding ascii
+          "SHA256=$hash" >> $env:GITHUB_ENV
+
       - name: Verify ZIP
         shell: pwsh
-        env: { ASSET: '${{ steps.meta.outputs.asset }}' }
+        env:
+          ASSET: '${{ steps.meta.outputs.asset }}'
         run: |
-          $ErrorActionPreference='Stop';$v=Join-Path $env:RUNNER_TEMP verify;Expand-Archive $env:ASSET $v -Force;$r=Join-Path $v 'Dr.Swinux';foreach($p in @('README.md','ASK-AGENT.cmd.lnk','system/VERSION.txt','system/Start-DoctorSwinux.ps1','system/Start-Agent.ps1','system/Broker-Request.ps1','system/Privileged-Broker.ps1','system/LAB-SWINUX.cmd','system/Lab-Loop.ps1','system/Audit-LabCandidate.ps1','system/catalog/trusted-packages.json','system/tools/Build-TrustedPackageCatalog.ps1','system/assets/branding/dr-swinux.png','system/assets/branding/dr-swinux-icon.png','system/assets/branding/dr-swinux.ico')){if(-not(Test-Path (Join-Path $r $p))){throw "ZIP missing $p"}};if((Get-Content (Join-Path $r 'system/VERSION.txt') -Raw).Trim()-ne"Dr.Swinux v${{ steps.meta.outputs.version }}-final"){throw 'ZIP version mismatch'};$c=Get-Content (Join-Path $r 'system/catalog/trusted-packages.json') -Raw|ConvertFrom-Json;if([int]$c.schemaVersion-ne 1-or@($c.packages).Count-lt 1){throw 'ZIP trusted catalog invalid'}
+          $ErrorActionPreference='Stop'
+          $v=Join-Path $env:RUNNER_TEMP verify
+          Expand-Archive $env:ASSET $v -Force
+          $r=Join-Path $v 'Dr.Swinux'
+          foreach($p in @('README.md','ASK-AGENT.cmd.lnk','system/VERSION.txt','system/Start-DoctorSwinux.ps1','system/Start-Agent.ps1','system/Broker-Request.ps1','system/Privileged-Broker.ps1','system/LAB-SWINUX.cmd','system/Lab-Loop.ps1','system/Audit-LabCandidate.ps1','system/catalog/trusted-packages.json','system/tools/Build-TrustedPackageCatalog.ps1','system/assets/branding/dr-swinux.png','system/assets/branding/dr-swinux-icon.png','system/assets/branding/dr-swinux.ico')){
+            if(-not(Test-Path (Join-Path $r $p))){throw "ZIP missing $p"}
+          }
+          if((Get-Content (Join-Path $r 'system/VERSION.txt') -Raw).Trim()-ne"Dr.Swinux v${{ steps.meta.outputs.version }}-final"){throw 'ZIP version mismatch'}
+          $c=Get-Content (Join-Path $r 'system/catalog/trusted-packages.json') -Raw|ConvertFrom-Json
+          if([int]$c.schemaVersion-ne 1-or@($c.packages).Count-lt 1){throw 'ZIP trusted catalog invalid'}
+
       - name: Publish GitHub Release
         shell: pwsh
-        env: { GH_TOKEN: '${{ github.token }}', TAG: '${{ steps.meta.outputs.tag }}', ASSET: '${{ steps.meta.outputs.asset }}' }
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          TAG: '${{ steps.meta.outputs.tag }}'
+          ASSET: '${{ steps.meta.outputs.asset }}'
         run: |
           gh release create $env:TAG $env:ASSET "$env:ASSET.sha256" --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Dr.Swinux $env:TAG-final" --notes "Dr.Swinux release. SHA-256: $env:SHA256" --latest
