@@ -198,7 +198,7 @@ $out=[ordered]@{
         repository='https://github.com/microsoft/winget-pkgs'
         generatedAt=(Get-Date).ToUniversalTime().ToString('o')
         commit=$SourceCommit
-        policy=if($AutomaticSafeSubset){'automatic-msi-wix-productcode-mutable-url-live-hash-v2'}else{'reviewed-generator-v1'}
+        policy=if($AutomaticSafeSubset){'automatic-msi-wix-productcode-v1'}else{'reviewed-generator-v1'}
     }
     packages=$packages
 }
