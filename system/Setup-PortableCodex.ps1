@@ -31,6 +31,10 @@ $configPath=Join-Path $codexHome 'config.toml'
 $config=@'
 cli_auth_credentials_store = "file"
 forced_login_method = "chatgpt"
+
+[sandbox_workspace_write]
+exclude_tmpdir_env_var = true
+exclude_slash_tmp = true
 '@
 Set-Content -LiteralPath $configPath -Value $config -Encoding UTF8
 
