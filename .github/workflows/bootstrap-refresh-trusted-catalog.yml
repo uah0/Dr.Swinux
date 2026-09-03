@@ -1,4 +1,5 @@
 name: Bootstrap trusted catalog refresh test
+# One-shot dispatcher for the optimized installer-manifest-only refresh.
 on:
   push:
     branches: [main]
