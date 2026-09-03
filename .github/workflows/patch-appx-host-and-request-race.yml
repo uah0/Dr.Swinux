@@ -18,4 +18,4 @@ jobs:
           fetch-depth: 0
       - name: Apply audited fix
         shell: pwsh
-        run: '& .github/scripts/patch-appx-host-and-request-race.ps1'
+        run: '& .github/scripts/run-appx-fix-v2.ps1'
