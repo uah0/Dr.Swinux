@@ -1,5 +1,5 @@
 name: Bootstrap trusted catalog refresh test
-# One-shot dispatcher for the optimized installer-manifest-only refresh.
+# One-shot dispatcher for the newest-version-first refresh.
 on:
   push:
     branches: [main]
@@ -12,9 +12,9 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel slow run and dispatch optimized refresh
+      - name: Cancel superseded refresh and dispatch current pipeline
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST repos/uah0/Dr.Swinux/actions/runs/33776740600/cancel || true
+          gh api -X POST repos/uah0/Dr.Swinux/actions/runs/33777343862/cancel || true
           gh workflow run refresh-trusted-catalog.yml --repo uah0/Dr.Swinux
