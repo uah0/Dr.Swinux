@@ -65,13 +65,14 @@ $changed=@()
 $sourceFiles=@(Get-ChildItem -LiteralPath $source -Recurse -File)
 foreach($f in $sourceFiles){
  $rel=Get-RelativePath $source $f.FullName
- if($rel -match '(^|\\)(auth\.json|CodexHome|tools|reports)(\\|$)'){throw "Repair candidate touched forbidden path: $rel"}
- if($allowedExtensions -notcontains $f.Extension.ToLowerInvariant()){throw "Repair candidate contains unsupported file type: $rel"}
- if($f.Length -gt 1048576){throw "Repair candidate file too large: $rel"}
  $baseFile=Join-Path $baseline $rel
  $before=if(Test-Path -LiteralPath $baseFile -PathType Leaf){Get-Hash $baseFile}else{''}
  $after=Get-Hash $f.FullName
- if($before-ne$after){$changed+=[pscustomobject]@{path=$rel;beforeSha256=$before;afterSha256=$after;bytes=$f.Length}}
+ if($before-eq$after){continue}
+ if($rel -match '(^|\\)(auth\.json|CodexHome|tools|reports)(\\|$)'){throw "Repair candidate touched forbidden path: $rel"}
+ if($allowedExtensions -notcontains $f.Extension.ToLowerInvariant()){throw "Repair candidate contains unsupported changed file type: $rel"}
+ if($f.Length -gt 1048576){throw "Repair candidate file too large: $rel"}
+ $changed+=[pscustomobject]@{path=$rel;beforeSha256=$before;afterSha256=$after;bytes=$f.Length}
 }
 if($changed.Count-eq0){throw 'Repair-agent produced no source changes.'}
 if($changed.Count-gt12){throw "Repair candidate changes too many files: $($changed.Count)"}
