@@ -1,0 +1,36 @@
+name: Patch v1.5.57 MSI trusted uninstall
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/patch-v157-msi-uninstall.ps1'
+      - '.github/workflows/patch-v157-msi-uninstall.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply migration
+        shell: pwsh
+        run: ./ .github/scripts/patch-v157-msi-uninstall.ps1
+      - name: Audit and commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $parseErrors=@()
+          Get-ChildItem system -Recurse -Filter '*.ps1' | ForEach-Object {$t=$null;$e=$null;[void][Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e);if($e){$parseErrors+=$e}}
+          if($parseErrors){throw 'PowerShell parser audit failed.'}
+          $broker=Get-Content system/Privileged-Broker.ps1 -Raw
+          if($broker -notmatch 'CatalogPinnedMsiProductCode'){throw 'MSI uninstall path missing.'}
+          if($broker -notmatch "@\('/x',\$code,'/qn','/norestart'\)"){throw 'Broker-owned MSI quiet args missing.'}
+          if($broker -match 'Invoke-Expression'){throw 'Unsafe Invoke-Expression detected.'}
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add system/Privileged-Broker.ps1 system/VERSION.txt
+          git commit -m 'Support catalog-pinned MSI trusted uninstall'
+          git push origin HEAD:main
