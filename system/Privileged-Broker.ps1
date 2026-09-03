@@ -747,71 +747,170 @@ function Search-Package {
     Invoke-Winget -Arguments @('search','--query',$Query,'--source','winget','--accept-source-agreements','--disable-interactivity')
 }
 
+function Get-TrustedPackageCatalog {
+    $path=Join-Path $PSScriptRoot 'catalog\trusted-packages.json'
+    if(-not(Test-Path -LiteralPath $path -PathType Leaf)){throw 'Trusted package catalog is missing.'}
+    try {$catalog=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop} catch {throw ("Trusted package catalog is invalid JSON: {0}" -f $_.Exception.Message)}
+    if([int]$catalog.schemaVersion -ne 1){throw ("Unsupported trusted package catalog schema: {0}" -f $catalog.schemaVersion)}
+    if($null -eq $catalog.packages){throw 'Trusted package catalog has no packages array.'}
+    return $catalog
+}
+
 function Get-TrustedPackageDefinition {
     param([string]$Id)
     Assert-PackageId -Id $Id
-    switch($Id.ToLowerInvariant()){
-        '7zip.7zip' {
-            return [pscustomobject]@{
-                Id='7zip.7zip'
-                DisplayName='7-Zip 26.02 (x64)'
-                Url='https://github.com/ip7z/7zip/releases/download/26.02/7z2602-x64.exe'
-                FileName='7z2602-x64.exe'
-                Sha256='6745FA76DC2EA031596D8678F6F6B99C3C1B435B4164A63485ADBBC7B8D82EF0'
-                InstallerArguments=@('/S')
-                VerifyPath=(Join-Path $env:ProgramFiles '7-Zip\7z.exe')
-                MinFileBytes=1000000
-            }
-        }
-        default { throw ("Package is not in the Dr.Swinux trusted direct-install allowlist: {0}" -f $Id) }
+    $catalog=Get-TrustedPackageCatalog
+    $matches=@($catalog.packages | Where-Object {[string]$_.id -ieq $Id})
+    if($matches.Count -ne 1){
+        if($matches.Count -eq 0){throw ("Package is not present in the packaged trusted catalog: {0}" -f $Id)}
+        throw ("Trusted package catalog contains duplicate PackageIdentifier: {0}" -f $Id)
     }
+    $package=$matches[0]
+    if([string]::IsNullOrWhiteSpace([string]$package.version)){throw 'Trusted package version is missing.'}
+    if($null -eq $package.installers -or @($package.installers).Count -eq 0){throw 'Trusted package has no installers.'}
+    return $package
+}
+
+function Search-TrustedPackages {
+    param([string]$Query)
+    if([string]::IsNullOrWhiteSpace($Query)){throw 'Query is required.'}
+    if($Query.Length -gt 200){throw 'Query is too long.'}
+    if($Query -match '[\x00-\x1F\x7F]'){throw 'Query contains control characters.'}
+    $needle=$Query.Trim()
+    $catalog=Get-TrustedPackageCatalog
+    @($catalog.packages | Where-Object {
+        ([string]$_.id -like ('*'+$needle+'*')) -or ([string]$_.displayName -like ('*'+$needle+'*'))
+    } | Select-Object -First 50 | ForEach-Object {
+        [pscustomobject]@{Id=[string]$_.id;Version=[string]$_.version;DisplayName=[string]$_.displayName;Architectures=@($_.installers|ForEach-Object{[string]$_.architecture}|Sort-Object -Unique)}
+    })
+}
+
+function Get-TrustedNativeArchitecture {
+    $arch=[string]$env:PROCESSOR_ARCHITECTURE
+    if($arch -match '(?i)ARM64'){return 'arm64'}
+    if([Environment]::Is64BitOperatingSystem){return 'x64'}
+    return 'x86'
+}
+
+function Select-TrustedPackageInstaller {
+    param($Package)
+    $native=Get-TrustedNativeArchitecture
+    $preferred=if($native -eq 'x64'){@('x64','x86')}else{@($native)}
+    $selected=$null
+    foreach($arch in $preferred){
+        $selected=@($Package.installers | Where-Object {[string]$_.architecture -ieq $arch}) | Select-Object -First 1
+        if($null -ne $selected){break}
+    }
+    if($null -eq $selected){throw ("Trusted catalog has no compatible installer for architecture {0}." -f $native)}
+    $type=([string]$selected.installerType).ToLowerInvariant()
+    if($type -notin @('msi','wix','exe')){throw ("Trusted installer type is not allowed: {0}" -f $type)}
+    $url=[string]$selected.url
+    if($url -notmatch '^https://'){throw 'Trusted installer URL must use HTTPS.'}
+    try {$uri=[Uri]$url} catch {throw 'Trusted installer URL is invalid.'}
+    if($uri.Scheme -ne 'https'){throw 'Trusted installer URL scheme is not HTTPS.'}
+    $sha=([string]$selected.sha256).ToUpperInvariant()
+    if($sha -notmatch '^[A-F0-9]{64}$'){throw 'Trusted installer SHA-256 is invalid.'}
+    $productCode=[string]$selected.productCode
+    $displayPattern=[string]$selected.displayNamePattern
+    if([string]::IsNullOrWhiteSpace($productCode)-and[string]::IsNullOrWhiteSpace($displayPattern)){throw 'Trusted installer has no post-install verification metadata.'}
+    $silentArgs=@()
+    if($type -eq 'exe'){
+        foreach($a in @($selected.silentArgs)){
+            $arg=[string]$a
+            if([string]::IsNullOrWhiteSpace($arg)-or$arg.Length -gt 500-or$arg -match '[\x00-\x1F\x7F]'){throw 'Trusted EXE silent argument is invalid.'}
+            $silentArgs += $arg
+        }
+        if($silentArgs.Count -eq 0){throw 'Trusted EXE installer has no fixed silent arguments.'}
+    }
+    [pscustomobject]@{Architecture=[string]$selected.architecture;InstallerType=$type;Url=$url;Sha256=$sha;ProductCode=$productCode;DisplayNamePattern=$displayPattern;SilentArgs=$silentArgs}
+}
+
+function Find-TrustedInstalledPackage {
+    param([string]$ProductCode,[string]$DisplayNamePattern)
+    $roots=@(
+        'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+        'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall',
+        'Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+    )
+    foreach($root in $roots){
+        if(-not(Test-Path -LiteralPath $root -PathType Container)){continue}
+        foreach($key in @(Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)){
+            $keyName=[string]$key.PSChildName
+            $item=$null;try{$item=Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction Stop}catch{continue}
+            $display=[string]$item.DisplayName
+            $codeMatch=(-not[string]::IsNullOrWhiteSpace($ProductCode))-and($keyName -ieq $ProductCode)
+            $nameMatch=$false
+            if(-not[string]::IsNullOrWhiteSpace($DisplayNamePattern)-and-not[string]::IsNullOrWhiteSpace($display)){
+                try {$nameMatch=($display -match $DisplayNamePattern)} catch {throw 'Trusted catalog displayNamePattern is invalid.'}
+            }
+            if($codeMatch -or $nameMatch){return [pscustomobject]@{DisplayName=$display;DisplayVersion=[string]$item.DisplayVersion;Publisher=[string]$item.Publisher;RegistryKey=$key.PSPath}}
+        }
+    }
+    return $null
 }
 
 function Confirm-TrustedPackageInstall {
-    param($Definition)
-    $message="Установить программу напрямую из доверенного источника?`r`n`r`nНазвание: $($Definition.DisplayName)`r`nPackage ID: $($Definition.Id)`r`nИсточник: $($Definition.Url)`r`n`r`nDr.Swinux проверит закреплённый SHA-256 перед запуском установщика.`r`nДействие будет выполнено с правами администратора."
-    Write-BrokerLog ("TRUSTED_PACKAGE_CONFIRM_DIALOG_SHOW id={0}" -f $Definition.Id)
+    param($Package,$Installer)
+    $display=if([string]::IsNullOrWhiteSpace([string]$Package.displayName)){[string]$Package.id}else{[string]$Package.displayName}
+    $message="Установить программу из упакованного доверенного каталога?`r`n`r`nНазвание: $display`r`nPackage ID: $($Package.id)`r`nВерсия: $($Package.version)`r`nАрхитектура: $($Installer.Architecture)`r`nИсточник: $($Installer.Url)`r`n`r`nDr.Swinux проверит закреплённый SHA-256 перед запуском.`r`nURL, хеш и параметры установки не принимаются от Codex.`r`nДействие будет выполнено с правами администратора."
+    Write-BrokerLog ("TRUSTED_CATALOG_CONFIRM_DIALOG_SHOW id={0} version={1}" -f $Package.id,$Package.version)
     Initialize-BrokerMessageBox
     $flags=[uint32](0x00000004 -bor 0x00000020 -bor 0x00000100 -bor 0x00001000 -bor 0x00010000 -bor 0x00040000)
     $answer=[DrSwintus.NativeMessageBox]::MessageBoxW([IntPtr]::Zero,$message,'Dr.Swinux',$flags)
-    if($answer -eq 6){Write-BrokerLog ("TRUSTED_PACKAGE_CONFIRM_USER_YES id={0}" -f $Definition.Id);return $true}
-    Write-BrokerLog ("TRUSTED_PACKAGE_CONFIRM_USER_NO id={0} result={1}" -f $Definition.Id,$answer)
+    if($answer -eq 6){Write-BrokerLog ("TRUSTED_CATALOG_CONFIRM_USER_YES id={0}" -f $Package.id);return $true}
+    Write-BrokerLog ("TRUSTED_CATALOG_CONFIRM_USER_NO id={0} result={1}" -f $Package.id,$answer)
     return $false
+}
+
+function Install-TrustedPackageCatalog {
+    param([string]$Id)
+    $package=Get-TrustedPackageDefinition -Id $Id
+    $installerDef=Select-TrustedPackageInstaller -Package $package
+    $existing=Find-TrustedInstalledPackage -ProductCode $installerDef.ProductCode -DisplayNamePattern $installerDef.DisplayNamePattern
+    if($null -ne $existing){
+        Write-BrokerLog ("TRUSTED_CATALOG_ALREADY_INSTALLED id={0} display={1} version={2}" -f $package.id,$existing.DisplayName,$existing.DisplayVersion)
+        return [pscustomobject]@{Confirmed=$null;Changed=$false;Verified=$true;Id=[string]$package.id;Version=[string]$package.version;Method='TrustedCatalog';Installed=$existing}
+    }
+    if(-not(Confirm-TrustedPackageInstall -Package $package -Installer $installerDef)){
+        return [pscustomobject]@{Confirmed=$false;Changed=$false;Verified=$false;Id=[string]$package.id;Version=[string]$package.version;Method='TrustedCatalog'}
+    }
+
+    $extension=if($installerDef.InstallerType -in @('msi','wix')){'.msi'}else{'.exe'}
+    $downloadPath=Join-Path $brokerRoot (('trusted-package-{0}{1}' -f ([guid]::NewGuid().ToString('N')),$extension))
+    try {
+        Write-BrokerLog ("TRUSTED_CATALOG_DOWNLOAD_BEGIN id={0} source={1}" -f $package.id,$installerDef.Url)
+        Invoke-WebRequest -Uri $installerDef.Url -OutFile $downloadPath -UseBasicParsing -MaximumRedirection 10 -ErrorAction Stop
+        if(-not(Test-Path -LiteralPath $downloadPath -PathType Leaf)){throw 'Trusted package download did not create a file.'}
+        $length=(Get-Item -LiteralPath $downloadPath).Length
+        if($length -lt 32768){throw ("Downloaded trusted package is unexpectedly small: {0} bytes." -f $length)}
+        $actualHash=(Get-FileHash -LiteralPath $downloadPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
+        Write-BrokerLog ("TRUSTED_CATALOG_SHA256 id={0} expected={1} actual={2}" -f $package.id,$installerDef.Sha256,$actualHash)
+        if($actualHash -ne $installerDef.Sha256){throw ("Trusted package SHA-256 mismatch. Expected {0}, got {1}." -f $installerDef.Sha256,$actualHash)}
+
+        if($installerDef.InstallerType -in @('msi','wix')){
+            $args=@('/i',('"{0}"' -f $downloadPath),'/qn','/norestart')
+            Write-BrokerLog ("TRUSTED_CATALOG_INSTALL_BEGIN id={0} type={1}" -f $package.id,$installerDef.InstallerType)
+            $process=Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\msiexec.exe') -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
+        } else {
+            Write-BrokerLog ("TRUSTED_CATALOG_INSTALL_BEGIN id={0} type=exe" -f $package.id)
+            $process=Start-Process -FilePath $downloadPath -ArgumentList $installerDef.SilentArgs -Wait -PassThru -WindowStyle Hidden
+        }
+        Write-BrokerLog ("TRUSTED_CATALOG_INSTALL_EXIT id={0} exitCode={1}" -f $package.id,$process.ExitCode)
+        if($process.ExitCode -notin @(0,1641,3010)){throw ("Trusted package installer exited with code {0}." -f $process.ExitCode)}
+    } finally {
+        Remove-Item -LiteralPath $downloadPath -Force -ErrorAction SilentlyContinue
+    }
+
+    Start-Sleep -Milliseconds 500
+    $installed=Find-TrustedInstalledPackage -ProductCode $installerDef.ProductCode -DisplayNamePattern $installerDef.DisplayNamePattern
+    if($null -eq $installed){throw 'Trusted package installer completed, but uninstall-registry verification did not find the package.'}
+    Write-BrokerLog ("TRUSTED_CATALOG_VERIFY id={0} display={1} version={2}" -f $package.id,$installed.DisplayName,$installed.DisplayVersion)
+    [pscustomobject]@{Confirmed=$true;Changed=$true;Verified=$true;Id=[string]$package.id;Version=[string]$package.version;Method='TrustedCatalog';Installed=$installed;InstallerType=$installerDef.InstallerType;Architecture=$installerDef.Architecture}
 }
 
 function Install-TrustedPackageFallback {
     param([string]$Id)
-    $definition=Get-TrustedPackageDefinition -Id $Id
-    if(-not [Environment]::Is64BitOperatingSystem){throw 'Trusted 7-Zip fallback currently supports only 64-bit Windows.'}
-    if(-not (Confirm-TrustedPackageInstall -Definition $definition)){
-        return [pscustomobject]@{Confirmed=$false;Changed=$false;Verified=$false;Id=$definition.Id;Method='TrustedDirect';Path=$null}
-    }
-
-    $installer=Join-Path $brokerRoot $definition.FileName
-    try {
-        Write-BrokerLog ("TRUSTED_PACKAGE_DOWNLOAD_BEGIN id={0} source={1}" -f $definition.Id,$definition.Url)
-        Invoke-WebRequest -Uri $definition.Url -OutFile $installer -UseBasicParsing -MaximumRedirection 10 -ErrorAction Stop
-        if(-not (Test-Path -LiteralPath $installer -PathType Leaf)){throw 'Trusted package download did not create a file.'}
-        $length=(Get-Item -LiteralPath $installer).Length
-        if($length -lt [int64]$definition.MinFileBytes){throw ("Downloaded trusted package is unexpectedly small: {0} bytes." -f $length)}
-        $actualHash=(Get-FileHash -LiteralPath $installer -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
-        $expectedHash=([string]$definition.Sha256).ToUpperInvariant()
-        Write-BrokerLog ("TRUSTED_PACKAGE_SHA256 id={0} expected={1} actual={2}" -f $definition.Id,$expectedHash,$actualHash)
-        if($actualHash -ne $expectedHash){throw ("Trusted package SHA-256 mismatch. Expected {0}, got {1}." -f $expectedHash,$actualHash)}
-
-        Write-BrokerLog ("TRUSTED_PACKAGE_INSTALL_BEGIN id={0}" -f $definition.Id)
-        $process=Start-Process -FilePath $installer -ArgumentList $definition.InstallerArguments -Wait -PassThru -WindowStyle Hidden
-        Write-BrokerLog ("TRUSTED_PACKAGE_INSTALL_EXIT id={0} exitCode={1}" -f $definition.Id,$process.ExitCode)
-        if($process.ExitCode -ne 0){throw ("Trusted package installer exited with code {0}." -f $process.ExitCode)}
-    } finally {
-        Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
-    }
-
-    if(-not (Test-Path -LiteralPath $definition.VerifyPath -PathType Leaf)){throw ("Trusted package installer completed, but verification path is missing: {0}" -f $definition.VerifyPath)}
-    $file=Get-Item -LiteralPath $definition.VerifyPath -ErrorAction Stop
-    $version=[string]$file.VersionInfo.FileVersion
-    Write-BrokerLog ("TRUSTED_PACKAGE_VERIFY id={0} path={1} version={2}" -f $definition.Id,$definition.VerifyPath,$version)
-    [pscustomobject]@{Confirmed=$true;Changed=$true;Verified=$true;Id=$definition.Id;Method='TrustedDirect';Path=$definition.VerifyPath;Version=$version}
+    Install-TrustedPackageCatalog -Id $Id
 }
 function Confirm-PackageChange {
     param([ValidateSet('Install','Uninstall')][string]$Operation,[string]$Id,[string]$DisplayName='')
@@ -932,7 +1031,8 @@ function Invoke-BrokerAction {
             return Get-InstalledPackages -Query $query
         }
         'SearchPackage' { return Search-Package -Query ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')) }
-        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }
+        'SearchTrustedPackages' { return Search-TrustedPackages -Query ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')) }
+        'InstallTrustedPackage' { return Install-TrustedPackageCatalog -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }        'InstallTrustedPackageFallback' { return Install-TrustedPackageFallback -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) }
         'InstallPackage' {
             $name=[string](Get-BrokerParameter -Parameters $Parameters -Name 'DisplayName' -Default '')
             return Install-Package -Id ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Id' -Default '')) -DisplayName $name
@@ -971,7 +1071,7 @@ $ready=[pscustomobject]@{
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
         'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
-        'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
+        'SearchTrustedPackages','InstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )
 }
 $ready | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $readyPath -Encoding UTF8

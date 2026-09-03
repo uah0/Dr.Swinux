@@ -525,7 +525,7 @@ param(
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
         'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
-        'InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
+        'SearchTrustedPackages','InstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
     [int]$TimeoutSeconds=45
@@ -601,14 +601,14 @@ PRIVILEGED BROKER:
 
 PACKAGE MANAGEMENT:
 - You may search installed/available software and install or uninstall a program when that is part of the user's task.
-- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, InstallTrustedPackageFallback.
-- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available and the requested package is 7-Zip, call InstallTrustedPackageFallback with Id 7zip.7zip. This fallback is broker-owned, hard-coded to the official 7-Zip release and a pinned SHA-256, shows its own Yes/No confirmation, and does not accept a URL or command line from you. Call this fallback at most once per task; if it returns an error, report that concrete blocker instead of retrying the same deterministic action.
+- Use the broker's typed package actions instead of arbitrary installer commands: EnsureWinget, GetInstalledPackages, SearchPackage, InstallPackage, UninstallPackage, SearchTrustedPackages, InstallTrustedPackage.
+- If GetInstalledPackages or SearchPackage reports that winget is unavailable, call EnsureWinget first. If EnsureWinget cannot make winget available, use SearchTrustedPackages with the program name. If it returns an exact catalog Id, call InstallTrustedPackage with that Id. The trusted catalog is packaged with Dr.Swinux and contains broker-owned HTTPS URLs, SHA-256 hashes, installer types, fixed silent arguments, and verification metadata generated from WinGet manifests; Codex cannot supply or override those fields. Call InstallTrustedPackage at most once per exact Id per task; if it returns an error, report that concrete blocker instead of retrying the same deterministic action.
 - Before InstallPackage, use SearchPackage and identify an exact package Id. Before UninstallPackage, use GetInstalledPackages and identify an exact installed package Id.
-- InstallPackage, UninstallPackage, and InstallTrustedPackageFallback always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
+- InstallPackage, UninstallPackage, and InstallTrustedPackage always show a broker-owned Yes/No confirmation dialog to the user. You cannot bypass this confirmation.
 - After a confirmed install/uninstall, verify the requested result with GetInstalledPackages or another direct observation.
 
 STRICT BOUNDARY:
-- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, URLs, or free-form command-line arguments. Trusted direct installers are broker-owned fixed definitions only.
+- The elevated broker remains typed and allowlist-only. It does not accept arbitrary elevated command text, scripts, installer paths, URLs, or free-form command-line arguments. Trusted direct installers are broker-owned catalog definitions only; the catalog is read-only at runtime and package Id is the only installer-selection input accepted from Codex.
 - Apart from confirmed typed broker actions, treat ordinary shell commands as read-only and do not write outside the report session.
 - Do not modify registry directly; use typed broker actions.
 - Do not run cleanup, deletion, formatting, partitioning, boot/BCD, BitLocker, security-disabling, account-deletion, or mass-deletion commands.
