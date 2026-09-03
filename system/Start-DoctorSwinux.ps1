@@ -73,7 +73,7 @@ function New-PreflightSession {
 }
 
 function Invoke-CodexLoginStatusWithTimeout {
-    param([int]$TimeoutSeconds=20)
+    param([int]$TimeoutSeconds=8)
     $result=[ordered]@{TimedOut=$false;ExitCode=-1;Stdout='';Stderr='';ElapsedMs=0}
     $psi=[System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName=$codex
@@ -92,25 +92,34 @@ function Invoke-CodexLoginStatusWithTimeout {
         $stdoutTask=$process.StandardOutput.ReadToEndAsync(); $stderrTask=$process.StandardError.ReadToEndAsync()
         if(-not $process.WaitForExit($TimeoutSeconds*1000)){
             $result.TimedOut=$true
-            Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'TIMEOUT' -Detail ('pid={0}; elapsedMs={1}' -f $process.Id,$watch.ElapsedMilliseconds)
+            Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'TIMEOUT' -Detail ('pid={0}; elapsedMs={1}; action=kill-and-continue' -f $process.Id,$watch.ElapsedMilliseconds)
             try { $process.Kill($true) } catch { try { $process.Kill() } catch {} }
-            try { $process.WaitForExit(5000)|Out-Null } catch {}
-        } else { $process.WaitForExit(); $result.ExitCode=$process.ExitCode }
-        try { $result.Stdout=$stdoutTask.GetAwaiter().GetResult() } catch {}
-        try { $result.Stderr=$stderrTask.GetAwaiter().GetResult() } catch {}
+            try { $process.WaitForExit(3000)|Out-Null } catch {}
+        } else {
+            $process.WaitForExit()
+            $result.ExitCode=$process.ExitCode
+        }
+        if($process.HasExited){
+            try { $result.Stdout=$stdoutTask.GetAwaiter().GetResult() } catch {}
+            try { $result.Stderr=$stderrTask.GetAwaiter().GetResult() } catch {}
+            if((-not $result.TimedOut)-and $result.ExitCode -lt 0){ $result.ExitCode=$process.ExitCode }
+        }
     } finally { $watch.Stop(); $result.ElapsedMs=$watch.ElapsedMilliseconds; $process.Dispose() }
     return [pscustomobject]$result
 }
 
 function New-PrevalidatedRuntimeAgent {
+    param([string]$PreflightDisposition='confirmed')
+
     $source=Get-Content -LiteralPath $legacyAgent -Raw -Encoding UTF8
     $authNeedle="Ensure-CodexAuthentication -Reason 'startup-check'"
     if(-not $source.Contains($authNeedle)){ throw 'Start-Agent startup authentication call was not found.' }
-    $source=$source.Replace($authNeedle,"Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_OK' -Detail 'timeout-guarded login status already confirmed by Start-DoctorSwinux'")
+    $safeDisposition=($PreflightDisposition -replace "'","''")
+    $authReplacement="Write-PreAgentLog -Stage 'codex-auth' -Status 'PREFLIGHT_HANDLED' -Detail 'startup login-status preflight $safeDisposition; duplicate blocking startup check skipped; task/server auth recovery remains active'"
+    $source=$source.Replace($authNeedle,$authReplacement)
 
-    # Critical for the persistent console: Start-Agent normally dispatches the next
-    # task back to $PSCommandPath. For a generated runtime copy that would bypass this
-    # wrapper forever, so subsequent tasks would not get a fresh preflight session.
+    # Persistent tasks must return through this wrapper so every task gets a fresh
+    # preflight log and timeout-guarded startup check.
     $dispatchNeedle='& $PSCommandPath -Task $nextTask -SingleTask'
     $escapedWrapper=$wrapperPath.Replace("'","''")
     $dispatchReplacement="& '$escapedWrapper' -Task `$nextTask -SingleTask"
@@ -120,7 +129,7 @@ function New-PrevalidatedRuntimeAgent {
     $id=[guid]::NewGuid().ToString('N')
     $script:runtimeAgent=Join-Path $PSScriptRoot ('Start-Agent.runtime.{0}.ps1' -f $id)
     Set-Content -LiteralPath $script:runtimeAgent -Value $source -Encoding UTF8
-    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}' -f $script:runtimeAgent,$wrapperPath)
+    Write-PreflightLog -Stage 'runtime-agent' -Status 'READY' -Detail ('path={0}; dispatcherTarget={1}; authDisposition={2}' -f $script:runtimeAgent,$wrapperPath,$PreflightDisposition)
     return $script:runtimeAgent
 }
 
@@ -143,14 +152,20 @@ try {
         Microsoft.PowerShell.Utility\Write-Host ''
         Microsoft.PowerShell.Utility\Write-Host '• Проверяю вход ChatGPT...'
         Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'BEGIN' -Detail 'timeout-guarded login status before task runtime'
-        $authResult=Invoke-CodexLoginStatusWithTimeout -TimeoutSeconds 20
+        $authResult=Invoke-CodexLoginStatusWithTimeout -TimeoutSeconds 8
         Set-Content -LiteralPath (Join-Path $preflightSession 'auth-status.stdout.log') -Value $authResult.Stdout -Encoding UTF8
         Set-Content -LiteralPath (Join-Path $preflightSession 'auth-status.stderr.log') -Value $authResult.Stderr -Encoding UTF8
-        if($authResult.TimedOut){ throw ('Codex login status did not return within 20 seconds. Diagnostic log: {0}' -f $preflightLog) }
-        $combined=$authResult.Stdout+"`n"+$authResult.Stderr
-        $loggedIn=($authResult.ExitCode -eq 0)-and($combined -match '(?im)^\s*Logged in(?:\s+using\s+.+)?\s*$')
-        Write-PreflightLog -Stage 'codex-auth-preflight' -Status $(if($loggedIn){'OK'}else{'LOGIN_REQUIRED'}) -Detail ('exit={0}; elapsedMs={1}' -f $authResult.ExitCode,$authResult.ElapsedMs)
-        if($loggedIn){ $agentToRun=New-PrevalidatedRuntimeAgent }
+
+        if($authResult.TimedOut){
+            Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'TIMEOUT_CONTINUE' -Detail ('elapsedMs={0}; duplicate startup auth check will be skipped; real Codex task will validate server auth' -f $authResult.ElapsedMs)
+            Microsoft.PowerShell.Utility\Write-Host '• Проверка входа отвечает медленно. Продолжаю запуск задачи...'
+            $agentToRun=New-PrevalidatedRuntimeAgent -PreflightDisposition 'timed out; status unknown'
+        } else {
+            $combined=$authResult.Stdout+"`n"+$authResult.Stderr
+            $loggedIn=($authResult.ExitCode -eq 0)-and($combined -match '(?im)^\s*Logged in(?:\s+using\s+.+)?\s*$')
+            Write-PreflightLog -Stage 'codex-auth-preflight' -Status $(if($loggedIn){'OK'}else{'LOGIN_REQUIRED'}) -Detail ('exit={0}; elapsedMs={1}' -f $authResult.ExitCode,$authResult.ElapsedMs)
+            if($loggedIn){ $agentToRun=New-PrevalidatedRuntimeAgent -PreflightDisposition 'confirmed logged in' }
+        }
     } else { Write-PreflightLog -Stage 'codex-auth-preflight' -Status 'SKIP' -Detail 'codex.exe not present yet; Start-Agent will prepare runtime' }
     Write-PreflightLog -Stage 'agent-launch' -Status 'BEGIN' -Detail ('agent={0}' -f $agentToRun)
     & $agentToRun -Task $Task -SingleTask:$SingleTask
