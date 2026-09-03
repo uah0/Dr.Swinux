@@ -30,6 +30,40 @@
           "publisherPattern": "^Igor Pavlov$"
         }
       ]
+    },
+    {
+      "id": "Google.Chrome",
+      "version": "152.0.7977.76",
+      "displayName": "Google Chrome",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi",
+          "sha256": "B62295897570E665B67BDD7254BC46ACB00DE8026DC93465B4DF781A2C10CA12",
+          "productCode": "{181B2E2F-E44B-3EB6-A2A6-FA4627B97DDF}",
+          "displayNamePattern": "^Google Chrome$",
+          "publisherPattern": "^Google LLC$"
+        },
+        {
+          "architecture": "x86",
+          "installerType": "wix",
+          "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise.msi",
+          "sha256": "D0122F9252F0BBAE6A8E09D99524A9D52DC0F1C2BB9585BB5D514102BCC022EA",
+          "productCode": "{7D06F99B-744B-34A9-AFD0-677D0E90DC8E}",
+          "displayNamePattern": "^Google Chrome$",
+          "publisherPattern": "^Google LLC$"
+        },
+        {
+          "architecture": "arm64",
+          "installerType": "wix",
+          "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise_arm64.msi",
+          "sha256": "4E224ED7B5DD1D97762DE8F6C9794A5FBAE339A160F962855A855974BBE9BE5B",
+          "productCode": "{4A97C15E-0A2D-3A5F-BA50-8BDEAF0A5EAB}",
+          "displayNamePattern": "^Google Chrome$",
+          "publisherPattern": "^Google LLC$"
+        }
+      ]
     }
   ]
 }
