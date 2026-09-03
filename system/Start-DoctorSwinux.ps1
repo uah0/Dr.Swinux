@@ -12,6 +12,8 @@ $root=Split-Path -Parent $PSScriptRoot
 $reportsRoot=Join-Path $root 'reports'
 $startupLog=Join-Path $reportsRoot 'startup-error.log'
 $preAgentLog=Join-Path $reportsRoot 'pre-agent.log'
+$codexHome=Join-Path (Join-Path $root 'tools') 'CodexHome'
+$codexConfig=Join-Path $codexHome 'config.toml'
 
 if(-not (Test-Path -LiteralPath $legacyAgent -PathType Leaf)){
     throw ('Dr.Swinux runtime not found: {0}' -f $legacyAgent)
@@ -36,6 +38,26 @@ function Write-StartupFailure {
         )
         Add-Content -LiteralPath $preAgentLog -Encoding UTF8 -Value ('[{0}] [start-wrapper] UNHANDLED_ERROR :: {1}' -f $stamp,($message -replace '[\r\n]+',' '))
     } catch {}
+}
+
+function Ensure-PortableCodexConfig {
+    # Real Windows testing showed Codex 0.151.0 refusing every local process with
+    # "cannot enforce split writable root sets" while using the unelevated
+    # restricted-token workspace-write sandbox. Dr.Swinux only needs the current
+    # report session writable; privileged/state-changing work goes through Broker.
+    # Excluding generic temp roots keeps the managed sandbox's writable-root set
+    # aligned with the legacy Windows restricted-token projection without turning
+    # sandboxing off or granting danger-full-access.
+    New-Item -ItemType Directory -Path $codexHome -Force | Out-Null
+    $config=@'
+cli_auth_credentials_store = "file"
+forced_login_method = "chatgpt"
+
+[sandbox_workspace_write]
+exclude_tmpdir_env_var = true
+exclude_slash_tmp = true
+'@
+    Set-Content -LiteralPath $codexConfig -Value $config -Encoding UTF8
 }
 
 function global:Write-Host {
@@ -72,6 +94,7 @@ try {
         throw 'Dr.Swinux requires 64-bit Windows for its current Codex runtime. This computer is running 32-bit Windows. Use a 64-bit Windows 10/11 installation or VM.'
     }
 
+    Ensure-PortableCodexConfig
     & $legacyAgent -Task $Task -SingleTask:$SingleTask
     $code=$LASTEXITCODE
     if($null -eq $code){ $code=0 }
