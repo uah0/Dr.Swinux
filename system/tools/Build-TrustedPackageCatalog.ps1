@@ -14,6 +14,10 @@ if(-not (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)){
 function Get-OptionalProperty {
     param($Object,[string]$Name)
     if($null -eq $Object){return $null}
+    if($Object -is [System.Collections.IDictionary]){
+        if($Object.Contains($Name)){return $Object[$Name]}
+        return $null
+    }
     $property=$Object.PSObject.Properties[$Name]
     if($null -eq $property){return $null}
     return $property.Value
@@ -37,9 +41,6 @@ $root=[IO.Path]::GetFullPath($WingetManifestRoot)
 if(-not(Test-Path -LiteralPath $root -PathType Container)){throw "Manifest root not found: $root"}
 $allowedTypes=if($AutomaticSafeSubset){@('msi','wix')}else{@('msi','wix','exe')}
 
-# WinGet installer manifests live under .../<package-path>/<version>/*.installer.yaml.
-# Choose the newest-looking version directory for each package path before parsing YAML.
-# This avoids parsing the complete historical version set on every catalog refresh.
 $fileRows=@(
     Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.installer.yaml' | ForEach-Object {
         $versionDir=$_.Directory
@@ -138,8 +139,6 @@ foreach($file in $selectedFiles){
     }
 }
 
-# Keep one deterministic newest-looking entry per PackageIdentifier as a second safety net
-# for unusual repository layouts where multiple package paths resolve to the same ID.
 $packages=@()
 foreach($g in ($rows | Group-Object id | Sort-Object Name)){
     $chosen=$g.Group | Sort-Object versionKey -Descending | Select-Object -First 1
