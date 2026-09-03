@@ -42,7 +42,7 @@ function Get-NaturalVersionKey {
 function Assert-RemoteInstallerHash {
     param([Uri]$Uri,[string]$ExpectedSha256)
     $cacheKey=$Uri.AbsoluteUri+'|'+$ExpectedSha256
-    if($validatedRemoteHashes.ContainsKey($cacheKey)){return}
+    if($validatedRemoteHashes.ContainsKey($cacheKey)){return $true}
     $temporaryPath=[IO.Path]::Combine([IO.Path]::GetTempPath(),('drswinux-catalog-{0}.download' -f [guid]::NewGuid().ToString('N')))
     try {
         Invoke-WebRequest -Uri $Uri -OutFile $temporaryPath -UseBasicParsing -MaximumRedirection 10 -ErrorAction Stop
@@ -52,8 +52,10 @@ function Assert-RemoteInstallerHash {
         $actual=(Get-FileHash -LiteralPath $temporaryPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
         if($actual -ne $ExpectedSha256){throw ("SHA-256 mismatch: expected {0}, got {1}" -f $ExpectedSha256,$actual)}
         $validatedRemoteHashes[$cacheKey]=$true
+        return $true
     } catch {
-        throw ("Remote installer validation failed for {0}: {1}" -f $Uri.AbsoluteUri,$_.Exception.Message)
+        Write-Warning ("Remote installer validation failed for {0}: {1}" -f $Uri.AbsoluteUri,$_.Exception.Message)
+        return $false
     } finally {
         Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
     }
@@ -130,7 +132,7 @@ foreach($file in $selectedFiles){
         # A URL that has carried different hashes across WinGet history is mutable.
         # For automatic catalogs, verify its live bytes before trusting the manifest hash.
         if($AutomaticSafeSubset -and $mutableInstallerUrls.ContainsKey($url)){
-            Assert-RemoteInstallerHash -Uri $uri -ExpectedSha256 $sha
+            if(-not (Assert-RemoteInstallerHash -Uri $uri -ExpectedSha256 $sha)){continue}
         }
 
         $silent=@()
