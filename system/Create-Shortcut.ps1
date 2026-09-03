@@ -49,7 +49,7 @@ $shell=New-Object -ComObject WScript.Shell
 $sc=$shell.CreateShortcut($link)
 $sc.TargetPath=$target
 $sc.WorkingDirectory=$systemDir
-$sc.Description='Dr.Swinux portable AI engineer'
+$sc.Description='Dr.Swinux portable AI doctor'
 $sc.IconLocation=$icon+',0'
 $sc.WindowStyle=1
 $sc.Save()
