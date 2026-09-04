@@ -8,6 +8,11 @@ function Replace-Required([string]$Text,[string]$Old,[string]$New,[string]$Label
     if(-not $Text.Contains($Old)){throw "Patch anchor missing: $Label"}
     return $Text.Replace($Old,$New)
 }
+function Replace-RequiredRegex([string]$Text,[string]$Pattern,[string]$Replacement,[string]$Label){
+    $regex=[regex]::new($Pattern,[Text.RegularExpressions.RegexOptions]::Multiline)
+    if(-not $regex.IsMatch($Text)){throw "Patch regex anchor missing: $Label"}
+    return $regex.Replace($Text,$Replacement,1)
+}
 
 $old=@'
 $codexSessionTemp=Join-Path $session '.codex-tmp'
@@ -75,13 +80,8 @@ Set-Content -LiteralPath (Join-Path $session 'sandbox-env.log') -Encoding UTF8 -
 '@
 $raw=Replace-Required $raw $old $new 'session-local Codex home'
 
-$old="Ensure-CodexAuthentication -Reason 'startup-check'`nWrite-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY'"
-$new="Ensure-CodexAuthentication -Reason 'startup-check'`nInitialize-TaskCodexHome`nWrite-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY'"
-$raw=Replace-Required $raw $old $new 'initialize task Codex home after auth'
+$raw=Replace-RequiredRegex $raw "Ensure-CodexAuthentication -Reason 'startup-check'\r?\nWrite-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY'" "Ensure-CodexAuthentication -Reason 'startup-check'`r`nInitialize-TaskCodexHome`r`nWrite-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY'" 'initialize task Codex home after auth'
 
-$old="        `$psi.Environment['CODEX_HOME']=`$codexHome`n        `$psi.Environment['TEMP']=`$codexSessionTemp"
-$new="        `$psi.Environment['CODEX_HOME']=`$taskCodexHome`n        `$psi.Environment['TEMP']=`$codexSessionTemp"
-# There are two occurrences: login status must remain on persistent home; replace only the task-process occurrence by anchoring later text.
 $taskAnchor=@'
         $psi.RedirectStandardInput=$true
         $psi.RedirectStandardOutput=$true
@@ -98,9 +98,9 @@ $taskReplacement=@'
 '@
 $raw=Replace-Required $raw $taskAnchor $taskReplacement 'task process CODEX_HOME'
 
-$old="        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; temp={1}' -f `$session,`$codexSessionTemp)"
-$new="        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f `$session,`$taskCodexHome,`$codexSessionTemp)"
-$raw=Replace-Required $raw $old $new 'task process logging'
+$pattern=[regex]::Escape("        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; temp={1}' -f `$session,`$codexSessionTemp)")
+$replacement="        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f `$session,`$taskCodexHome,`$codexSessionTemp)"
+$raw=Replace-RequiredRegex $raw $pattern $replacement 'task process logging'
 
 $old=@'
 $codexExit=[int]$codexExitResult[0]
