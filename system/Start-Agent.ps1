@@ -710,7 +710,7 @@ function Invoke-DrSwintusCodexTask {
         $psi.Environment['TEMP']=$codexSessionTemp
         $psi.Environment['TMP']=$codexSessionTemp
         $psi.Environment['TMPDIR']=$codexSessionTemp
-        foreach($argument in @('exec','--config','approval_policy="never"','--config','windows.sandbox="unelevated"','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-')){ [void]$psi.ArgumentList.Add([string]$argument) }
+        foreach($argument in @('exec','--config','approval_policy="never"','--config','windows.sandbox="unelevated"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-')){ [void]$psi.ArgumentList.Add([string]$argument) }
         $process=[System.Diagnostics.Process]::new()
         $process.StartInfo=$psi
         Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f $session,$taskCodexHome,$codexSessionTemp)
