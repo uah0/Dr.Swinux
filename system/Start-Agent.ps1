@@ -332,12 +332,56 @@ Write-PreAgentLog -Stage 'history' -Status 'OK' -Detail ('history={0}' -f $histo
 $finalPath=Join-Path $session 'final-answer.txt'
 $promptPath=Join-Path $session 'prompt.txt'
 $codexSessionTemp=Join-Path $session '.codex-tmp'
+$taskCodexHome=Join-Path $session '.codex-home'
 New-Item -ItemType Directory -Path $codexSessionTemp -Force | Out-Null
+New-Item -ItemType Directory -Path $taskCodexHome -Force | Out-Null
+
+function Test-PathInsideTaskWorkspace {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $workspaceFull=[IO.Path]::GetFullPath($session).TrimEnd('\\')+'\\'
+    $pathFull=[IO.Path]::GetFullPath($Path).TrimEnd('\\')+'\\'
+    return $pathFull.StartsWith($workspaceFull,[StringComparison]::OrdinalIgnoreCase)
+}
+foreach($sandboxWritable in @($codexSessionTemp,$taskCodexHome)){
+    if(-not(Test-PathInsideTaskWorkspace -Path $sandboxWritable)){
+        Stop-WithMessage ("Внутренняя ошибка sandbox: writable path находится вне task workspace: {0}" -f $sandboxWritable)
+    }
+}
+Write-PreAgentLog -Stage 'sandbox' -Status 'WRITABLE_ROOT_OK' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f $session,$taskCodexHome,$codexSessionTemp)
+
+function Initialize-TaskCodexHome {
+    New-Item -ItemType Directory -Path $taskCodexHome -Force | Out-Null
+    foreach($name in @('auth.json','config.toml')){
+        $source=Join-Path $codexHome $name
+        $destination=Join-Path $taskCodexHome $name
+        if(Test-Path -LiteralPath $source -PathType Leaf){
+            Copy-Item -LiteralPath $source -Destination $destination -Force
+        } elseif(Test-Path -LiteralPath $destination -PathType Leaf){
+            Remove-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Sync-TaskCodexAuthentication {
+    $source=Join-Path $taskCodexHome 'auth.json'
+    $destination=Join-Path $codexHome 'auth.json'
+    if(-not(Test-Path -LiteralPath $source -PathType Leaf)){return}
+    try {
+        $json=Get-Content -LiteralPath $source -Raw -Encoding UTF8
+        $null=$json | ConvertFrom-Json -ErrorAction Stop
+        Copy-Item -LiteralPath $source -Destination $destination -Force
+        Write-PreAgentLog -Stage 'codex-auth' -Status 'TASK_AUTH_SYNCED' -Detail 'session-local auth state synchronized without logging credential contents'
+    } catch {
+        Write-PreAgentLog -Stage 'codex-auth' -Status 'TASK_AUTH_SYNC_WARN' -Detail $_.Exception.Message
+    }
+}
+
 Set-Content -LiteralPath (Join-Path $session 'sandbox-env.log') -Encoding UTF8 -Value @(
     'CHILD_TEMP='+$codexSessionTemp,
     'CHILD_TMP='+$codexSessionTemp,
     'CHILD_TMPDIR='+$codexSessionTemp,
-    'CODEX_HOME='+$codexHome,
+    'PERSISTENT_CODEX_HOME='+$codexHome,
+    'TASK_CODEX_HOME='+$taskCodexHome,
     'WORKSPACE='+$session,
     'PARENT_TEMP='+[string]$env:TEMP,
     'PARENT_TMP='+[string]$env:TMP,
@@ -514,6 +558,7 @@ function Ensure-CodexAuthentication {
 
 Write-PreAgentLog -Stage 'codex-auth' -Status 'BEGIN' -Detail 'checking portable Codex authorization'
 Ensure-CodexAuthentication -Reason 'startup-check'
+Initialize-TaskCodexHome
 Write-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY' -Detail 'portable PowerShell and Codex runtime are ready; startup auth was confirmed or deferred to the real request after bounded status timeout'
 
 $brokerRoot=Join-Path $session 'broker'
@@ -618,7 +663,7 @@ STRICT BOUNDARY:
 - Apart from confirmed typed broker actions, treat ordinary shell commands as read-only and do not write outside the report session.
 - Do not modify registry directly; use typed broker actions.
 - Do not run cleanup, deletion, formatting, partitioning, boot/BCD, BitLocker, security-disabling, account-deletion, or mass-deletion commands.
-- Do not inspect passwords, tokens, browser secrets, credential stores, SAM/SECURITY secrets, or CodexHome/auth.json.
+- Do not inspect passwords, tokens, browser secrets, credential stores, SAM/SECURITY secrets, or any auth.json. The .codex-home and .codex-tmp directories inside the task workspace are launcher-managed runtime internals and must not be inspected.
 
 Finish with the result, evidence/verification, any remaining uncertainty, and the next useful step only if needed.
 Reply in the same language as the user's task.
@@ -657,14 +702,14 @@ function Invoke-DrSwintusCodexTask {
         $psi.RedirectStandardInput=$true
         $psi.RedirectStandardOutput=$true
         $psi.RedirectStandardError=$true
-        $psi.Environment['CODEX_HOME']=$codexHome
+        $psi.Environment['CODEX_HOME']=$taskCodexHome
         $psi.Environment['TEMP']=$codexSessionTemp
         $psi.Environment['TMP']=$codexSessionTemp
         $psi.Environment['TMPDIR']=$codexSessionTemp
         foreach($argument in @('exec','--config','approval_policy="never"','--config','windows.sandbox="unelevated"','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-')){ [void]$psi.ArgumentList.Add([string]$argument) }
         $process=[System.Diagnostics.Process]::new()
         $process.StartInfo=$psi
-        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; temp={1}' -f $session,$codexSessionTemp)
+        Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f $session,$taskCodexHome,$codexSessionTemp)
         if(-not $process.Start()){ throw 'Не удалось запустить Codex.' }
         $stdoutCopy=$process.StandardOutput.BaseStream.CopyToAsync($stdoutStream)
         $stderrCopy=$process.StandardError.BaseStream.CopyToAsync($stderrStream)
@@ -699,18 +744,20 @@ if($codexExitResult.Count -ne 1 -or $codexExitResult[0] -isnot [int]){
     Stop-WithMessage ("Внутренняя ошибка запуска Codex: ожидался один код завершения Int32, получено {0} значение(й): {1}. Подробности: {2}" -f $codexExitResult.Count,$types,$codexStderr)
 }
 $codexExit=[int]$codexExitResult[0]
+Sync-TaskCodexAuthentication
 
 if(($codexExit -ne 0) -and (Test-CodexAuthenticationFailure -ErrorLogPath $codexStderr)){
     Write-Host ''
     Write-Host 'Сессия Codex требует повторного входа в ChatGPT.'
     Write-Host 'Выполните вход один раз. После этого исходная задача продолжится автоматически.'
     Write-Host ''
-    try { Ensure-CodexAuthentication -ForceFresh -Reason 'server-auth-rejection' } catch { try { New-Item -ItemType File -Path $brokerStop -Force | Out-Null } catch {}; throw }
+    try { Ensure-CodexAuthentication -ForceFresh -Reason 'server-auth-rejection'; Initialize-TaskCodexHome } catch { try { New-Item -ItemType File -Path $brokerStop -Force | Out-Null } catch {}; throw }
     try { Add-Content -LiteralPath $codexStderr -Value "`r`n--- Dr.Swinux: retry after ChatGPT re-authentication ---`r`n" -Encoding UTF8 } catch {}
     Show-Status 'Вход обновлён. Продолжаю исходную задачу...'
     $retryExitResult=@(Invoke-DrSwintusCodexTask -AppendLogs)
     if($retryExitResult.Count -ne 1 -or $retryExitResult[0] -isnot [int]){ Stop-WithMessage 'Внутренняя ошибка повторного запуска Codex.' }
     $codexExit=[int]$retryExitResult[0]
+    Sync-TaskCodexAuthentication
 }
 
 try { New-Item -ItemType File -Path $brokerStop -Force | Out-Null } catch {}
