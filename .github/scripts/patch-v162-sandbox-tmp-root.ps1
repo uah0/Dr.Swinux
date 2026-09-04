@@ -23,3 +23,4 @@ $version=(Get-Content -LiteralPath $versionPath -Raw -Encoding UTF8).Trim()
 if($version -ne 'Dr.Swinux v1.5.61-final'){throw "Unexpected VERSION: $version"}
 Set-Content -LiteralPath $versionPath -Value "Dr.Swinux v1.5.62-final`n" -Encoding UTF8 -NoNewline
 Write-Host 'Patched Codex workspace-write TMP projection and set v1.5.62.'
+# trigger
