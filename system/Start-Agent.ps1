@@ -338,9 +338,13 @@ New-Item -ItemType Directory -Path $taskCodexHome -Force | Out-Null
 
 function Test-PathInsideTaskWorkspace {
     param([Parameter(Mandatory=$true)][string]$Path)
-    $workspaceFull=[IO.Path]::GetFullPath($session).TrimEnd('\\')+'\\'
-    $pathFull=[IO.Path]::GetFullPath($Path).TrimEnd('\\')+'\\'
-    return $pathFull.StartsWith($workspaceFull,[StringComparison]::OrdinalIgnoreCase)
+    $workspaceFull=[IO.DirectoryInfo]::new($session).FullName
+    $pathFull=[IO.DirectoryInfo]::new($Path).FullName
+    $relative=[IO.Path]::GetRelativePath($workspaceFull,$pathFull)
+    if([string]::IsNullOrWhiteSpace($relative)){ return $true }
+    if([IO.Path]::IsPathRooted($relative)){ return $false }
+    if($relative -eq '..'){ return $false }
+    return -not $relative.StartsWith(('..'+[IO.Path]::DirectorySeparatorChar),[StringComparison]::Ordinal)
 }
 foreach($sandboxWritable in @($codexSessionTemp,$taskCodexHome)){
     if(-not(Test-PathInsideTaskWorkspace -Path $sandboxWritable)){
