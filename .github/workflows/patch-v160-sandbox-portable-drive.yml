@@ -24,17 +24,17 @@ jobs:
         shell: pwsh
         run: |
           & ./.github/scripts/patch-v160-sandbox-portable-drive.ps1
-          git diff --check
-          $changed=@(git diff --name-only)
-          $allowed=@('system/Start-Agent.ps1','system/VERSION.txt')
-          foreach($f in $changed){if($f -notin $allowed){throw "Unexpected changed file: $f"}}
-          foreach($f in $allowed){if($f -notin $changed){throw "Expected changed file missing: $f"}}
+          git diff --check -- system/Start-Agent.ps1 system/VERSION.txt
+          $changed=@(git diff --name-only -- system/Start-Agent.ps1 system/VERSION.txt)
+          foreach($f in @('system/Start-Agent.ps1','system/VERSION.txt')){if($f -notin $changed){throw "Expected changed file missing: $f"}}
 
       - name: Commit migration
         shell: pwsh
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add system/Start-Agent.ps1 system/VERSION.txt
+          git add -- system/Start-Agent.ps1 system/VERSION.txt
+          $staged=@(git diff --cached --name-only)
+          if(($staged.Count -ne 2)-or($staged -notcontains 'system/Start-Agent.ps1')-or($staged -notcontains 'system/VERSION.txt')){throw "Unexpected staged files: $($staged -join ', ')"}
           git commit -m 'Fix Codex sandbox on portable drives'
           git push origin HEAD:main
