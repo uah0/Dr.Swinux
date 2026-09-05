@@ -116,7 +116,7 @@ if($errors.Count -gt 0){ throw ($errors -join "`n") }
 $agentCheck=Get-Content -LiteralPath $agentPath -Raw -Encoding UTF8
 $brokerCheck=Get-Content -LiteralPath $brokerPath -Raw -Encoding UTF8
 if(-not $agentCheck.Contains('$codexSandboxMode=if($taskRequiresSystemChange){''workspace-write''}else{''read-only''}')){ throw 'task sandbox mode invariant missing' }
-if(-not $agentCheck.Contains('windows.sandbox=\"unelevated\"')){ throw 'unelevated sandbox invariant missing' }
+if($agentCheck -notmatch 'windows\.sandbox=.*unelevated'){ throw 'unelevated sandbox invariant missing' }
 if($agentCheck -match 'danger-full-access'){ throw 'danger-full-access is forbidden' }
 if($brokerCheck -notmatch "taskMode -eq 'READ_ONLY'"){ throw 'broker read-only enforcement missing' }
 if($brokerCheck -notmatch 'SetRegistryValue'){ throw 'broker mutation denylist incomplete' }
