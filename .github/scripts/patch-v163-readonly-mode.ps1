@@ -69,8 +69,12 @@ PRIVILEGED BROKER:
 if(-not $agent.Contains($old)){ throw 'Start-Agent prompt broker anchor not found' }
 $agent=$agent.Replace($old,$new)
 
-$old="foreach(`$argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',`$session,'--skip-git-repo-check','--output-last-message',`$finalPath,'-'))"
-$new="foreach(`$argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox',`$codexSandboxMode,'--cd',`$session,'--skip-git-repo-check','--output-last-message',`$finalPath,'-'))"
+$old=@'
+foreach($argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-'))
+'@
+$new=@'
+foreach($argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox',$codexSandboxMode,'--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-'))
+'@
 if(-not $agent.Contains($old)){ throw 'Start-Agent Codex sandbox anchor not found' }
 $agent=$agent.Replace($old,$new)
 
@@ -117,8 +121,8 @@ if($errors.Count -gt 0){ throw ($errors -join "`n") }
 
 $agentCheck=Get-Content -LiteralPath $agentPath -Raw -Encoding UTF8
 $brokerCheck=Get-Content -LiteralPath $brokerPath -Raw -Encoding UTF8
-if($agentCheck -notmatch "codexSandboxMode=if\(\$taskRequiresSystemChange\)\{'workspace-write'\}else\{'read-only'\}"){ throw 'task sandbox mode invariant missing' }
-if($agentCheck -notmatch 'windows\.sandbox=\\"unelevated\\"'){ throw 'unelevated sandbox invariant missing' }
+if(-not $agentCheck.Contains('$codexSandboxMode=if($taskRequiresSystemChange){''workspace-write''}else{''read-only''}')){ throw 'task sandbox mode invariant missing' }
+if(-not $agentCheck.Contains('windows.sandbox=\"unelevated\"')){ throw 'unelevated sandbox invariant missing' }
 if($agentCheck -match 'danger-full-access'){ throw 'danger-full-access is forbidden' }
 if($brokerCheck -notmatch "taskMode -eq 'READ_ONLY'"){ throw 'broker read-only enforcement missing' }
 if($brokerCheck -notmatch 'SetRegistryValue'){ throw 'broker mutation denylist incomplete' }
