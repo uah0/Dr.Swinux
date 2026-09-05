@@ -331,6 +331,9 @@ if(Test-NoTask -Text $Task){
     exit 0
 }
 
+$script:taskTimer=Start-LargeTaskTimer
+Write-PreAgentLog -Stage 'task-timer' -Status 'START' -Detail 'visible timer started before runtime/auth/broker preflight'
+
 $computer=if([string]::IsNullOrWhiteSpace($env:COMPUTERNAME)){'WINDOWS'}else{$env:COMPUTERNAME}
 $session=Join-Path $reportsRoot ('{0}_{1}_{2}_codex' -f $computer,(Get-Date -Format 'yyyy-MM-dd_HHmmss'),([guid]::NewGuid().ToString('N').Substring(0,8)))
 New-Item -ItemType Directory -Path $session -Force | Out-Null
@@ -453,11 +456,16 @@ if((-not $mainCliValid) -or (-not $codeModeHostPresent) -or (-not $commandRunner
 foreach($requiredPath in @($codex,$codeModeHost,$commandRunner,$sandboxSetup)){
     if(-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)){ Stop-WithMessage ("После подготовки не найден компонент Codex: {0}" -f $requiredPath) }
 }
-try {
-    $finalCodexVersion=(& $codex --version 2>&1 | Out-String).Trim()
-    $finalCodexExit=$LASTEXITCODE
-    Write-PreAgentLog -Stage 'codex-runtime' -Status $(if($finalCodexExit -eq 0){'READY'}else{'WARN'}) -Detail ('exit={0}; version={1}; CODEX_HOME={2}' -f $finalCodexExit,$finalCodexVersion,$codexHome)
-} catch { Write-PreAgentLog -Stage 'codex-runtime' -Status 'WARN' -Detail ('final version probe failed: {0}' -f $_.Exception.Message) }
+if($mainCliValid -and $codeModeHostPresent -and $commandRunnerPresent -and $sandboxSetupPresent){
+    Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_CACHED' -Detail ('version={0}; CODEX_HOME={1}; duplicate --version probe skipped' -f $versionText,$codexHome)
+} else {
+    try {
+        $finalCodexVersion=(& $codex --version 2>&1 | Out-String).Trim()
+        $finalCodexExit=$LASTEXITCODE
+        if($finalCodexExit -ne 0){ Stop-WithMessage ("Codex после подготовки не прошёл проверку версии. Код: {0}" -f $finalCodexExit) }
+        Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_AFTER_SETUP' -Detail ('exit={0}; version={1}; CODEX_HOME={2}' -f $finalCodexExit,$finalCodexVersion,$codexHome)
+    } catch { Stop-WithMessage ("Не удалось проверить Codex после подготовки: {0}" -f $_.Exception.Message) }
+}
 
 $authLog=Join-Path $reportsRoot 'auth-status.log'
 $portableAuth=Join-Path $codexHome 'auth.json'
@@ -572,10 +580,21 @@ function Ensure-CodexAuthentication {
     if(-not $loggedIn){ Stop-WithMessage 'Вход завершён, но Codex не подтвердил авторизацию.' }
 }
 
-Write-PreAgentLog -Stage 'codex-auth' -Status 'BEGIN' -Detail 'checking portable Codex authorization'
-Ensure-CodexAuthentication -Reason 'startup-check'
+$portableAuthReady=$false
+if(Test-Path -LiteralPath $portableAuth -PathType Leaf){
+    try {
+        $authRaw=Get-Content -LiteralPath $portableAuth -Raw -Encoding UTF8
+        if(-not [string]::IsNullOrWhiteSpace($authRaw)){ $null=$authRaw | ConvertFrom-Json -ErrorAction Stop; $portableAuthReady=$true }
+    } catch { $portableAuthReady=$false }
+}
+if($portableAuthReady){
+    Write-PreAgentLog -Stage 'codex-auth' -Status 'FAST_PATH' -Detail 'valid local auth.json present; startup login status probe skipped; real Codex request validates server auth'
+} else {
+    Write-PreAgentLog -Stage 'codex-auth' -Status 'LOGIN_CHECK_REQUIRED' -Detail 'portable auth state missing or invalid; running interactive authentication check'
+    Ensure-CodexAuthentication -Reason 'startup-check'
+}
 Initialize-TaskCodexHome
-Write-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY' -Detail 'portable PowerShell and Codex runtime are ready; startup auth was confirmed or deferred to the real request after bounded status timeout'
+Write-PreAgentLog -Stage 'environment' -Status 'RUNTIME_AUTH_READY' -Detail 'portable runtime ready; redundant Codex version/auth probes skipped when local state is valid'
 
 $brokerRoot=Join-Path $session 'broker'
 $brokerReady=Join-Path $brokerRoot 'ready.json'
@@ -634,6 +653,7 @@ Prefer small, focused diagnostic commands over large compound PowerShell one-lin
 If a diagnostic command fails because of quoting, parsing, permissions, or tool behavior, inspect the error, simplify or split the command, and continue automatically.
 Do not treat a failed diagnostic command as evidence about the computer itself.
 Once the available evidence is sufficient to answer the user's task with stated uncertainty, stop investigating instead of collecting redundant evidence.
+For simple read-only fact checks, use the highest-signal direct source first and stop immediately when it gives a conclusive answer; do not fan out into redundant alternative probes.
 Do not ask the user to manually run commands that you can run yourself.
 
 TASK MODE:
@@ -713,7 +733,7 @@ function Invoke-DrSwintusCodexTask {
     if(Test-Path -LiteralPath $finalPath -PathType Leaf){ Remove-Item -LiteralPath $finalPath -Force -ErrorAction SilentlyContinue }
     $stdoutMode=if($AppendLogs){[System.IO.FileMode]::Append}else{[System.IO.FileMode]::Create}
     $stderrMode=if($AppendLogs){[System.IO.FileMode]::Append}else{[System.IO.FileMode]::Create}
-    $stdoutStream=$null; $stderrStream=$null; $process=$null; $timer=$null
+    $stdoutStream=$null; $stderrStream=$null; $process=$null
     try {
         $stdoutStream=[System.IO.FileStream]::new($codexStdout,$stdoutMode,[System.IO.FileAccess]::Write,[System.IO.FileShare]::ReadWrite)
         $stderrStream=[System.IO.FileStream]::new($codexStderr,$stderrMode,[System.IO.FileAccess]::Write,[System.IO.FileShare]::ReadWrite)
@@ -737,15 +757,13 @@ function Invoke-DrSwintusCodexTask {
         $stderrCopy=$process.StandardError.BaseStream.CopyToAsync($stderrStream)
         $process.StandardInput.Write($promptText)
         $process.StandardInput.Close()
-        $timer=Start-LargeTaskTimer
-        while(-not $process.HasExited){ Update-LargeTaskTimer -State $timer; Start-Sleep -Milliseconds 150; $process.Refresh() }
-        Update-LargeTaskTimer -State $timer -Force
+        while(-not $process.HasExited){ Update-LargeTaskTimer -State $script:taskTimer; Start-Sleep -Milliseconds 150; $process.Refresh() }
+        Update-LargeTaskTimer -State $script:taskTimer -Force
         $null=$stdoutCopy.GetAwaiter().GetResult(); $null=$stderrCopy.GetAwaiter().GetResult()
         $stdoutStream.Flush(); $stderrStream.Flush()
         Write-PreAgentLog -Stage 'codex-process' -Status 'EXIT' -Detail ('exit={0}' -f $process.ExitCode)
         return [int]$process.ExitCode
     } finally {
-        if($null -ne $timer){ Stop-LargeTaskTimer -State $timer }
         if($null -ne $process){ $process.Dispose() }
         if($null -ne $stdoutStream){ $stdoutStream.Dispose() }
         if($null -ne $stderrStream){ $stderrStream.Dispose() }
@@ -838,6 +856,7 @@ if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
 }
 
 if(Test-Path -LiteralPath $finalPath -PathType Leaf){
+    if($null -ne $script:taskTimer){ Stop-LargeTaskTimer -State $script:taskTimer; Write-PreAgentLog -Stage 'task-timer' -Status 'STOP' -Detail 'task pipeline completed' }
     Show-ResultHeader
     Get-Content -LiteralPath $finalPath -Encoding UTF8
     Write-Host ''
@@ -859,4 +878,5 @@ if(-not $SingleTask){
         try { & $PSCommandPath -Task $nextTask -SingleTask } catch { Write-Host ''; Write-Host 'Задача завершилась с ошибкой. Можно сразу ввести следующую задачу.' }
     }
 }
+
 
