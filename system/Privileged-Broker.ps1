@@ -104,6 +104,62 @@ function Get-WifiDetails {
     }
 }
 
+function Get-WindowsActivationStatus {
+    $applicationId='55c92734-d682-4d71-983e-d6ec3f16059f'
+    $os=$null
+    try { $os=Get-CimInstance Win32_OperatingSystem -ErrorAction Stop | Select-Object -First 1 Caption,Version,BuildNumber } catch {}
+
+    $products=@()
+    try {
+        $products=@(Get-CimInstance SoftwareLicensingProduct -Filter ("ApplicationID='{0}'" -f $applicationId) -ErrorAction Stop |
+            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.PartialProductKey) } |
+            Select-Object Name,Description,LicenseStatus,LicenseStatusReason,GracePeriodRemaining,PartialProductKey)
+    } catch { Write-BrokerLog ("ACTIVATION_CIM_WARN error={0}" -f $_.Exception.Message) }
+
+    $selected=$null
+    if($products.Count -gt 0){
+        $licensed=@($products | Where-Object {[int]$_.LicenseStatus -eq 1} | Select-Object -First 1)
+        if($licensed.Count -gt 0){$selected=$licensed[0]}else{$selected=$products[0]}
+    }
+
+    $activationResult=$null
+    try {
+        $reg=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Activation' -ErrorAction Stop
+        if($null -ne $reg.PSObject.Properties['ProductActivationResult']){$activationResult=[int]$reg.ProductActivationResult}
+    } catch { Write-BrokerLog ("ACTIVATION_REGISTRY_WARN error={0}" -f $_.Exception.Message) }
+
+    $statusMap=@{0='Unlicensed';1='Licensed';2='OOBGrace';3='OOTGrace';4='NonGenuineGrace';5='Notification';6='ExtendedGrace'}
+    $activated=$null;$status='Unknown';$licenseStatus=$null;$source='Unavailable'
+    $reason=$null;$grace=$null;$productName=$null;$description=$null;$partialKey=$null
+    if($null -ne $selected){
+        $licenseStatus=[int]$selected.LicenseStatus
+        if($statusMap.ContainsKey($licenseStatus)){$status=$statusMap[$licenseStatus]}
+        $activated=($licenseStatus -eq 1);$source='SoftwareLicensingProduct'
+        $reason=$selected.LicenseStatusReason;$grace=$selected.GracePeriodRemaining
+        $productName=[string]$selected.Name;$description=[string]$selected.Description;$partialKey=[string]$selected.PartialProductKey
+    } elseif($null -ne $activationResult){
+        $activated=($activationResult -eq 0);$status=if($activated){'Licensed'}else{'NotLicensedOrError'};$source='SoftwareProtectionPlatformRegistry'
+    }
+
+    $channel=$null
+    if(-not [string]::IsNullOrWhiteSpace($description)){
+        if($description -match '(?i)OEM_DM'){$channel='OEM_DM'}
+        elseif($description -match '(?i)VOLUME_KMSCLIENT'){$channel='Volume_KMSClient'}
+        elseif($description -match '(?i)VOLUME_MAK'){$channel='Volume_MAK'}
+        elseif($description -match '(?i)RETAIL'){$channel='Retail'}
+        elseif($description -match '(?i)OEM'){$channel='OEM'}
+    }
+    $windowsName=$null;$windowsVersion=$null;$buildNumber=$null
+    if($null -ne $os){$windowsName=[string]$os.Caption;$windowsVersion=[string]$os.Version;$buildNumber=[string]$os.BuildNumber}
+    Write-BrokerLog ("ACTIVATION_RESULT source={0} activated={1} licenseStatus={2} activationResult={3}" -f $source,$activated,$licenseStatus,$activationResult)
+    [pscustomobject]@{
+        Activated=$activated;Status=$status;LicenseStatus=$licenseStatus;LicenseStatusReason=$reason
+        GracePeriodRemainingMinutes=$grace;ActivationResult=$activationResult;EvidenceSource=$source
+        WindowsName=$windowsName;WindowsVersion=$windowsVersion;BuildNumber=$buildNumber
+        ProductName=$productName;Channel=$channel;PartialProductKey=$partialKey
+    }
+}
+
 function Get-NetworkExtended {
     $ip=@()
     $routes=@()
@@ -1232,6 +1288,7 @@ function Invoke-BrokerAction {
         'GetRegistryRead' {
             return Get-RegistryRead -Path ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Path' -Default '')) -Name ([string](Get-BrokerParameter -Parameters $Parameters -Name 'Name' -Default ''))
         }
+        'GetWindowsActivationStatus' { return Get-WindowsActivationStatus }
         'EnsureWinget' { return Ensure-Winget }
         'GetInstalledPackages' {
             $query=[string](Get-BrokerParameter -Parameters $Parameters -Name 'Query' -Default '')
@@ -1279,7 +1336,7 @@ $ready=[pscustomobject]@{
         'GetWifiDetails','GetNetworkExtended','GetProcessExtended','GetDriverInventory',
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
-        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
+        'GetScheduledTaskSnapshot','GetRegistryRead','GetWindowsActivationStatus','EnsureWinget','GetInstalledPackages','SearchPackage',
         'SearchTrustedPackages','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )
 }

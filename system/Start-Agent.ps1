@@ -30,6 +30,7 @@ $codexHome=Join-Path $toolsRoot 'CodexHome'
 $setup=Join-Path $systemRoot 'Setup-PortableCodex.ps1'
 $brokerServer=Join-Path $systemRoot 'Privileged-Broker.ps1'
 $brokerClient=Join-Path $systemRoot 'Broker-Request.ps1'
+$diagnosticToolSource=Join-Path $systemRoot 'Diagnostic-Tool.ps1'
 $failureReporter=Join-Path $systemRoot 'Failure-Reporter.ps1'
 $autoRepair=Join-Path $systemRoot 'Auto-Repair.ps1'
 $repairSubmitter=Join-Path $systemRoot 'Submit-RepairCandidate.ps1'
@@ -600,6 +601,7 @@ $brokerRoot=Join-Path $session 'broker'
 $brokerReady=Join-Path $brokerRoot 'ready.json'
 $brokerStop=Join-Path $brokerRoot 'stop'
 $brokerTool=Join-Path $session 'broker-tool.ps1'
+$diagnosticTool=Join-Path $session 'diagnostic-tool.ps1'
 New-Item -ItemType Directory -Path $brokerRoot -Force | Out-Null
 
 $brokerToolText=@'
@@ -608,7 +610,7 @@ param(
         'GetWifiDetails','GetNetworkExtended','GetProcessExtended','GetDriverInventory',
         'GetDeviceInventory','GetServiceExtended','GetStorageExtended','GetStorageReliability',
         'GetEventLogElevated','GetUpdateHistory','GetFirewallSecurityStatus',
-        'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget','GetInstalledPackages','SearchPackage',
+        'GetScheduledTaskSnapshot','GetRegistryRead','GetWindowsActivationStatus','EnsureWinget','GetInstalledPackages','SearchPackage',
         'SearchTrustedPackages','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue'
     )][string]$Action,
     [string]$ParametersJson='{}',
@@ -622,6 +624,9 @@ if(-not (Test-Path -LiteralPath $clientPath -PathType Leaf)){ throw ('SWINTUS br
 if($LASTEXITCODE -ne $null){exit $LASTEXITCODE}
 '@
 Set-Content -LiteralPath $brokerTool -Value $brokerToolText -Encoding UTF8
+if(-not(Test-Path -LiteralPath $diagnosticToolSource -PathType Leaf)){ Stop-WithMessage ('Diagnostic-Tool.ps1 not found: '+$diagnosticToolSource) }
+Copy-Item -LiteralPath $diagnosticToolSource -Destination $diagnosticTool -Force
+Write-PreAgentLog -Stage 'diagnostic-api' -Status 'PREPARED' -Detail ('tool={0}' -f $diagnosticTool)
 Write-PreAgentLog -Stage 'broker' -Status 'PREPARED' -Detail ('tool={0}; server={1}; client={2}' -f $brokerTool,$brokerServer,$brokerClient)
 if($taskRequiresSystemChange){ Show-Status 'Для системных изменений Windows может запросить права администратора.' } else { Show-Status 'Диагностический режим: изменения системы запрещены; дополнительные подтверждения действий не требуются.' }
 
@@ -640,6 +645,25 @@ while((Get-Date) -lt $readyDeadline){
 if(-not (Test-Path -LiteralPath $brokerReady -PathType Leaf)){ Stop-WithMessage 'Системный Broker не запустился за 30 секунд.' }
 Write-PreAgentLog -Stage 'broker' -Status 'READY' -Detail ('readyFile={0}; pid={1}' -f $brokerReady,$brokerProcess.Id)
 
+$prefetchedDiagnosticEvidence='None'
+if(($taskMode -eq 'READ_ONLY') -and ($Task -match '(?i)(активац|активирован\s+ли\s+windows|активирован\s+ли\s+виндовс|windows\s+(?:is\s+)?activated|activation\s+status)')){
+    try {
+        Write-PreAgentLog -Stage 'diagnostic-prefetch' -Status 'BEGIN' -Detail 'action=GetWindowsActivationStatus'
+        $activationRaw=(& $brokerClient -Session $session -Action 'GetWindowsActivationStatus' -ParametersJson '{}' -TimeoutSeconds 20 | Out-String).Trim()
+        $activationResponse=$activationRaw | ConvertFrom-Json -ErrorAction Stop
+        if([bool]$activationResponse.Ok){
+            $prefetchedDiagnosticEvidence=('GetWindowsActivationStatus: '+($activationResponse.Data | ConvertTo-Json -Compress -Depth 6))
+            Write-PreAgentLog -Stage 'diagnostic-prefetch' -Status 'OK' -Detail 'conclusive typed activation evidence available before Codex'
+        } else {
+            $prefetchedDiagnosticEvidence=('GetWindowsActivationStatus failed: '+[string]$activationResponse.Error)
+            Write-PreAgentLog -Stage 'diagnostic-prefetch' -Status 'WARN' -Detail ([string]$activationResponse.Error)
+        }
+    } catch {
+        $prefetchedDiagnosticEvidence=('GetWindowsActivationStatus failed: '+$_.Exception.Message)
+        Write-PreAgentLog -Stage 'diagnostic-prefetch' -Status 'WARN' -Detail $_.Exception.Message
+    }
+}
+
 $instructions=@"
 You are Dr.Swinux's autonomous Windows engineer, physically running on the user's CURRENT Windows computer. Act as an experienced Windows engineer: understand the user's goal, form technical hypotheses when needed, choose the smallest useful checks or actions, test against evidence from this computer, revise the plan as evidence changes, and continue until the task is completed or you can explain the concrete blocker. Do not wait for the user to tell you which commands or checks to run.
 
@@ -654,7 +678,12 @@ If a diagnostic command fails because of quoting, parsing, permissions, or tool 
 Do not treat a failed diagnostic command as evidence about the computer itself.
 Once the available evidence is sufficient to answer the user's task with stated uncertainty, stop investigating instead of collecting redundant evidence.
 For simple read-only fact checks, use the highest-signal direct source first and stop immediately when it gives a conclusive answer; do not fan out into redundant alternative probes.
+Use .\diagnostic-tool.ps1 before ad-hoc shell/WMI/CIM/registry probes whenever it provides the requested fact. For Windows activation/licensing status, GetWindowsActivationStatus is authoritative for this task; if prefetched evidence below is conclusive, answer from it immediately and run no alternative activation probes.
 Do not ask the user to manually run commands that you can run yourself.
+
+PREFETCHED DIAGNOSTIC EVIDENCE:
+$prefetchedDiagnosticEvidence
+- Treat successful typed diagnostic evidence as the primary source. If it directly answers the user, do not re-check the same fact through slmgr, cmd, wmic, registry, event logs, or other redundant paths.
 
 TASK MODE:
 - This session is $taskMode.
@@ -667,6 +696,7 @@ PRIVILEGED BROKER:
 - Codex itself remains unelevated.
 - When normal commands are blocked by permissions or when administrator-only evidence would materially improve the diagnosis, use the broker automatically instead of asking the user.
 - The broker tool is inside your current workspace as .\broker-tool.ps1.
+- The preferred read-only diagnostic facade is .\diagnostic-tool.ps1. It exposes only typed read actions and routes them to managed Dr.Swinux backends.
 - Invoke privileged reads directly from the current session:
   & .\broker-tool.ps1 -Action ACTION -ParametersJson 'JSON'
 - IMPORTANT: if ordinary diagnostics report access denied, elevation required, or omit a requested value because of permissions, that is not a stopping condition. Immediately retry the needed observation through broker-tool.ps1 when a matching broker action exists.
@@ -685,6 +715,7 @@ PRIVILEGED BROKER:
   GetFirewallSecurityStatus
   GetScheduledTaskSnapshot
   GetRegistryRead
+  GetWindowsActivationStatus
   SetRegistryValue
   RemoveRegistryValue
 - broker-tool.ps1 was created in the current workspace before Codex started, and the elevated broker reported READY.
@@ -768,6 +799,24 @@ function Invoke-DrSwintusCodexTask {
         if($null -ne $stdoutStream){ $stdoutStream.Dispose() }
         if($null -ne $stderrStream){ $stderrStream.Dispose() }
     }
+}
+
+function Invoke-SessionRuntimeCleanup {
+    $removed=@();$warnings=@()
+    foreach($runtimeDir in @($codexSessionTemp,$taskCodexHome)){
+        try { if(Test-Path -LiteralPath $runtimeDir){Remove-Item -LiteralPath $runtimeDir -Recurse -Force -ErrorAction Stop;$removed+=(Split-Path -Leaf $runtimeDir)} }
+        catch {$warnings+=((Split-Path -Leaf $runtimeDir)+': '+$_.Exception.Message)}
+    }
+    try {if($null -ne $brokerProcess -and -not $brokerProcess.HasExited){try{$brokerProcess.WaitForExit(2500)|Out-Null}catch{}}} catch {}
+    foreach($name in @('requests','responses')){
+        $dir=Join-Path $brokerRoot $name
+        try {if(Test-Path -LiteralPath $dir){Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction Stop;$removed+=('broker/'+$name)}} catch {$warnings+=('broker/'+$name+': '+$_.Exception.Message)}
+    }
+    foreach($name in @('ready.json','stop')){
+        $p=Join-Path $brokerRoot $name
+        try {if(Test-Path -LiteralPath $p){Remove-Item -LiteralPath $p -Force -ErrorAction Stop;$removed+=('broker/'+$name)}} catch {$warnings+=('broker/'+$name+': '+$_.Exception.Message)}
+    }
+    Write-PreAgentLog -Stage 'session-cleanup' -Status $(if($warnings.Count -eq 0){'OK'}else{'WARN'}) -Detail ('removed={0}; warnings={1}' -f ($removed -join ','),($warnings -join ' | '))
 }
 
 function Test-CodexAuthenticationFailure {
@@ -854,6 +903,8 @@ if($taskOutcome -in @('FAILURE','BLOCKED','UNKNOWN')){
         Write-PreAgentLog -Stage 'failure-reporter' -Status 'ERROR' -Detail $_.Exception.Message
     }
 }
+
+Invoke-SessionRuntimeCleanup
 
 if(Test-Path -LiteralPath $finalPath -PathType Leaf){
     if($null -ne $script:taskTimer){ Stop-LargeTaskTimer -State $script:taskTimer; Write-PreAgentLog -Stage 'task-timer' -Status 'STOP' -Detail 'task pipeline completed' }
