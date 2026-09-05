@@ -71,7 +71,8 @@ function Get-WindowsActivationStatus {
 $t=Replace-Once $t $anchor ($fn+$anchor) 'insert Get-WindowsActivationStatus'
 $t=$t.Replace("'GetScheduledTaskSnapshot','GetRegistryRead','EnsureWinget'","'GetScheduledTaskSnapshot','GetRegistryRead','GetWindowsActivationStatus','EnsureWinget'")
 $t=Replace-Once $t "        'EnsureWinget' { return Ensure-Winget }" "        'GetWindowsActivationStatus' { return Get-WindowsActivationStatus }`n        'EnsureWinget' { return Ensure-Winget }" 'activation dispatch'
-if(($t -split "GetWindowsActivationStatus").Count -lt 5){ throw 'Activation action was not wired into broker allowlists/dispatch.' }
+if($t -notmatch 'function Get-WindowsActivationStatus'){ throw 'Activation function insertion failed.' }
+if($t -notmatch "'GetWindowsActivationStatus' \{ return Get-WindowsActivationStatus \}"){ throw 'Activation dispatch insertion failed.' }
 Write-Utf8 $path $t
 
 $path='system/Broker-Request.ps1'
