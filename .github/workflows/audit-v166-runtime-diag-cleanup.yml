@@ -52,29 +52,26 @@ jobs:
           if($agent -notmatch 'windows\.sandbox=\\?"unelevated\\?"'){ throw 'unelevated sandbox invariant missing.' }
           if($agent -notmatch 'approval_policy=\\?"never\\?"'){ throw 'approval never invariant missing.' }
           if($agent -match '&\s*\$codex\s+--version'){ throw 'Normal Start-Agent path still launches codex --version.' }
-          if($agent -notmatch "READY_FAST"){ throw 'Fast runtime validation marker missing.' }
+          if($agent -notmatch 'READY_FAST'){ throw 'Fast runtime validation marker missing.' }
           if($agent -notmatch 'Remove-SessionRuntimePathWithRetry'){ throw 'Retry cleanup helper missing.' }
           if($agent -notmatch 'Attempts=16'){ throw 'Bounded cleanup retry policy missing.' }
-          if($broker -notmatch "ACTIVATION_RESULT source=SoftwareProtectionPlatformRegistry activated=True fastPath=True"){ throw 'Activation registry fast path missing.' }
+          if($broker -notmatch 'ACTIVATION_RESULT source=SoftwareProtectionPlatformRegistry activated=True fastPath=True'){ throw 'Activation registry fast path missing.' }
           $regPos=$broker.IndexOf("if(`$activationResult -eq 0)")
           $cimPos=$broker.IndexOf('Get-CimInstance SoftwareLicensingProduct')
           if($regPos -lt 0 -or $cimPos -lt 0 -or $regPos -gt $cimPos){ throw 'Activation CIM is not a fallback after registry fast path.' }
           foreach($action in @('GetWindowsActivationStatus','GetRegistryRead')){ if($broker -notmatch [regex]::Escape($action)){ throw "Broker read action missing: $action" } }
-          git diff --check
 
-      - name: Audit exact candidate diff
+      - name: Stage and audit exact candidate diff
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t changed < <(git diff --name-only)
+          git add system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/VERSION.txt
+          git diff --cached --check
+          mapfile -t changed < <(git diff --cached --name-only)
           printf '%s\n' "${changed[@]}"
-          allowed=(system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/VERSION.txt)
-          for f in "${changed[@]}"; do
-            ok=0
-            for a in "${allowed[@]}"; do [[ "$f" == "$a" ]] && ok=1; done
-            [[ $ok -eq 1 ]] || { echo "Unexpected candidate file: $f"; exit 1; }
-          done
-          [[ ${#changed[@]} -eq 3 ]] || { echo "Expected exactly 3 changed source files"; exit 1; }
+          expected=(system/Privileged-Broker.ps1 system/Start-Agent.ps1 system/VERSION.txt)
+          [[ ${#changed[@]} -eq 3 ]] || { echo "Expected exactly 3 staged source files"; exit 1; }
+          for i in 0 1 2; do [[ "${changed[$i]}" == "${expected[$i]}" ]] || { echo "Unexpected staged file order/set"; exit 1; }; done
 
       - name: Commit audited candidate to audit branch
         shell: bash
@@ -82,7 +79,5 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/VERSION.txt
-          git diff --cached --check
           git commit -m "Candidate v1.5.66 runtime diagnostics cleanup"
           git push origin HEAD:audit/v1.5.66-runtime-diag-cleanup
