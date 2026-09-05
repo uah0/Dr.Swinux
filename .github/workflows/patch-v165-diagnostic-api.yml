@@ -22,7 +22,12 @@ jobs:
 
       - name: Apply migration
         shell: pwsh
-        run: ./.github/scripts/patch-v165-diagnostic-api.ps1
+        run: |
+          # Preserve the two target-script variable names literally when the migration
+          # builds replacement anchors under StrictMode.
+          $brokerClient='$brokerClient'
+          $brokerTool='$brokerTool'
+          ./.github/scripts/patch-v165-diagnostic-api.ps1
 
       - name: Audit diff
         shell: pwsh
