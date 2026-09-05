@@ -23,11 +23,21 @@ jobs:
       - name: Apply migration
         shell: pwsh
         run: |
-          # Preserve the two target-script variable names literally when the migration
-          # builds replacement anchors under StrictMode.
-          $brokerClient='$brokerClient'
-          $brokerTool='$brokerTool'
-          ./.github/scripts/patch-v165-diagnostic-api.ps1
+          $ErrorActionPreference='Stop'
+          $migration='.github/scripts/patch-v165-diagnostic-api.ps1'
+          $text=[IO.File]::ReadAllText($migration,[Text.UTF8Encoding]::new($false))
+          # Escape two target-source variable names that must remain literal inside
+          # double-quoted replacement anchors in the temporary migration script.
+          $text=$text.Replace('$t=Replace-Once $t "$brokerClient=','$t=Replace-Once $t "`$brokerClient=')
+          $text=$text.Replace('" "$brokerClient=','" "`$brokerClient=')
+          $text=$text.Replace('$t=Replace-Once $t "$brokerTool=','$t=Replace-Once $t "`$brokerTool=')
+          $text=$text.Replace('" "$brokerTool=','" "`$brokerTool=')
+          [IO.File]::WriteAllText($migration,$text,[Text.UTF8Encoding]::new($false))
+          try {
+            & ./$migration
+          } finally {
+            git checkout -- $migration
+          }
 
       - name: Audit diff
         shell: pwsh
