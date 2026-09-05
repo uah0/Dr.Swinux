@@ -56,7 +56,7 @@ $new="if(`$taskRequiresSystemChange){ Show-Status 'Для системных и�
 if(-not $agent.Contains($old)){ throw 'Start-Agent broker status anchor not found' }
 $agent=$agent.Replace($old,$new)
 
-$old="PRIVILEGED BROKER:`n"
+$old='PRIVILEGED BROKER:'
 $new=@"
 TASK MODE:
 - This session is `$taskMode.
@@ -67,7 +67,7 @@ TASK MODE:
 PRIVILEGED BROKER:
 "@
 if(-not $agent.Contains($old)){ throw 'Start-Agent prompt broker anchor not found' }
-$agent=$agent.Replace($old,$new)
+$agent=$agent.Replace($old,$new.TrimEnd())
 
 $old=@'
 foreach($argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-'))
@@ -81,12 +81,8 @@ $agent=$agent.Replace($old,$new)
 Set-Content -LiteralPath $agentPath -Value $agent -Encoding UTF8
 
 $broker=Get-Content -LiteralPath $brokerPath -Raw -Encoding UTF8
-$anchor="if(-not (Test-Path -LiteralPath `$readyPath -PathType Leaf)){`n    throw 'SWINTUS privileged broker is not ready.'`n}`n"
+$anchor="if(`$Action -eq 'EnsureWinget'){"
 $insert=@'
-if(-not (Test-Path -LiteralPath $readyPath -PathType Leaf)){
-    throw 'SWINTUS privileged broker is not ready.'
-}
-
 $taskModePath=Join-Path $Session 'task-mode.json'
 $taskMode='SYSTEM_CHANGE'
 if(Test-Path -LiteralPath $taskModePath -PathType Leaf){
@@ -104,9 +100,11 @@ if($taskMode -eq 'READ_ONLY'){
         throw ("Action '{0}' is blocked because this Dr.Swinux session is READ_ONLY." -f $Action)
     }
 }
+
+if($Action -eq 'EnsureWinget'){
 '@
-if(-not $broker.Contains($anchor)){ throw 'Broker ready anchor not found' }
-$broker=$broker.Replace($anchor,$insert)
+if(-not $broker.Contains($anchor)){ throw 'Broker EnsureWinget anchor not found' }
+$broker=$broker.Replace($anchor,$insert.TrimEnd())
 Set-Content -LiteralPath $brokerPath -Value $broker -Encoding UTF8
 
 Set-Content -LiteralPath $versionPath -Value "Dr.Swinux v1.5.63-final`n" -Encoding UTF8
