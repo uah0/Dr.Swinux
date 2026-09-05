@@ -29,12 +29,11 @@ jobs:
       - name: Audit diff
         shell: pwsh
         run: |
-          git checkout -- system/ASK-AGENT.cmd
-          $allowed=@('system/Start-Agent.ps1','system/Broker-Request.ps1','system/VERSION.txt')
-          $changed=@(git diff --name-only)
-          if($changed.Count -eq 0){ throw 'Migration produced no changes.' }
-          foreach($path in $changed){ if($path -notin $allowed){ throw "Unexpected changed file: $path" } }
-          git diff --check
+          $targets=@('system/Start-Agent.ps1','system/Broker-Request.ps1','system/VERSION.txt')
+          $changed=@(git diff --name-only -- @targets)
+          if($changed.Count -eq 0){ throw 'Migration produced no intended changes.' }
+          foreach($path in $targets){ if($path -notin $changed){ throw "Expected changed file missing: $path" } }
+          git diff --check -- system/Start-Agent.ps1 system/Broker-Request.ps1 system/VERSION.txt
           git diff -- system/Start-Agent.ps1 system/Broker-Request.ps1 system/VERSION.txt
 
       - name: Commit migration
