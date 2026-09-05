@@ -203,6 +203,13 @@ function Test-NoTask {
     return $normalized -in @('нет','нет проблем','проблем нет','ничего','отмена','выход')
 }
 
+function Test-TaskRequiresSystemChange {
+    param([Parameter(Mandatory=$true)][string]$Text)
+    $normalized=($Text.Trim().ToLowerInvariant() -replace '\s+',' ')
+    $mutationPattern='(?i)(установ(и|ить|ка)|удал(и|ить|ение)|обнов(и|ить)|исправ(ь|ить)|почин(и|ить)|включ(и|ить)|отключ(и|ить)|измени(ть)?|поменя(й|ть)|созда(й|ть)|очист(и|ить)|сброс(ь|ить)|настрой|переустанов|форматир|размет|запусти\s+служб|останови\s+служб|install\b|uninstall\b|remove\b|delete\b|update\b|upgrade\b|fix\b|repair\b|enable\b|disable\b|change\b|modify\b|create\b|reset\b|configure\b|format\b)'
+    return [regex]::IsMatch($normalized,$mutationPattern)
+}
+
 function Read-TaskWithHistory {
     param([string]$HistoryPath,[string]$Prompt='Опишите задачу')
     $history=@()
@@ -313,6 +320,10 @@ if([string]::IsNullOrWhiteSpace($Task)){
     Stop-WithMessage 'Задача не может быть пустой.'
 }
 Write-PreAgentLog -Stage 'task-input' -Status 'ACCEPTED' -Detail ('characters={0}' -f $Task.Length)
+$taskRequiresSystemChange=Test-TaskRequiresSystemChange -Text $Task
+$taskMode=if($taskRequiresSystemChange){'SYSTEM_CHANGE'}else{'READ_ONLY'}
+$codexSandboxMode=if($taskRequiresSystemChange){'workspace-write'}else{'read-only'}
+Write-PreAgentLog -Stage 'task-mode' -Status $taskMode -Detail ('sandbox={0}' -f $codexSandboxMode)
 
 if(Test-NoTask -Text $Task){
     Write-PreAgentLog -Stage 'task-input' -Status 'NO_TASK' -Detail 'normalized no-task phrase; stopping before environment/auth/broker/Codex'
@@ -325,6 +336,7 @@ $session=Join-Path $reportsRoot ('{0}_{1}_{2}_codex' -f $computer,(Get-Date -For
 New-Item -ItemType Directory -Path $session -Force | Out-Null
 $script:taskLog=Join-Path $session 'preflight.log'
 Write-PreAgentLog -Stage 'session' -Status 'CREATED' -Detail ('session={0}' -f $session)
+[ordered]@{schemaVersion=1;mode=$taskMode;systemChange=[bool]$taskRequiresSystemChange} | ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $session 'task-mode.json') -Encoding UTF8
 Write-TaskEnvironmentSnapshot -Path (Join-Path $session 'environment.log')
 Add-Content -LiteralPath $historyPath -Value $Task -Encoding UTF8
 Write-PreAgentLog -Stage 'history' -Status 'OK' -Detail ('history={0}' -f $historyPath)
@@ -592,7 +604,7 @@ if($LASTEXITCODE -ne $null){exit $LASTEXITCODE}
 '@
 Set-Content -LiteralPath $brokerTool -Value $brokerToolText -Encoding UTF8
 Write-PreAgentLog -Stage 'broker' -Status 'PREPARED' -Detail ('tool={0}; server={1}; client={2}' -f $brokerTool,$brokerServer,$brokerClient)
-Show-Status 'Для системных действий Windows может запросить права администратора.'
+if($taskRequiresSystemChange){ Show-Status 'Для системных изменений Windows может запросить права администратора.' } else { Show-Status 'Диагностический режим: изменения системы запрещены; дополнительные подтверждения действий не требуются.' }
 
 $brokerArgs=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $brokerServer),'-Session',('"{0}"' -f $session))
 try {
@@ -623,6 +635,12 @@ If a diagnostic command fails because of quoting, parsing, permissions, or tool 
 Do not treat a failed diagnostic command as evidence about the computer itself.
 Once the available evidence is sufficient to answer the user's task with stated uncertainty, stop investigating instead of collecting redundant evidence.
 Do not ask the user to manually run commands that you can run yourself.
+
+TASK MODE:
+- This session is $taskMode.
+- READ_ONLY means the user's task is observation/diagnosis only. Do not modify files, registry, services, packages, configuration, security settings, accounts, scheduled tasks, boot state, or any other system state. Use ordinary read-only commands and elevated broker read actions as needed. No broker-owned confirmation is required for read-only actions.
+- SYSTEM_CHANGE means the user's request explicitly asks to change system state. Use the existing typed broker boundaries and confirmations for mutation actions.
+- The launcher and Broker-Request.ps1 enforce the mode independently of your reasoning. If a READ_ONLY task turns out to require a change, explain that a separate system-change task is required instead of attempting the change.
 
 PRIVILEGED BROKER:
 - A separate UAC-elevated SWINTUS broker is already running for this session.
@@ -710,7 +728,7 @@ function Invoke-DrSwintusCodexTask {
         $psi.Environment['TEMP']=$codexSessionTemp
         $psi.Environment['TMP']=$codexSessionTemp
         $psi.Environment['TMPDIR']=$codexSessionTemp
-        foreach($argument in @('exec','--config','approval_policy="never"','--config','windows.sandbox="unelevated"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-')){ [void]$psi.ArgumentList.Add([string]$argument) }
+        foreach($argument in @('exec','--config','approval_policy="never"','--config','windows.sandbox="unelevated"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox',$codexSandboxMode,'--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-')){ [void]$psi.ArgumentList.Add([string]$argument) }
         $process=[System.Diagnostics.Process]::new()
         $process.StartInfo=$psi
         Write-PreAgentLog -Stage 'codex-process' -Status 'START' -Detail ('workspace={0}; taskCodexHome={1}; temp={2}' -f $session,$taskCodexHome,$codexSessionTemp)
@@ -841,3 +859,4 @@ if(-not $SingleTask){
         try { & $PSCommandPath -Task $nextTask -SingleTask } catch { Write-Host ''; Write-Host 'Задача завершилась с ошибкой. Можно сразу ввести следующую задачу.' }
     }
 }
+

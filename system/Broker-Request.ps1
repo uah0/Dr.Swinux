@@ -69,6 +69,24 @@ if(-not (Test-Path -LiteralPath $readyPath -PathType Leaf)){
     throw 'SWINTUS privileged broker is not ready.'
 }
 
+$taskModePath=Join-Path $Session 'task-mode.json'
+$taskMode='SYSTEM_CHANGE'
+if(Test-Path -LiteralPath $taskModePath -PathType Leaf){
+    try {
+        $modeDoc=Get-Content -LiteralPath $taskModePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        if([string]$modeDoc.mode -in @('READ_ONLY','SYSTEM_CHANGE')){ $taskMode=[string]$modeDoc.mode }
+        else { throw 'invalid task mode' }
+    } catch {
+        throw ('Invalid Dr.Swinux task mode metadata: '+$_.Exception.Message)
+    }
+}
+if($taskMode -eq 'READ_ONLY'){
+    $mutationActions=@('EnsureWinget','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue')
+    if($Action -in $mutationActions){
+        throw ("Action '{0}' is blocked because this Dr.Swinux session is READ_ONLY." -f $Action)
+    }
+}
+
 if($Action -eq 'EnsureWinget'){
     if(Test-ClientWingetReady){
         Clear-WingetBlockerCache
@@ -88,7 +106,25 @@ if($Action -eq 'EnsureWinget'){
 }
 
 if($TimeoutSeconds -eq 45){
-    if($Action -eq 'EnsureWinget'){$TimeoutSeconds=180}
+    $taskModePath=Join-Path $Session 'task-mode.json'
+$taskMode='SYSTEM_CHANGE'
+if(Test-Path -LiteralPath $taskModePath -PathType Leaf){
+    try {
+        $modeDoc=Get-Content -LiteralPath $taskModePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        if([string]$modeDoc.mode -in @('READ_ONLY','SYSTEM_CHANGE')){ $taskMode=[string]$modeDoc.mode }
+        else { throw 'invalid task mode' }
+    } catch {
+        throw ('Invalid Dr.Swinux task mode metadata: '+$_.Exception.Message)
+    }
+}
+if($taskMode -eq 'READ_ONLY'){
+    $mutationActions=@('EnsureWinget','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue')
+    if($Action -in $mutationActions){
+        throw ("Action '{0}' is blocked because this Dr.Swinux session is READ_ONLY." -f $Action)
+    }
+}
+
+if($Action -eq 'EnsureWinget'){$TimeoutSeconds=180}
     elseif($Action -in @('InstallPackage','UninstallPackage','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback')){$TimeoutSeconds=300}
 }
 if($TimeoutSeconds -lt 5){$TimeoutSeconds=5}
@@ -113,7 +149,25 @@ while((Get-Date) -lt $deadline){
     if(Test-Path -LiteralPath $responsePath -PathType Leaf){
         $raw=Get-Content -LiteralPath $responsePath -Raw -Encoding UTF8
         Remove-Item -LiteralPath $responsePath -Force -ErrorAction SilentlyContinue
-        if($Action -eq 'EnsureWinget'){
+        $taskModePath=Join-Path $Session 'task-mode.json'
+$taskMode='SYSTEM_CHANGE'
+if(Test-Path -LiteralPath $taskModePath -PathType Leaf){
+    try {
+        $modeDoc=Get-Content -LiteralPath $taskModePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        if([string]$modeDoc.mode -in @('READ_ONLY','SYSTEM_CHANGE')){ $taskMode=[string]$modeDoc.mode }
+        else { throw 'invalid task mode' }
+    } catch {
+        throw ('Invalid Dr.Swinux task mode metadata: '+$_.Exception.Message)
+    }
+}
+if($taskMode -eq 'READ_ONLY'){
+    $mutationActions=@('EnsureWinget','InstallTrustedPackage','UninstallTrustedPackage','InstallTrustedPackageFallback','InstallPackage','UninstallPackage','SetRegistryValue','RemoveRegistryValue')
+    if($Action -in $mutationActions){
+        throw ("Action '{0}' is blocked because this Dr.Swinux session is READ_ONLY." -f $Action)
+    }
+}
+
+if($Action -eq 'EnsureWinget'){
             try {
                 $response=$raw | ConvertFrom-Json -ErrorAction Stop
                 if([bool]$response.Ok){
@@ -133,3 +187,4 @@ while((Get-Date) -lt $deadline){
 }
 
 throw ("Timed out waiting for privileged broker response to {0}." -f $Action)
+
