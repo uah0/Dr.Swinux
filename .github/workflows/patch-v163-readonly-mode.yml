@@ -1,0 +1,46 @@
+name: Patch v1.5.63 read-only mode
+
+on:
+  push:
+    paths:
+      - '.github/scripts/patch-v163-readonly-mode.ps1'
+      - '.github/workflows/patch-v163-readonly-mode.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUTF8: '1'
+
+jobs:
+  migrate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply migration
+        shell: pwsh
+        run: ./.github/scripts/patch-v163-readonly-mode.ps1
+
+      - name: Audit diff
+        shell: pwsh
+        run: |
+          $allowed=@('system/Start-Agent.ps1','system/Broker-Request.ps1','system/VERSION.txt')
+          $changed=@(git diff --name-only)
+          if($changed.Count -eq 0){ throw 'Migration produced no changes.' }
+          foreach($path in $changed){ if($path -notin $allowed){ throw "Unexpected changed file: $path" } }
+          git diff --check
+          git diff -- system/Start-Agent.ps1 system/Broker-Request.ps1 system/VERSION.txt
+
+      - name: Commit migration
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add system/Start-Agent.ps1 system/Broker-Request.ps1 system/VERSION.txt
+          git commit -m 'Add read-only diagnostic execution mode'
+          git push origin HEAD:main
