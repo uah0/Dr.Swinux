@@ -69,12 +69,8 @@ PRIVILEGED BROKER:
 if(-not $agent.Contains($old)){ throw 'Start-Agent prompt broker anchor not found' }
 $agent=$agent.Replace($old,$new.TrimEnd())
 
-$old=@'
-foreach($argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox','workspace-write','--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-'))
-'@
-$new=@'
-foreach($argument in @('exec','--config','approval_policy=\"never\"','--config','windows.sandbox=\"unelevated\"','--config','sandbox_workspace_write.exclude_tmpdir_env_var=true','--sandbox',$codexSandboxMode,'--cd',$session,'--skip-git-repo-check','--output-last-message',$finalPath,'-'))
-'@
+$old="'--sandbox','workspace-write','--cd'"
+$new="'--sandbox',`$codexSandboxMode,'--cd'"
 if(-not $agent.Contains($old)){ throw 'Start-Agent Codex sandbox anchor not found' }
 $agent=$agent.Replace($old,$new)
 
