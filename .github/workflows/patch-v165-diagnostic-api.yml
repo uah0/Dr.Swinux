@@ -33,22 +33,10 @@ jobs:
             if($errors.Count -gt 0){ throw ("PowerShell parse error in {0}: {1}" -f $ps,(($errors | ForEach-Object {$_.Message}) -join '; ')) }
           }
 
-      - name: Audit diff
+      - name: Audit targets
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          $allowed=@(
-            'system/Start-Agent.ps1',
-            'system/Privileged-Broker.ps1',
-            'system/Broker-Request.ps1',
-            'system/Diagnostic-Tool.ps1',
-            'system/VERSION.txt',
-            'tools/Diagnostics/README.txt'
-          )
-          $changed=@(git status --porcelain | ForEach-Object { $_.Substring(3) })
-          if($changed.Count -eq 0){ throw 'Migration produced no source changes.' }
-          $unexpected=@($changed | Where-Object { $_ -notin $allowed })
-          if($unexpected.Count -gt 0){ throw ('Unexpected changed files: '+($unexpected -join ', ')) }
           if((Get-Content system/VERSION.txt -Raw).Trim() -ne 'Dr.Swinux v1.5.65-final'){ throw 'VERSION mismatch.' }
           $agent=Get-Content system/Start-Agent.ps1 -Raw
           $broker=Get-Content system/Privileged-Broker.ps1 -Raw
@@ -60,8 +48,27 @@ jobs:
           if($agent -notmatch 'diagnostic-prefetch'){ throw 'activation prefetch missing.' }
           if($agent -notmatch 'Invoke-SessionRuntimeCleanup'){ throw 'runtime cleanup missing.' }
           if(-not(Test-Path system/Diagnostic-Tool.ps1)){ throw 'Diagnostic-Tool.ps1 missing.' }
-          git diff --check
-          git diff --stat
+          if(-not(Test-Path tools/Diagnostics/README.txt)){ throw 'Diagnostics backend README missing.' }
+          git diff --check -- system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/Broker-Request.ps1 system/VERSION.txt
+
+      - name: Stage and verify exact migration set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/Broker-Request.ps1 system/Diagnostic-Tool.ps1 system/VERSION.txt tools/Diagnostics/README.txt
+          mapfile -t actual < <(git diff --cached --name-only | sort)
+          expected=(
+            system/Broker-Request.ps1
+            system/Diagnostic-Tool.ps1
+            system/Privileged-Broker.ps1
+            system/Start-Agent.ps1
+            system/VERSION.txt
+            tools/Diagnostics/README.txt
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected_sorted[@]}") <(printf '%s\n' "${actual[@]}")
+          git diff --cached --check
+          git diff --cached --stat
 
       - name: Commit migration
         shell: bash
@@ -69,6 +76,5 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add system/Start-Agent.ps1 system/Privileged-Broker.ps1 system/Broker-Request.ps1 system/Diagnostic-Tool.ps1 system/VERSION.txt tools/Diagnostics/README.txt
           git commit -m "Release v1.5.65 diagnostic API and cleanup"
           git push origin HEAD:main
