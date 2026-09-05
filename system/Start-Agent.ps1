@@ -432,19 +432,14 @@ Write-PreAgentLog -Stage 'codex-auth-env' -Status 'ISOLATED' -Detail ('clearedPr
 $codeModeHost=Join-Path $toolsRoot 'Codex\codex-code-mode-host.exe'
 $commandRunner=Join-Path $toolsRoot 'Codex\codex-command-runner.exe'
 $sandboxSetup=Join-Path $toolsRoot 'Codex\codex-windows-sandbox-setup.exe'
-$mainCliValid=$false
-if(Test-Path -LiteralPath $codex -PathType Leaf){
-    try {
-        $versionText=(& $codex --version 2>&1 | Out-String).Trim()
-        if(($LASTEXITCODE -eq 0) -and ($versionText -match ('(?m)^codex-cli\s+{0}(?:\s|$)' -f [regex]::Escape($requiredCodexVersion)))){ $mainCliValid=$true }
-    } catch {}
-}
+$mainCliPresent=Test-Path -LiteralPath $codex -PathType Leaf
 $codeModeHostPresent=Test-Path -LiteralPath $codeModeHost -PathType Leaf
 $commandRunnerPresent=Test-Path -LiteralPath $commandRunner -PathType Leaf
 $sandboxSetupPresent=Test-Path -LiteralPath $sandboxSetup -PathType Leaf
-Write-PreAgentLog -Stage 'codex-runtime' -Status $(if($mainCliValid -and $codeModeHostPresent -and $commandRunnerPresent -and $sandboxSetupPresent){'OK'}else{'NEEDS_SETUP'}) -Detail ('requiredVersion={0}; cliValid={1}; codeModeHost={2}; commandRunner={3}; sandboxSetup={4}; cliPath={5}' -f $requiredCodexVersion,$mainCliValid,$codeModeHostPresent,$commandRunnerPresent,$sandboxSetupPresent,$codex)
+$runtimePresent=($mainCliPresent -and $codeModeHostPresent -and $commandRunnerPresent -and $sandboxSetupPresent)
+Write-PreAgentLog -Stage 'codex-runtime' -Status $(if($runtimePresent){'READY_FAST'}else{'NEEDS_SETUP'}) -Detail ('requiredVersion={0}; cliPresent={1}; codeModeHost={2}; commandRunner={3}; sandboxSetup={4}; validation=managed-presence-fast-path; cliPath={5}' -f $requiredCodexVersion,$mainCliPresent,$codeModeHostPresent,$commandRunnerPresent,$sandboxSetupPresent,$codex)
 
-if((-not $mainCliValid) -or (-not $codeModeHostPresent) -or (-not $commandRunnerPresent) -or (-not $sandboxSetupPresent)){
+if(-not $runtimePresent){
     Write-PreAgentLog -Stage 'codex-setup' -Status 'BEGIN' -Detail ('setupScript={0}' -f $setup)
     Write-Host 'Подготавливаю компоненты Dr.Swinux...'
     $setupLog=Join-Path $reportsRoot 'setup.log'
@@ -457,15 +452,10 @@ if((-not $mainCliValid) -or (-not $codeModeHostPresent) -or (-not $commandRunner
 foreach($requiredPath in @($codex,$codeModeHost,$commandRunner,$sandboxSetup)){
     if(-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)){ Stop-WithMessage ("После подготовки не найден компонент Codex: {0}" -f $requiredPath) }
 }
-if($mainCliValid -and $codeModeHostPresent -and $commandRunnerPresent -and $sandboxSetupPresent){
-    Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_CACHED' -Detail ('version={0}; CODEX_HOME={1}; duplicate --version probe skipped' -f $versionText,$codexHome)
+if($runtimePresent){
+    Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_FAST' -Detail ('requiredVersion={0}; CODEX_HOME={1}; no Codex process launched during startup validation' -f $requiredCodexVersion,$codexHome)
 } else {
-    try {
-        $finalCodexVersion=(& $codex --version 2>&1 | Out-String).Trim()
-        $finalCodexExit=$LASTEXITCODE
-        if($finalCodexExit -ne 0){ Stop-WithMessage ("Codex после подготовки не прошёл проверку версии. Код: {0}" -f $finalCodexExit) }
-        Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_AFTER_SETUP' -Detail ('exit={0}; version={1}; CODEX_HOME={2}' -f $finalCodexExit,$finalCodexVersion,$codexHome)
-    } catch { Stop-WithMessage ("Не удалось проверить Codex после подготовки: {0}" -f $_.Exception.Message) }
+    Write-PreAgentLog -Stage 'codex-runtime' -Status 'READY_AFTER_SETUP' -Detail ('requiredVersion={0}; CODEX_HOME={1}; Setup-PortableCodex completed and required files are present' -f $requiredCodexVersion,$codexHome)
 }
 
 $authLog=Join-Path $reportsRoot 'auth-status.log'
@@ -801,20 +791,45 @@ function Invoke-DrSwintusCodexTask {
     }
 }
 
+function Remove-SessionRuntimePathWithRetry {
+    param([Parameter(Mandatory=$true)][string]$Path,[Parameter(Mandatory=$true)][string]$Label,[int]$Attempts=16,[int]$DelayMs=250)
+    $lastError=$null
+    for($attempt=1;$attempt -le $Attempts;$attempt++){
+        try {
+            if(-not(Test-Path -LiteralPath $Path)){ return [pscustomobject]@{Removed=$true;Label=$Label;Error=$null;Attempts=$attempt} }
+            Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+            if(-not(Test-Path -LiteralPath $Path)){ return [pscustomobject]@{Removed=$true;Label=$Label;Error=$null;Attempts=$attempt} }
+        } catch { $lastError=$_.Exception.Message }
+        if($attempt -lt $Attempts){
+            if(($attempt % 4) -eq 0){ try{[GC]::Collect();[GC]::WaitForPendingFinalizers()}catch{} }
+            Start-Sleep -Milliseconds $DelayMs
+        }
+    }
+    return [pscustomobject]@{Removed=$false;Label=$Label;Error=$lastError;Attempts=$Attempts}
+}
+
 function Invoke-SessionRuntimeCleanup {
     $removed=@();$warnings=@()
-    foreach($runtimeDir in @($codexSessionTemp,$taskCodexHome)){
-        try { if(Test-Path -LiteralPath $runtimeDir){Remove-Item -LiteralPath $runtimeDir -Recurse -Force -ErrorAction Stop;$removed+=(Split-Path -Leaf $runtimeDir)} }
-        catch {$warnings+=((Split-Path -Leaf $runtimeDir)+': '+$_.Exception.Message)}
-    }
-    try {if($null -ne $brokerProcess -and -not $brokerProcess.HasExited){try{$brokerProcess.WaitForExit(2500)|Out-Null}catch{}}} catch {}
-    foreach($name in @('requests','responses')){
-        $dir=Join-Path $brokerRoot $name
-        try {if(Test-Path -LiteralPath $dir){Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction Stop;$removed+=('broker/'+$name)}} catch {$warnings+=('broker/'+$name+': '+$_.Exception.Message)}
+    try {
+        if($null -ne $brokerProcess -and -not $brokerProcess.HasExited){
+            try{$brokerProcess.WaitForExit(5000)|Out-Null}catch{}
+        }
+    } catch {}
+
+    foreach($item in @(
+        [pscustomobject]@{Path=$codexSessionTemp;Label='.codex-tmp'},
+        [pscustomobject]@{Path=$taskCodexHome;Label='.codex-home'},
+        [pscustomobject]@{Path=(Join-Path $brokerRoot 'requests');Label='broker/requests'},
+        [pscustomobject]@{Path=(Join-Path $brokerRoot 'responses');Label='broker/responses'}
+    )){
+        $result=Remove-SessionRuntimePathWithRetry -Path $item.Path -Label $item.Label
+        if($result.Removed){$removed+=('{0}({1})' -f $result.Label,$result.Attempts)}
+        else{$warnings+=('{0} after {1} attempts: {2}' -f $result.Label,$result.Attempts,$result.Error)}
     }
     foreach($name in @('ready.json','stop')){
         $p=Join-Path $brokerRoot $name
-        try {if(Test-Path -LiteralPath $p){Remove-Item -LiteralPath $p -Force -ErrorAction Stop;$removed+=('broker/'+$name)}} catch {$warnings+=('broker/'+$name+': '+$_.Exception.Message)}
+        try {if(Test-Path -LiteralPath $p){Remove-Item -LiteralPath $p -Force -ErrorAction Stop};if(-not(Test-Path -LiteralPath $p)){$removed+=('broker/'+$name)}}
+        catch {$warnings+=('broker/'+$name+': '+$_.Exception.Message)}
     }
     Write-PreAgentLog -Stage 'session-cleanup' -Status $(if($warnings.Count -eq 0){'OK'}else{'WARN'}) -Detail ('removed={0}; warnings={1}' -f ($removed -join ','),($warnings -join ' | '))
 }

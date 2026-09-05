@@ -106,8 +106,37 @@ function Get-WifiDetails {
 
 function Get-WindowsActivationStatus {
     $applicationId='55c92734-d682-4d71-983e-d6ec3f16059f'
-    $os=$null
-    try { $os=Get-CimInstance Win32_OperatingSystem -ErrorAction Stop | Select-Object -First 1 Caption,Version,BuildNumber } catch {}
+    $activationResult=$null
+    $windowsName=$null;$windowsVersion=$null;$buildNumber=$null;$partialKey=$null
+    try {
+        $activation=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Activation' -ErrorAction Stop
+        if($null -ne $activation.PSObject.Properties['ProductActivationResult']){$activationResult=[int]$activation.ProductActivationResult}
+    } catch { Write-BrokerLog ("ACTIVATION_REGISTRY_WARN error={0}" -f $_.Exception.Message) }
+    try {
+        $cv=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction Stop
+        if($null -ne $cv.PSObject.Properties['ProductName']){$windowsName=[string]$cv.ProductName}
+        if($null -ne $cv.PSObject.Properties['DisplayVersion']){$windowsVersion=[string]$cv.DisplayVersion}
+        if($null -ne $cv.PSObject.Properties['CurrentBuildNumber']){$buildNumber=[string]$cv.CurrentBuildNumber}
+    } catch {}
+    try {
+        $spp=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -ErrorAction Stop
+        if($null -ne $spp.PSObject.Properties['BackupProductKeyDefault']){
+            $key=[string]$spp.BackupProductKeyDefault
+            if($key.Length -ge 5){$partialKey=$key.Substring($key.Length-5)}
+        }
+    } catch {}
+
+    # ProductActivationResult=0 is the fast positive path observed from SPP.
+    # Ambiguous/missing/non-zero registry state falls back to canonical licensing CIM.
+    if($activationResult -eq 0){
+        Write-BrokerLog 'ACTIVATION_RESULT source=SoftwareProtectionPlatformRegistry activated=True fastPath=True'
+        return [pscustomobject]@{
+            Activated=$true;Status='Licensed';LicenseStatus=1;LicenseStatusReason=$null
+            GracePeriodRemainingMinutes=$null;ActivationResult=$activationResult;EvidenceSource='SoftwareProtectionPlatformRegistry'
+            WindowsName=$windowsName;WindowsVersion=$windowsVersion;BuildNumber=$buildNumber
+            ProductName=$null;Channel=$null;PartialProductKey=$partialKey
+        }
+    }
 
     $products=@()
     try {
@@ -115,22 +144,14 @@ function Get-WindowsActivationStatus {
             Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.PartialProductKey) } |
             Select-Object Name,Description,LicenseStatus,LicenseStatusReason,GracePeriodRemaining,PartialProductKey)
     } catch { Write-BrokerLog ("ACTIVATION_CIM_WARN error={0}" -f $_.Exception.Message) }
-
     $selected=$null
     if($products.Count -gt 0){
         $licensed=@($products | Where-Object {[int]$_.LicenseStatus -eq 1} | Select-Object -First 1)
         if($licensed.Count -gt 0){$selected=$licensed[0]}else{$selected=$products[0]}
     }
-
-    $activationResult=$null
-    try {
-        $reg=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Activation' -ErrorAction Stop
-        if($null -ne $reg.PSObject.Properties['ProductActivationResult']){$activationResult=[int]$reg.ProductActivationResult}
-    } catch { Write-BrokerLog ("ACTIVATION_REGISTRY_WARN error={0}" -f $_.Exception.Message) }
-
     $statusMap=@{0='Unlicensed';1='Licensed';2='OOBGrace';3='OOTGrace';4='NonGenuineGrace';5='Notification';6='ExtendedGrace'}
     $activated=$null;$status='Unknown';$licenseStatus=$null;$source='Unavailable'
-    $reason=$null;$grace=$null;$productName=$null;$description=$null;$partialKey=$null
+    $reason=$null;$grace=$null;$productName=$null;$description=$null
     if($null -ne $selected){
         $licenseStatus=[int]$selected.LicenseStatus
         if($statusMap.ContainsKey($licenseStatus)){$status=$statusMap[$licenseStatus]}
@@ -138,9 +159,8 @@ function Get-WindowsActivationStatus {
         $reason=$selected.LicenseStatusReason;$grace=$selected.GracePeriodRemaining
         $productName=[string]$selected.Name;$description=[string]$selected.Description;$partialKey=[string]$selected.PartialProductKey
     } elseif($null -ne $activationResult){
-        $activated=($activationResult -eq 0);$status=if($activated){'Licensed'}else{'NotLicensedOrError'};$source='SoftwareProtectionPlatformRegistry'
+        $activated=$false;$status='NotLicensedOrError';$source='SoftwareProtectionPlatformRegistry'
     }
-
     $channel=$null
     if(-not [string]::IsNullOrWhiteSpace($description)){
         if($description -match '(?i)OEM_DM'){$channel='OEM_DM'}
@@ -149,9 +169,7 @@ function Get-WindowsActivationStatus {
         elseif($description -match '(?i)RETAIL'){$channel='Retail'}
         elseif($description -match '(?i)OEM'){$channel='OEM'}
     }
-    $windowsName=$null;$windowsVersion=$null;$buildNumber=$null
-    if($null -ne $os){$windowsName=[string]$os.Caption;$windowsVersion=[string]$os.Version;$buildNumber=[string]$os.BuildNumber}
-    Write-BrokerLog ("ACTIVATION_RESULT source={0} activated={1} licenseStatus={2} activationResult={3}" -f $source,$activated,$licenseStatus,$activationResult)
+    Write-BrokerLog ("ACTIVATION_RESULT source={0} activated={1} licenseStatus={2} activationResult={3} fastPath=False" -f $source,$activated,$licenseStatus,$activationResult)
     [pscustomobject]@{
         Activated=$activated;Status=$status;LicenseStatus=$licenseStatus;LicenseStatusReason=$reason
         GracePeriodRemainingMinutes=$grace;ActivationResult=$activationResult;EvidenceSource=$source
