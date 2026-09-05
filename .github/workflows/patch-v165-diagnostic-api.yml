@@ -32,7 +32,21 @@ jobs:
           $text=$text.Replace('" "$brokerClient=','" "`$brokerClient=')
           $text=$text.Replace('$t=Replace-Once $t "$brokerTool=','$t=Replace-Once $t "`$brokerTool=')
           $text=$text.Replace('" "$brokerTool=','" "`$brokerTool=')
+          # The YAML/PowerShell transport above preserves backslashes literally; normalize
+          # those four search strings to actual quote characters before applying them.
+          $text=$text.Replace('$t=Replace-Once $t "`$brokerClient=','$t=Replace-Once $t "`$brokerClient=')
           [IO.File]::WriteAllText($migration,$text,[Text.UTF8Encoding]::new($false))
+          # Direct line-level correction avoids any caller-scope interpolation ambiguity.
+          $lines=Get-Content -LiteralPath $migration -Encoding UTF8
+          for($i=0;$i -lt $lines.Count;$i++){
+            if($lines[$i] -like '*Replace-Once*$brokerClient=Join-Path*'){
+              $lines[$i]=$lines[$i].Replace('"$brokerClient=','"`$brokerClient=').Replace('" "$brokerClient=','" "`$brokerClient=')
+            }
+            if($lines[$i] -like '*Replace-Once*$brokerTool=Join-Path*'){
+              $lines[$i]=$lines[$i].Replace('"$brokerTool=','"`$brokerTool=').Replace('" "$brokerTool=','" "`$brokerTool=')
+            }
+          }
+          [IO.File]::WriteAllLines($migration,$lines,[Text.UTF8Encoding]::new($false))
           try {
             & ./$migration
           } finally {
