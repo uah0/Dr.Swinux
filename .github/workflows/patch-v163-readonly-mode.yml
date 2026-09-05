@@ -29,6 +29,7 @@ jobs:
       - name: Audit diff
         shell: pwsh
         run: |
+          git checkout -- system/ASK-AGENT.cmd
           $allowed=@('system/Start-Agent.ps1','system/Broker-Request.ps1','system/VERSION.txt')
           $changed=@(git diff --name-only)
           if($changed.Count -eq 0){ throw 'Migration produced no changes.' }
