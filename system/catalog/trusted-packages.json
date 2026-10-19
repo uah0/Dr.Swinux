@@ -3,8 +3,8 @@
   "source": {
     "name": "microsoft/winget-pkgs",
     "repository": "https://github.com/microsoft/winget-pkgs",
-    "generatedAt": "2026-10-12T12:07:02.9486430Z",
-    "commit": "db0460279fd904ca428c68dab28b2295ca5d0571",
+    "generatedAt": "2026-10-19T10:02:20.8156057Z",
+    "commit": "16a1cf2cdb0ab480506cef361146633af6a7bfe4",
     "policy": "automatic-msi-wix-productcode-v1"
   },
   "packages": [
@@ -389,15 +389,15 @@
     },
     {
       "id": "ADInstruments.LtSampling",
-      "version": "1.5.1.0",
+      "version": "1.5.2.0",
       "displayName": "ADInstruments.LtSampling",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://lt-sampling.kuracloud.com/win/1.5.1/lt-sampling-1.5.0-8-g556f692.msi",
-          "sha256": "F806EC3F061B63169E608075EC569FAC24A52087DBF8E74E3B95C66757DBFAEA",
-          "productCode": "{68CD0167-031B-425D-8695-FC0CA5556264}",
+          "url": "https://lt-sampling.kuracloud.com/win/1.5.2/lt-sampling-1.5.1-9-g2f8db4c.msi",
+          "sha256": "E2039B6412FE04B1F3A6CDEF1066237471B483B4A92BEC8C3AA215B887ADCA18",
+          "productCode": "{DE692999-EB6C-4C5F-9066-8FC1D6156B6C}",
           "displayNamePattern": "",
           "publisherPattern": "^ADInstruments\\ NZ\\ Ltd$",
           "silentArgs": []
@@ -738,15 +738,15 @@
     },
     {
       "id": "Aircall.AircallWorkspace",
-      "version": "1.18.10",
+      "version": "1.18.18",
       "displayName": "Aircall.AircallWorkspace",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://download-electron.aircall.io/aircall-workspace/Aircall-Workspace-1.18.10-x64.msi",
-          "sha256": "455961712668FBC1F739CFB1D01F4D08A1D9FC8723DEE2B957F82A2D5FDA93CE",
-          "productCode": "{3F987C4F-31E1-4F58-B154-7AD8C75FE08B}",
+          "url": "https://download-electron.aircall.io/aircall-workspace/Aircall-Workspace-1.18.18-x64.msi",
+          "sha256": "3ED189AD7C4B80AF63388C95E1EBE7782810A509B6D4D34A5C6ABF1F9288AB2B",
+          "productCode": "{1FA7455F-6770-4F8F-9A3E-3113782C72FC}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -843,16 +843,16 @@
     },
     {
       "id": "alfaview.alfaview",
-      "version": "9.29.0",
+      "version": "9.30.2",
       "displayName": "alfaview.alfaview",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://assets.alfaview.com/stable/win/alfaview-setup-win-production-9.29.0.msi",
-          "sha256": "4AAC5A5FCDD7B4AC46995C5345CF49B091D227601D428DC7D59A22E43B78A82D",
-          "productCode": "{AF5FC305-5D94-4F59-8C4C-329A5DA485D4}",
-          "displayNamePattern": "^alfaview\\ msi\\ version\\ 9\\.29\\.0",
+          "url": "https://assets.alfaview.com/stable/win/alfaview-setup-win-production-9.30.2.msi",
+          "sha256": "A316C690F3098D21967DB322915CEF55C3DE854B29338554BA023CC69202A3F3",
+          "productCode": "{EC3CB0D4-DA30-4686-99B5-C39F4EEDF55E}",
+          "displayNamePattern": "^alfaview\\ msi\\ version\\ 9\\.30\\.2",
           "publisherPattern": "",
           "silentArgs": []
         }
@@ -1648,15 +1648,15 @@
     },
     {
       "id": "AprilNEA.OpenLogi",
-      "version": "0.8.13",
+      "version": "0.8.14",
       "displayName": "AprilNEA.OpenLogi",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/AprilNEA/OpenLogi/releases/download/v0.8.13/OpenLogi-v0.8.13-windows-x86_64.msi",
-          "sha256": "AFB456D326135A822D216B21A06113DE8178515B38D5E153B4E167D7927EB6A5",
-          "productCode": "{760EB450-B9FE-4442-B153-BF0345F73AA3}",
+          "url": "https://github.com/AprilNEA/OpenLogi/releases/download/v0.8.14/OpenLogi-v0.8.14-windows-x86_64.msi",
+          "sha256": "0FCCDA2AA13F3590629B795A7E7D7097AAE72B21F0E213A434CA44210057654E",
+          "productCode": "{781DD743-33B4-479F-A216-246807089EFE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -1664,9 +1664,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/AprilNEA/OpenLogi/releases/download/v0.8.13/OpenLogi-v0.8.13-windows-arm64.msi",
-          "sha256": "15369FECE8B169471726EDBCF2A3A7B1D17B721C4ADC86125178EFA42F4E53CE",
-          "productCode": "{A70C8F5A-DA4D-4F4D-864A-8019EAF420A8}",
+          "url": "https://github.com/AprilNEA/OpenLogi/releases/download/v0.8.14/OpenLogi-v0.8.14-windows-arm64.msi",
+          "sha256": "85AE67834526495EE641226DFE69671EDADBA7CD3A0C176333C775A475FDDAFC",
+          "productCode": "{067E3CC2-CCF7-4724-AACD-A9FC0512E933}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -1830,16 +1830,16 @@
       ]
     },
     {
-      "id": "ArtCraft.VectorCraft",
-      "version": "0.9.0",
-      "displayName": "ArtCraft.VectorCraft",
+      "id": "ArtCraft.CadCraft",
+      "version": "0.7.0",
+      "displayName": "ArtCraft.CadCraft",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.9.0/vectorcraft-0.9.0-windows-x86.msi",
-          "sha256": "1BBFC98CA33A045C4C5AC6AEF7C87D7E1A9A12DD1C6425761C4CC51658023917",
-          "productCode": "{96F74991-6D91-4298-B0AF-35801678A8FE}",
+          "url": "https://github.com/storytold/cadcraft/releases/download/v0.7.0/cadcraft-0.7.0-windows-x86.msi",
+          "sha256": "3368047A85872E402517CD16218935750EFAFBB5877B239A7AD4FFC02826FDE7",
+          "productCode": "{CCD48282-D627-479F-A12D-5F7480515551}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -1847,9 +1847,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.9.0/vectorcraft-0.9.0-windows-x64.msi",
-          "sha256": "DE590A69AC3345F32586EFA1B608F868C5CA71CDE5646AED715054C68DA73C23",
-          "productCode": "{4A30A4CB-6249-4CC2-AE76-10F300388781}",
+          "url": "https://github.com/storytold/cadcraft/releases/download/v0.7.0/cadcraft-0.7.0-windows-x64.msi",
+          "sha256": "C2FCDB79DFF80023FBAA567881474DB1A78FBAD9F455481198BE8F32AF2017EF",
+          "productCode": "{93916749-D6C0-4188-9B2D-5B0E5D384E0C}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -1857,9 +1857,73 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.9.0/vectorcraft-0.9.0-windows-arm64.msi",
-          "sha256": "481C2981EAFC6DE6A35295420EE7D8D65C65BF986B79E2AE272536AB8CA3274D",
-          "productCode": "{7DB1848A-1002-457B-994D-EF5BA77B0316}",
+          "url": "https://github.com/storytold/cadcraft/releases/download/v0.7.0/cadcraft-0.7.0-windows-arm64.msi",
+          "sha256": "DD4ECE59F1741F06138AE68CB2967F4350070CDDC611F0B22B573DF0E1C3408A",
+          "productCode": "{B04CBF75-5533-462C-A451-FD54BF692D5A}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "ArtCraft.VectorCraft",
+      "version": "0.12.0",
+      "displayName": "ArtCraft.VectorCraft",
+      "installers": [
+        {
+          "architecture": "x86",
+          "installerType": "wix",
+          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.12.0/vectorcraft-0.12.0-windows-x86.msi",
+          "sha256": "136EBBD9BC9A986507D8BC092BD676201063E7F61A59690DA7CFD7CA2BE47D2B",
+          "productCode": "{2AE70B18-31FB-4387-A4E9-A9B7F382DEF4}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        },
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.12.0/vectorcraft-0.12.0-windows-x64.msi",
+          "sha256": "2F89995D97478EAA75D132316138AA528367AD1E840A3D910E554E7C4650C33A",
+          "productCode": "{7C1403FA-FE33-46F1-9013-C261C1395404}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        },
+        {
+          "architecture": "arm64",
+          "installerType": "wix",
+          "url": "https://github.com/storytold/vectorcraft/releases/download/v0.12.0/vectorcraft-0.12.0-windows-arm64.msi",
+          "sha256": "E3994AD1763EC20A3927B0217E4D8263039AB706E326F302526B81B80A33EB70",
+          "productCode": "{069642D7-EE48-4FC5-843A-838D2FDF5DA6}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "ArtemChepurnyi.Keyguard",
+      "version": "3.4.0",
+      "displayName": "ArtemChepurnyi.Keyguard",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/AChep/keyguard-app/releases/download/r20261013/Keyguard-3.4.0.msi",
+          "sha256": "CDEE3087D32B24B16E9D7BA08142599204816FB46C4E0BE49369F837D511BECC",
+          "productCode": "{9F8EE0F6-918C-3C6D-AF7E-439932FA0231}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        },
+        {
+          "architecture": "arm64",
+          "installerType": "wix",
+          "url": "https://github.com/AChep/keyguard-app/releases/download/r20261013/Keyguard-3.4.0-aarch64.msi",
+          "sha256": "0D8A13290F973D829FB9EAA403D1ED6735A84BC3EB9DF13D1559667E9BB19BA9",
+          "productCode": "{7A36DDD9-B993-40B7-B44A-B0378FA8E3DB}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -2105,15 +2169,15 @@
     },
     {
       "id": "axpnet.AeroFTP",
-      "version": "4.2.2",
+      "version": "4.2.3",
       "displayName": "axpnet.AeroFTP",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/axpdev-lab/aeroftp/releases/download/v4.2.2/AeroFTP_4.2.2_x64_en-US.msi",
-          "sha256": "50C1668B7960B767C76F1A0A8C7138400C4FAA9D99B263FAE53D550792281364",
-          "productCode": "{E1B5E455-501D-4DBB-96C2-4DC1E1F042C5}",
+          "url": "https://github.com/axpdev-lab/aeroftp/releases/download/v4.2.3/AeroFTP_4.2.3_x64_en-US.msi",
+          "sha256": "877707DF1D32E0F5BA6E7D5A3EE6DAED1D18E3B9A1740F968BEA5EF53ADE9B69",
+          "productCode": "{1106FA4D-BBAE-4467-82C6-9E4445C18352}",
           "displayNamePattern": "",
           "publisherPattern": "^aeroftp$",
           "silentArgs": []
@@ -5634,15 +5698,15 @@
     },
     {
       "id": "Cisco.Webex",
-      "version": "46.9.0.35800",
+      "version": "46.10.0.36042",
       "displayName": "Cisco.Webex",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://binaries.webex.com/WebexDesktop-Win-64-Gold/20260908010841/Webex.msi",
-          "sha256": "2613B6C80034E2FAE46489649D8D9FFBBB94A4A4041614537E45616AD24243A1",
-          "productCode": "{AB51C413-48BD-5707-A269-49EE0D1FCD4B}",
+          "url": "https://binaries.webex.com/WebexDesktop-Win-64-Gold/20261012153007/Webex.msi",
+          "sha256": "3E843018377B64A36BED292410A0E25A033804AE9491DB53E0A99494B1ED8BB3",
+          "productCode": "{E07BD927-C88E-5F0C-BBD0-5383E07540F3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -5650,9 +5714,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://binaries.webex.com/WebexDesktop-Win-64-Gold/20260908010841/Webex.msi",
-          "sha256": "2613B6C80034E2FAE46489649D8D9FFBBB94A4A4041614537E45616AD24243A1",
-          "productCode": "{AB51C413-48BD-5707-A269-49EE0D1FCD4B}",
+          "url": "https://binaries.webex.com/WebexDesktop-Win-64-Gold/20261012153007/Webex.msi",
+          "sha256": "3E843018377B64A36BED292410A0E25A033804AE9491DB53E0A99494B1ED8BB3",
+          "productCode": "{E07BD927-C88E-5F0C-BBD0-5383E07540F3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -5660,9 +5724,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://binaries.webex.com/webexdesktop-win-arm-64-gold/20260908005326/Webex.msi",
-          "sha256": "B67A39DD63A7BC21B73265E09A24D25C23497D95D3F68937C98F78BF00CF3004",
-          "productCode": "{A83F3938-656E-5489-A417-2150FE6D405F}",
+          "url": "https://binaries.webex.com/webexdesktop-win-arm-64-gold/20261012150156/Webex.msi",
+          "sha256": "9D3B94A4164F38C011F30F4135C7CFB9C6E030E47E8C37D5901008130658FFF6",
+          "productCode": "{9B4FBE69-4501-5B4D-B005-1EBA007E60CD}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -5670,9 +5734,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://binaries.webex.com/webexdesktop-win-arm-64-gold/20260908005326/Webex.msi",
-          "sha256": "B67A39DD63A7BC21B73265E09A24D25C23497D95D3F68937C98F78BF00CF3004",
-          "productCode": "{A83F3938-656E-5489-A417-2150FE6D405F}",
+          "url": "https://binaries.webex.com/webexdesktop-win-arm-64-gold/20261012150156/Webex.msi",
+          "sha256": "9D3B94A4164F38C011F30F4135C7CFB9C6E030E47E8C37D5901008130658FFF6",
+          "productCode": "{9B4FBE69-4501-5B4D-B005-1EBA007E60CD}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -5898,15 +5962,15 @@
     },
     {
       "id": "Cloudflare.cloudflared",
-      "version": "2026.10.0",
+      "version": "2026.10.1",
       "displayName": "Cloudflare.cloudflared",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/cloudflare/cloudflared/releases/download/2026.10.0/cloudflared-windows-386.msi",
-          "sha256": "0CD8BD6FF1D5B2A8B57268F7695FDFA820339CBE75CF1905E7CEF44CE5BBC866",
-          "productCode": "{E13B8CC8-66FF-415A-A53E-7696A442F87B}",
+          "url": "https://github.com/cloudflare/cloudflared/releases/download/2026.10.1/cloudflared-windows-386.msi",
+          "sha256": "4FCF3980EB3FF9CAC349E07246600044194D411B9E3264505BBB6AA2E3F8283A",
+          "productCode": "{02AB39B4-B54B-4DFA-AED3-15AD0A45DFC1}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -5914,9 +5978,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/cloudflare/cloudflared/releases/download/2026.10.0/cloudflared-windows-amd64.msi",
-          "sha256": "6F0ABD135EB2F76D18A491D742CDD395D982D5714BB0B8696C2B3CA98B59571F",
-          "productCode": "{2F0EE15C-E4C5-4E01-B88E-ECA4A8E1738B}",
+          "url": "https://github.com/cloudflare/cloudflared/releases/download/2026.10.1/cloudflared-windows-amd64.msi",
+          "sha256": "5AFDF57C8E98BDFAE7A5794BE0DF6D7FB0ED960FE2CDA2CE20541434A487C1BD",
+          "productCode": "{A37D1D8F-4783-4C28-83D6-F9B203B37707}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -6003,15 +6067,15 @@
     },
     {
       "id": "Codexo.ExoSnap",
-      "version": "0.8.1",
+      "version": "0.10.1",
       "displayName": "Codexo.ExoSnap",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/Exoridus/exosnap/releases/download/v0.8.1/ExoSnap-0.8.1-windows-x64.msi",
-          "sha256": "92783F9B1A603F9B60CD99562A736D7278E35CD5828340EED5AAD861C4AD1AC7",
-          "productCode": "{3DA29A53-29A1-445E-92D5-0482AF9420AB}",
+          "url": "https://github.com/Exoridus/exosnap/releases/download/v0.10.1/ExoSnap-0.10.1-windows-x64.msi",
+          "sha256": "347A6F3D25289CC5322237A2814BA988E0AEF4BF93E1612B6D45EAB4FD7B2C3E",
+          "productCode": "{8A863D0C-A7AF-4F44-8EBB-FB3AE41AE9F9}",
           "displayNamePattern": "^ExoSnap",
           "publisherPattern": "^Codexo$",
           "silentArgs": []
@@ -6363,15 +6427,15 @@
     },
     {
       "id": "cst8t.gitmun",
-      "version": "0.12.2",
+      "version": "0.13.0",
       "displayName": "cst8t.gitmun",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/cst8t/gitmun/releases/download/v0.12.2/Gitmun_0.12.2_x64.msi",
-          "sha256": "4CE5A450678CC05A241627B61A5B7CB8361FA59E9912249E0692CEE737DC35BA",
-          "productCode": "{12D54311-99A9-4197-B011-828C46D69727}",
+          "url": "https://github.com/cst8t/gitmun/releases/download/v0.13.0/Gitmun_0.13.0_x64.msi",
+          "sha256": "C2434F4766DD7EF58E8EAFC16F38EF2276E936F882CE06FE4C057D4496F6829E",
+          "productCode": "{0656FB63-AACB-439B-BC83-C8F03C8E59E3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -6407,15 +6471,15 @@
     },
     {
       "id": "Cyanfish.NAPS2",
-      "version": "8.5.0",
+      "version": "8.5.1",
       "displayName": "Cyanfish.NAPS2",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/cyanfish/naps2/releases/download/v8.5.0/naps2-8.5.0-win-x64.msi",
-          "sha256": "2358D0C146EC1028F3A96CF46A063EAC5B1A326D9AED7BC4FF1334C7D0C46D8D",
-          "productCode": "{CFC98FCB-DA3E-4E57-B57B-705802B073D3}",
+          "url": "https://github.com/cyanfish/naps2/releases/download/v8.5.1/naps2-8.5.1-win-x64.msi",
+          "sha256": "2E035C9B9B1C0E9ECE8F8F7262A84FB41750D585650366B746BA8CFF15FF93CD",
+          "productCode": "{96877BD0-2077-4BA6-932C-D86F31820792}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -7083,15 +7147,15 @@
     },
     {
       "id": "devonmochi.ByeType",
-      "version": "1.22.4",
+      "version": "1.23.2",
       "displayName": "devonmochi.ByeType",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/devonmochi/byetype/releases/download/v1.22.4/ByeType_1.22.4_x64_en-US.msi",
-          "sha256": "82FBB67308E52351C119A354FCE43A05F12AC561820C2D64DDE362D25962F251",
-          "productCode": "{77FB05DC-47C8-4CDD-B69D-5422844AD7B4}",
+          "url": "https://github.com/devonmochi/byetype/releases/download/v1.23.2/ByeType_1.23.2_x64_en-US.msi",
+          "sha256": "E6CDB9AF65A7FA610D4C218C973D1DE71A9E0A081A1198BECC10287B9BA0020A",
+          "productCode": "{3F852F10-558B-4793-989B-8B0D93C04F18}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -7178,15 +7242,15 @@
     },
     {
       "id": "Diodeme.GoldBand",
-      "version": "0.18.0",
+      "version": "0.19.1",
       "displayName": "Diodeme.GoldBand",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/diodeme/Gold-Band/releases/download/v0.18.0/Gold.Band_0.18.0_x64_en-US.msi",
-          "sha256": "9DC517A8C8FA2A769F12DAE1F7CB08348F8FFDE29B1DBF6B5E8BDB0E50D89D8D",
-          "productCode": "{9628539C-99D7-4883-9E86-5EC6A63DD881}",
+          "url": "https://github.com/diodeme/Gold-Band/releases/download/v0.19.1/Gold.Band_0.19.1_x64_en-US.msi",
+          "sha256": "B260648A32AC183CA48D9C744D3D21BB1782D9FA1D66125FB187FD000D83F94A",
+          "productCode": "{9E52F7B8-99E1-470E-9C1A-1F559E58633A}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -7330,36 +7394,36 @@
     },
     {
       "id": "dnGrep.dnGrep",
-      "version": "5.0.57.0",
+      "version": "5.0.65.0",
       "displayName": "dnGrep.dnGrep",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.57.0/dnGREP.5.0.57.x86.msi",
-          "sha256": "18B3E43DA541F158DDAFD05AD6C5D70D7AA5307594E0BA0BB9746AF854670777",
-          "productCode": "{EB8645BE-F886-4948-8B30-A61B0E757BDD}",
-          "displayNamePattern": "^dnGrep\\ 5\\.0\\.57\\ \\(x86\\)",
+          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.65.0/dnGREP.5.0.65.x86.msi",
+          "sha256": "B832B549F4461CE3263550540070C72827F76124BB06D5AA899EE906F8F95F52",
+          "productCode": "{42A587F6-00E4-4638-841A-C11C89E1E21C}",
+          "displayNamePattern": "^dnGrep\\ 5\\.0\\.65\\ \\(x86\\)",
           "publisherPattern": "",
           "silentArgs": []
         },
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.57.0/dnGREP.5.0.57.x64.msi",
-          "sha256": "B302F4F1D3FAEE251B3565AEFB380D05246E5CF6721E1EAAAD6DFA12376D2BD5",
-          "productCode": "{13C49333-0E22-43AD-AFF7-78C3F9C67D28}",
-          "displayNamePattern": "^dnGrep\\ 5\\.0\\.57\\ \\(x64\\)",
+          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.65.0/dnGREP.5.0.65.x64.msi",
+          "sha256": "200A100F499ABC89A2A332DBB14D65728C7B851A80ABFD8B13DA67E6C68F836F",
+          "productCode": "{C6962139-E95D-4FBC-B631-11EAD564A419}",
+          "displayNamePattern": "^dnGrep\\ 5\\.0\\.65\\ \\(x64\\)",
           "publisherPattern": "",
           "silentArgs": []
         },
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.57.0/dnGREP.5.0.57.ARM64.msi",
-          "sha256": "A76739210123E15FD94203717A09E9BED62F04CD7D23B1597D4F9BF4582009F8",
-          "productCode": "{EE8071BA-9508-4E0E-B02D-039273C49B10}",
-          "displayNamePattern": "^dnGrep\\ 5\\.0\\.57\\ \\(ARM64\\)",
+          "url": "https://github.com/dnGrep/dnGrep/releases/download/v5.0.65.0/dnGREP.5.0.65.ARM64.msi",
+          "sha256": "4E763865725AB727B9AD01D077F252400A271A061AC28A259A019BA9A2318FB0",
+          "productCode": "{40623AA8-BFB1-4171-8377-9DA74747AE1D}",
+          "displayNamePattern": "^dnGrep\\ 5\\.0\\.65\\ \\(ARM64\\)",
           "publisherPattern": "",
           "silentArgs": []
         }
@@ -7502,15 +7566,15 @@
     },
     {
       "id": "Draftable.Draftable",
-      "version": "26.6.200",
+      "version": "26.10.0",
       "displayName": "Draftable.Draftable",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://dl.draftable.com/desktop/DraftableDesktopSystem-26.6.200.msi",
-          "sha256": "8307B675706BDE2B49DD07303FE5FDE282D655D3633B31F43BBF694E1C9A3ADE",
-          "productCode": "{84EFDAB7-F1F8-4238-9DBD-D0A93619838F}",
+          "url": "https://dl.draftable.com/desktop/DraftableDesktopSystem-26.10.0.msi",
+          "sha256": "56371C3C5DBBDA2C5002E617FF1762491C82B01F46719C47FD447409875857B3",
+          "productCode": "{A7958112-594C-4510-8A90-E8587CA093ED}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -8717,15 +8781,15 @@
     },
     {
       "id": "eParaksts.eParakstitajs",
-      "version": "1.10.0",
+      "version": "1.11.0",
       "displayName": "eParaksts.eParakstitajs",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win64-1.10.0.msi",
-          "sha256": "9E4D1B5DB4FBAD9A8C368B20910F55CE70A5777FCED5B48C6F06AC3010D2C54E",
-          "productCode": "{3B0BA422-DD69-49BD-B8CA-0CD1133D92A0}",
+          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win64-1.11.0.msi",
+          "sha256": "186EB99C04A98AA6AB13FBDB7734C46858B8061D0D12720B848060D40C925A34",
+          "productCode": "{22785AF9-BB21-4A52-BFBA-245A14A3A5C6}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -8733,9 +8797,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win64-1.10.0.msi",
-          "sha256": "9E4D1B5DB4FBAD9A8C368B20910F55CE70A5777FCED5B48C6F06AC3010D2C54E",
-          "productCode": "{3B0BA422-DD69-49BD-B8CA-0CD1133D92A0}",
+          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win64-1.11.0.msi",
+          "sha256": "186EB99C04A98AA6AB13FBDB7734C46858B8061D0D12720B848060D40C925A34",
+          "productCode": "{22785AF9-BB21-4A52-BFBA-245A14A3A5C6}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -8743,9 +8807,9 @@
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win32-1.10.0.msi",
-          "sha256": "09F9CBC43B68CB4CD59EEBBACC3E6FACC5896C63DC8C3B49BF0667311FC538C1",
-          "productCode": "{01707F17-5E22-45DD-9946-B8BA4D155C0B}",
+          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win32-1.11.0.msi",
+          "sha256": "ADF755275340EC7363EC5DEC296A5AFB062E08158A830937B1BACBAD951BE844",
+          "productCode": "{F9A24620-9F29-4053-A3E3-CFF23D34EA51}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -8753,9 +8817,9 @@
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win32-1.10.0.msi",
-          "sha256": "09F9CBC43B68CB4CD59EEBBACC3E6FACC5896C63DC8C3B49BF0667311FC538C1",
-          "productCode": "{01707F17-5E22-45DD-9946-B8BA4D155C0B}",
+          "url": "https://www.eparaksts.lv/files/ep3updates/eparakstitajs3-win32-1.11.0.msi",
+          "sha256": "ADF755275340EC7363EC5DEC296A5AFB062E08158A830937B1BACBAD951BE844",
+          "productCode": "{F9A24620-9F29-4053-A3E3-CFF23D34EA51}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9140,15 +9204,15 @@
     },
     {
       "id": "farion1231.CC-Switch",
-      "version": "4.0.9",
+      "version": "4.0.13",
       "displayName": "farion1231.CC-Switch",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/farion1231/cc-switch/releases/download/v4.0.9/CC-Switch-v4.0.9-Windows.msi",
-          "sha256": "B68867D1C541DE1A45BC32DE12EDEDACDD4D1E5BD119A2A44C1249202F75B687",
-          "productCode": "{CC3A3035-BCBB-402D-A2D1-C111ED31F406}",
+          "url": "https://github.com/farion1231/cc-switch/releases/download/v4.0.13/CC-Switch-v4.0.13-Windows.msi",
+          "sha256": "79B8ADC2278E29CCA560183F1EED5343C680CE9DA06643A515FC80E84F46FC13",
+          "productCode": "{A050C5EE-D027-4D09-AA48-E5C659FC7697}",
           "displayNamePattern": "",
           "publisherPattern": "^ccswitch$",
           "silentArgs": []
@@ -9156,9 +9220,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/farion1231/cc-switch/releases/download/v4.0.9/CC-Switch-v4.0.9-Windows-arm64.msi",
-          "sha256": "7FFC8BB44A36A222C69156BD96AC896C429E0A5F5FADCC9E6CA26CEA1EA91973",
-          "productCode": "{59F5DB18-08D4-4B7E-861A-9514AD506347}",
+          "url": "https://github.com/farion1231/cc-switch/releases/download/v4.0.13/CC-Switch-v4.0.13-Windows-arm64.msi",
+          "sha256": "43958782742AF1C8F5A9670007EBCB61326A0456BC30B9C6D8D85B05148D7E59",
+          "productCode": "{356D078E-9E17-4DEC-8E13-134E0E8E32AB}",
           "displayNamePattern": "",
           "publisherPattern": "^ccswitch$",
           "silentArgs": []
@@ -9302,17 +9366,34 @@
     },
     {
       "id": "Figma.Figma",
-      "version": "126.10.7",
+      "version": "126.10.10",
       "displayName": "Figma.Figma",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://desktop.figma.com/win/build/Figma-126.10.7.msi",
-          "sha256": "5AFC9D883EEC4E3A7719FAB2E5380C5CB21A240FAB11EAD1B638CA05AE386A5B",
+          "url": "https://desktop.figma.com/win/build/Figma-126.10.10.msi",
+          "sha256": "066F0048BF7D5EF946E55B5558BC7170E06BEF4219F09E10FBA5C08054D37AB8",
           "productCode": "{BDE063B2-459A-4ECE-876D-E449ACCAC237}.msq",
           "displayNamePattern": "",
           "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "Fileman.HisuiPDF",
+      "version": "0.1.31",
+      "displayName": "Fileman.HisuiPDF",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/fileman/Hisui.PDF/releases/download/v0.1.31/HisuiPDF-0.1.31-win-x64.msi",
+          "sha256": "BE72E6C3F3E688840917A6C88F4D00FF0F027C1C84BA1419DDEB98704EBE86D3",
+          "productCode": "{8C296810-4E87-4599-AA03-D0DF6187F627}",
+          "displayNamePattern": "^Hisui\\ PDF",
+          "publisherPattern": "^Emanuele\\ Filardo$",
           "silentArgs": []
         }
       ]
@@ -9700,15 +9781,32 @@
       ]
     },
     {
+      "id": "Genesys.GenesysCloud",
+      "version": "2.56.933.0",
+      "displayName": "Genesys.GenesysCloud",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://app.mypurecloud.com/directory-windows/build-assets/2.56.933-264/genesys-cloud-windows-2.56.933-x64.msi",
+          "sha256": "3B9630AFD42CCDF1180CEB1A170F88765254B1BBFD674E477CFDA359A519CCC7",
+          "productCode": "{FEBA3D42-68C8-40DB-87FC-132F3737910C}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
       "id": "GeoGebra.Classic",
-      "version": "6.0.931",
+      "version": "6.0.932",
       "displayName": "GeoGebra.Classic",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://download.geogebra.org/installers/6.0/GeoGebra-Windows-Installer-6-0-931-2.msi",
-          "sha256": "0D5D95984BC2FA4C7831B6F496A5AA1B01D5F1E70110AD1A2E192BBA37905E92",
+          "url": "https://download.geogebra.org/installers/6.0/GeoGebra-Windows-Installer-6-0-932-1.msi",
+          "sha256": "E2DFE68CF011752BDC7DC4EDD2EED2F8F93C1C41E626DAAE4024B2522F6FAAD9",
           "productCode": "{4748282E-2448-11E8-81BC-53A8D56EE868}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -9717,8 +9815,8 @@
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://download.geogebra.org/installers/6.0/GeoGebra-Windows-Installer-6-0-931-2.msi",
-          "sha256": "0D5D95984BC2FA4C7831B6F496A5AA1B01D5F1E70110AD1A2E192BBA37905E92",
+          "url": "https://download.geogebra.org/installers/6.0/GeoGebra-Windows-Installer-6-0-932-1.msi",
+          "sha256": "E2DFE68CF011752BDC7DC4EDD2EED2F8F93C1C41E626DAAE4024B2522F6FAAD9",
           "productCode": "{4748282E-2448-11E8-81BC-53A8D56EE868}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -9799,15 +9897,15 @@
     },
     {
       "id": "gg.ai.ggcode-cli",
-      "version": "1.3.260",
+      "version": "1.3.264",
       "displayName": "gg.ai.ggcode-cli",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.260/ggcode_1.3.260_windows_x64.msi",
-          "sha256": "B751BAD876B4C2C878CE64E12DD9AF2626DEF64B17A0474ACB1A5F3F840E8724",
-          "productCode": "{CD650723-4C41-46E8-837D-44BA976EA1DF}",
+          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.264/ggcode_1.3.264_windows_x64.msi",
+          "sha256": "18E1AD134DE6F219E4ACF7358428963D7E700EF9D8A077AD8D6A775BFEE0EB4C",
+          "productCode": "{4B209EF4-FF14-4896-AFC9-97BB677C9F4D}",
           "displayNamePattern": "^ggcode",
           "publisherPattern": "^GG\\ AI\\ Studio$",
           "silentArgs": []
@@ -9815,9 +9913,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.260/ggcode_1.3.260_windows_arm64.msi",
-          "sha256": "609EC271FBC775E4E8D8F27DDDBEDDEE353A4B5A7CB0B2F28D6B87D556F158FE",
-          "productCode": "{D14A81AD-3B79-485B-9097-8BE913311A41}",
+          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.264/ggcode_1.3.264_windows_arm64.msi",
+          "sha256": "450D859AFD80AA11F5749560EE5532624309C2DD01837B12DE6F066CF028B7FB",
+          "productCode": "{0F125D17-D3DA-4DEC-9017-0A9B7CD8871C}",
           "displayNamePattern": "^ggcode",
           "publisherPattern": "^GG\\ AI\\ Studio$",
           "silentArgs": []
@@ -9826,15 +9924,15 @@
     },
     {
       "id": "gg.ai.ggcode-desktop",
-      "version": "1.3.260",
+      "version": "1.3.264",
       "displayName": "gg.ai.ggcode-desktop",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.260/ggcode-desktop_1.3.260_windows_x64.msi",
-          "sha256": "804159613AD9C025A51A9F7FECEDC7B344FAEB684DFED0610D0F3662BA24F17B",
-          "productCode": "{438E79B7-FB61-407D-A6DF-64EC0485C55E}",
+          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.264/ggcode-desktop_1.3.264_windows_x64.msi",
+          "sha256": "753F21A640C337BEA8C538FFD190241FBAC8AAA09FFF1C123D575CE94F5E001E",
+          "productCode": "{C1F10F16-695C-48D3-9DA0-66886C3023C2}",
           "displayNamePattern": "^GGCode\\ Desktop",
           "publisherPattern": "^GG\\ AI\\ Studio$",
           "silentArgs": []
@@ -9842,9 +9940,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.260/ggcode-desktop_1.3.260_windows_arm64.msi",
-          "sha256": "C7BC3C809C17961AF5036D6C848B83F5486B522601F16282109331646D768621",
-          "productCode": "{8E1C9206-8675-499D-BE8C-8CF0F79DBCA0}",
+          "url": "https://github.com/topcheer/ggcode/releases/download/v1.3.264/ggcode-desktop_1.3.264_windows_arm64.msi",
+          "sha256": "E83982EACCE979AFC07C133DA14C831E702757DAE8F497A18A1EB969B9699A8F",
+          "productCode": "{DB2F8CDD-23E9-4561-BEA7-0C591A3D4224}",
           "displayNamePattern": "^GGCode\\ Desktop",
           "publisherPattern": "^GG\\ AI\\ Studio$",
           "silentArgs": []
@@ -9853,15 +9951,15 @@
     },
     {
       "id": "ghost-him.ZeroLaunch-rs",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "displayName": "ghost-him.ZeroLaunch-rs",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/ghost-him/ZeroLaunch-rs/releases/download/v1.4.0/zerolaunch-rs_1.4.0_x64_en-US.msi",
-          "sha256": "E4205EEDED6FAD52B23B5AFE35613DB6ACD8D3DF788C10851B87530775CE7A55",
-          "productCode": "{BF19B2BB-FD00-4CC2-8245-28863AD40643}",
+          "url": "https://github.com/ghost-him/ZeroLaunch-rs/releases/download/v1.4.1/zerolaunch-rs_1.4.1_x64_en-US.msi",
+          "sha256": "9D3A17EE409E0B10FB6E4CCDFE4214C5C8B101346F42E8126230A14188B648F3",
+          "productCode": "{6310C8B7-A0FB-42C6-9F37-2925EC76F377}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9869,9 +9967,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/ghost-him/ZeroLaunch-rs/releases/download/v1.4.0/zerolaunch-rs_1.4.0_arm64_en-US.msi",
-          "sha256": "C4075EBFC881A1BE0289BDA05BD2114E916B2494E99DF2DD6C85AC6D4EABF922",
-          "productCode": "{A30B9A17-2ECC-45EB-9562-06C57F393ECD}",
+          "url": "https://github.com/ghost-him/ZeroLaunch-rs/releases/download/v1.4.1/zerolaunch-rs_1.4.1_arm64_en-US.msi",
+          "sha256": "DACA9D624208785ED77548C95214F6CE63C3956C9E5621406952C918E813D8CA",
+          "productCode": "{1D5689E3-FDF6-4122-9E91-0D5F4339903C}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9944,15 +10042,15 @@
     },
     {
       "id": "GitHub.Copilot.modernization.agent",
-      "version": "1.0.74",
+      "version": "1.0.76",
       "displayName": "GitHub.Copilot.modernization.agent",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/microsoft/modernize-cli/releases/download/v1.0.74/modernize_1.0.74_windows_x64.msi",
-          "sha256": "A8B928286DA2DBBD888E1ADE76457C14BB7AE747DD9110985D083F7B2F9E8D03",
-          "productCode": "{8EF43E05-F611-44FE-AC1D-E3DD615CDC18}",
+          "url": "https://github.com/microsoft/modernize-cli/releases/download/v1.0.76/modernize_1.0.76_windows_x64.msi",
+          "sha256": "52FF351434B1655B92D92E6630ECB9B47CB94B874BF2C679C02E73599130D5FA",
+          "productCode": "{D01DC9B2-3C82-4D19-A0B2-C294E4255509}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9960,9 +10058,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/microsoft/modernize-cli/releases/download/v1.0.74/modernize_1.0.74_windows_arm64.msi",
-          "sha256": "9F58084D621C0B64FACE5C8FFDB20569D60275B3FF623B67768610A67E10B479",
-          "productCode": "{00AC58CA-4DCE-4CEC-B10A-F564FB1A273C}",
+          "url": "https://github.com/microsoft/modernize-cli/releases/download/v1.0.76/modernize_1.0.76_windows_arm64.msi",
+          "sha256": "DE156D814F77D18A6DDDE2ACC4A61C20F9C922B454AB9FDE1347A40735EC1670",
+          "productCode": "{63A34B3B-33B0-4EF4-BC1A-862F958912D2}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9971,15 +10069,15 @@
     },
     {
       "id": "GitHub.CopilotApp",
-      "version": "1.1.28",
+      "version": "1.1.30",
       "displayName": "GitHub.CopilotApp",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/github/app/releases/download/v1.1.28/GitHub-Copilot-windows-x64.msi",
-          "sha256": "BF410ABF79B9B7E7510364A590AB73F277EC8F6604AD303E7A7C81444981BD3D",
-          "productCode": "{4C22B075-0F92-483D-8480-CC1C4F478311}",
+          "url": "https://github.com/github/app/releases/download/v1.1.30/GitHub-Copilot-windows-x64.msi",
+          "sha256": "6BEA8972D8310E12AE1A5930F83FF115AAE40A91AC5BFF21E26581765FAE593A",
+          "productCode": "{2826BFDC-BD53-4F2B-A11C-67F2A47355A3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -9987,9 +10085,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/github/app/releases/download/v1.1.28/GitHub-Copilot-windows-arm64.msi",
-          "sha256": "2C035A60BE525E5C9F1ABDA7B58B1B8491CA0A0C4127DBDF6380F910D2026A16",
-          "productCode": "{C19DAD50-0D45-49B4-9D13-F07F4E39E147}",
+          "url": "https://github.com/github/app/releases/download/v1.1.30/GitHub-Copilot-windows-arm64.msi",
+          "sha256": "AB30C059C46A966BD0335EC1F3F99CD8B5A2BD710A2D955F2B1E1E769B9B9007",
+          "productCode": "{F1AC8FE7-0E67-45E6-8C86-555256586C1E}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10272,15 +10370,15 @@
     },
     {
       "id": "Google.Chrome",
-      "version": "155.0.8059.40",
+      "version": "155.0.8059.85",
       "displayName": "Google.Chrome",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
           "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise.msi",
-          "sha256": "7DE1A4D079B0C5B167CB1BFCE41CE554EFB71C98D3F5150351C7EE147C10B20E",
-          "productCode": "{FD357231-2E3D-355C-BC74-63E8AD104E94}",
+          "sha256": "751E022B31C80A84E0FD9A711E544308396D902FCDCD2A3321F2D9CD423937C0",
+          "productCode": "{E1AA5A4D-A345-3E6A-B723-D637A405B0DF}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10289,8 +10387,8 @@
           "architecture": "x64",
           "installerType": "wix",
           "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi",
-          "sha256": "32BA438DEA18F0FED1EC621BFB274A2669ADEC67BE2AA91D96B3CC6C64779276",
-          "productCode": "{AE41646D-561A-3316-9B94-DD3EA96EF975}",
+          "sha256": "9B7615C72F17F5EF7FA5CF3C7DBF872CEBE9E8EBEAE7786BB96B490214EFB31C",
+          "productCode": "{0228B730-26AA-39E9-B2E1-0FC0E3EA58C8}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10299,8 +10397,8 @@
           "architecture": "arm64",
           "installerType": "wix",
           "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise_arm64.msi",
-          "sha256": "80C279DB8BA6ED157B776FAB9DFE5E856645AA1CA021E3F1C0B660FA6E38B44B",
-          "productCode": "{74BADAF7-9D73-386E-B2E4-2D4B3416A469}",
+          "sha256": "6B657A654D6AEC14623454B2F5B8272DA2791E49A968C4037DFF9443632303C2",
+          "productCode": "{454EC48D-7E8D-3E28-A7C4-AA16C4F2438A}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10346,15 +10444,15 @@
     },
     {
       "id": "Google.Chrome.Dev",
-      "version": "157.0.8092.0",
+      "version": "158.0.8106.0",
       "displayName": "Google.Chrome.Dev",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
           "url": "https://dl.google.com/dl/chrome/install/dev/googlechromedevstandaloneenterprise.msi",
-          "sha256": "8DC1AE3E112CFDCCB716C9D3C9231D9EE7E336BC6FFFC388D6607236AC27F375",
-          "productCode": "{1654E5A3-98FA-3650-9E54-56F3D05EA49D}",
+          "sha256": "E7EB24CD353A5F0AA5CFE876F6588B4CCE549131D852FDA7B176E08F2530FE70",
+          "productCode": "{20C39F44-0B98-36ED-A980-255FD15622CE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10363,8 +10461,8 @@
           "architecture": "x64",
           "installerType": "wix",
           "url": "https://dl.google.com/dl/chrome/install/dev/googlechromedevstandaloneenterprise64.msi",
-          "sha256": "5D3E06F2233610C01E11E28D26A5FD25D62F027C17ADC74E90781F3352EE6289",
-          "productCode": "{76FA4989-4E85-3918-9218-974E644C7F87}",
+          "sha256": "82B8096D82D7012F7A491AAB6E7E23471729C5604BC1BEBDF5DF5343DF14071C",
+          "productCode": "{518DEB37-7C45-3620-ABA5-5E48F23A933E}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -10522,8 +10620,8 @@
           "architecture": "x64",
           "installerType": "wix",
           "url": "https://github.com/Habeeb-Rahman-CA/bilet/releases/download/bilet-v1.3.1/bilet_1.3.1_x64_en-US.msi",
-          "sha256": "8FCB0E962F91566BEB45C686AFE5237EE78EBD435F7B36AE9EE2D501253048E7",
-          "productCode": "{E9DBF55F-0823-4447-B129-8E7353BB51DA}",
+          "sha256": "B4F1DEA7991BD66459966A0ED2E23DE1C17A2E7970021E7601E9AC5C8DA51F1F",
+          "productCode": "{4B355F55-DFA4-43C3-8B63-C1582483CE38}",
           "displayNamePattern": "",
           "publisherPattern": "^bilet$",
           "silentArgs": []
@@ -10620,32 +10718,32 @@
     },
     {
       "id": "Headlamp.Headlamp",
-      "version": "0.45.0",
+      "version": "0.46.0",
       "displayName": "Headlamp.Headlamp",
       "installers": [
         {
           "architecture": "x64",
-          "installerType": "msi",
-          "url": "https://github.com/kubernetes-sigs/headlamp/releases/download/v0.45.0/Headlamp-0.45.0-win-x64.msi",
-          "sha256": "33DC5C69D74104DBFC0A58629750674C25A599D7F25AC354F9F2D2403B193886",
-          "productCode": "{D473415D-2483-43E7-92A7-08B8358698A7}",
+          "installerType": "wix",
+          "url": "https://github.com/kubernetes-sigs/headlamp/releases/download/v0.46.0/Headlamp-0.46.0-win-x64.msi",
+          "sha256": "595E97A2046BD29FABA0C2FFDAB6679E030D6B44E1BBA79F1D24120A989D8667",
+          "productCode": "{E24D28A4-D933-471A-B56E-C58582B138C9}",
           "displayNamePattern": "",
-          "publisherPattern": "",
+          "publisherPattern": "^Kinvolk$",
           "silentArgs": []
         }
       ]
     },
     {
       "id": "HeroHealth.HeroSidekick",
-      "version": "1.35.2",
+      "version": "1.37.0.0",
       "displayName": "HeroHealth.HeroSidekick",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
           "url": "https://releases.app.herohealth.net/production/win32/x64/HeroSidekickSetup.msi",
-          "sha256": "0C625AAA9761C23B104C8B78DE034A343FF537549CDE8FBF2B50E76903FBE2E2",
-          "productCode": "{2E38B366-340B-4F43-BB33-B0B1028DB31F}",
+          "sha256": "3F9644F4178E44711E734DE23F96962A80618AE7A4F630228B404B17DF0189E3",
+          "productCode": "{7F43794E-9E21-4AA7-8704-E58048CC9F8F}",
           "displayNamePattern": "^Hero\\ Sidekick\\ Deployment\\ Tool",
           "publisherPattern": "",
           "silentArgs": []
@@ -10762,15 +10860,15 @@
     },
     {
       "id": "hrzlgnm.zux",
-      "version": "1.21.2",
+      "version": "1.21.3",
       "displayName": "hrzlgnm.zux",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/hrzlgnm/zux/releases/download/v1.21.2/zux_1.21.2_x64_en-US.msi",
-          "sha256": "3BBB8D15A81C7AFD725DE5CEF0A228F4D2BAB228B3FB9F5B3AC0D6F3D5F18610",
-          "productCode": "{C7A54961-0EAE-4C41-9FAB-1B6027A52543}",
+          "url": "https://github.com/hrzlgnm/zux/releases/download/v1.21.3/zux_1.21.3_x64_en-US.msi",
+          "sha256": "5EFB22B0BD3983B7852B2CFC19870238F5A0CF74ED560EDAE9FB1BF30E396733",
+          "productCode": "{229EEC47-273B-4059-9F45-8C9D35C1CF2E}",
           "displayNamePattern": "",
           "publisherPattern": "^github$",
           "silentArgs": []
@@ -11054,15 +11152,15 @@
     },
     {
       "id": "ibrahemid.Writ",
-      "version": "0.5.0",
+      "version": "0.7.0",
       "displayName": "ibrahemid.Writ",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/ibrahemid/writ/releases/download/v0.5.0/Writ_0.5.0_x64_en-US.msi",
-          "sha256": "56006B86ADDA661CC6FCCF806FB7D31087C4CC1B48C730621279A6EDB8E41079",
-          "productCode": "{FD0146EA-B2E8-4F19-A5D5-C3F2E4788501}",
+          "url": "https://github.com/ibrahemid/writ/releases/download/v0.7.0/Writ_0.7.0_x64_en-US.msi",
+          "sha256": "97A3FD787E23BBCCFDCF574E5998D89A7C31469BB39837E54F8236EFA24FC3F8",
+          "productCode": "{978FB780-D5C1-4054-A5CF-F68ADFB49A03}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -11372,15 +11470,15 @@
     },
     {
       "id": "InstaZDLL.WaveFlow",
-      "version": "1.8.4",
+      "version": "1.9.3",
       "displayName": "InstaZDLL.WaveFlow",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/InstaZDLL/WaveFlow/releases/download/v1.8.4/WaveFlow_1.8.4_windows-x86_64.msi",
-          "sha256": "EDDB2856F0E0591D4629094E5EC78E7E268819B97C9898EB6F4201A346CE3ADB",
-          "productCode": "{6009FD53-E387-41B5-874D-A209DB562C29}",
+          "url": "https://github.com/InstaZDLL/WaveFlow/releases/download/v1.9.3/WaveFlow_1.9.3_windows-x86_64.msi",
+          "sha256": "02AB90F05F38658E7054DDA8353C767D0E52C6600C22CD14F32758E872D0986C",
+          "productCode": "{311154F1-79A5-47F7-BF2E-68672F0C9705}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -11582,15 +11680,15 @@
     },
     {
       "id": "IvanCharapanau.Harbor",
-      "version": "0.5.14",
+      "version": "0.5.15",
       "displayName": "IvanCharapanau.Harbor",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/av/harbor/releases/download/v0.5.14/Harbor_0.5.14_x64_en-US.msi",
-          "sha256": "47CB1EB6D77BFE2A0659976394E59009BB1429B6599C2EBEBFF7F0D991F00F9B",
-          "productCode": "{011A2E44-2AC7-49A9-9CE4-A012BE03267C}",
+          "url": "https://github.com/av/harbor/releases/download/v0.5.15/Harbor_0.5.15_x64_en-US.msi",
+          "sha256": "53050DAB3FAD3598C57656DC84CBEB08BE82EFE14BADBD2984FBDD96E1760C80",
+          "productCode": "{4E5A50BD-B4A6-4F8B-8E9C-054895AEC6CC}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -11901,15 +11999,15 @@
     },
     {
       "id": "Kamjin.Chatless",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "displayName": "Kamjin.Chatless",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/kamjin3086/chatless/releases/download/v0.7.1/Chatless_0.7.1_x64_en-US.msi",
-          "sha256": "FB4671E8A358DB59EC8FD8D4F7AE072B9DB0361BA3695968B971F41E30ADFF80",
-          "productCode": "{9667937E-C9C8-4482-BA1B-A109EEFAA74C}",
+          "url": "https://github.com/kamjin3086/chatless/releases/download/v0.7.2/Chatless_0.7.2_x64_en-US.msi",
+          "sha256": "5DF4BA40503954B9725A2B33E58364E8E2CF1BCB2E650EEFDCC4F8C634BB1179",
+          "productCode": "{B9059D22-658A-4A4B-89CA-A66C7A50A3A6}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -12470,15 +12568,15 @@
     },
     {
       "id": "Learnpulse.Screenpresso",
-      "version": "2.3.7.0",
+      "version": "2.3.8.0",
       "displayName": "Learnpulse.Screenpresso",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://cdn.screenpresso.com/binaries/releases/v2-3-07-000/dotnet47/ScreenpressoSetup.msi",
-          "sha256": "42F2BB39911922A1A0E6F433A620575DF4BC566E3AAB5671BF931836E943AE3E",
-          "productCode": "{19764788-b3d0-43d5-ae44-577b9599f903}",
+          "url": "https://cdn.screenpresso.com/binaries/releases/v2-3-08-000/dotnet47/ScreenpressoSetup.msi",
+          "sha256": "74B427F4741074E90C3B4964F3AC102BE90B057441EF39524B5FD72609D2992B",
+          "productCode": "{8bee6e0a-7062-481c-b0a3-95789bfcdaa6}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -13123,15 +13221,15 @@
     },
     {
       "id": "M-FilesCorporation.M-FilesOnline",
-      "version": "23.4.12528.8",
+      "version": "26.9.16459.6",
       "displayName": "M-FilesCorporation.M-FilesOnline",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://cdn3.m-files.com/public/M-Files_23.4/M-Files_Online_x64_eng_23_4_12528_8_EV.msi",
-          "sha256": "D3E5B8C70D8D4373EF82B7455C4CF8191830E7867CF81CC41FA553F7A3AC6A5F",
-          "productCode": "{A5566A6E-194D-4181-BE29-A0A7B7B4CAD4}",
+          "url": "https://cdn3.m-files.com/public/M-Files_26.9/M-Files_Online_x64_eng_26_9_16459_6_EV.msi",
+          "sha256": "A7DC60A4FE5181B2EEBDB66B68486200B6065150D610366F0D85D7F8CFCFF220",
+          "productCode": "{EE35BAC2-7454-4431-A650-508C8D9DA5EF}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -13183,16 +13281,33 @@
       ]
     },
     {
+      "id": "Mahcks.MirrorSim",
+      "version": "0.1.5",
+      "displayName": "Mahcks.MirrorSim",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/Mahcks/MirrorSim/releases/download/v0.1.5/MirrorSim_0.1.5_x64_en-US.msi",
+          "sha256": "F5C3063FBA5FE9D2D8E29A67376D30BD6199DEF2FB7DD9BF9C110D8ABB6DD3B3",
+          "productCode": "{790BBE13-18ED-4EBF-8B27-1275FE30FB1B}",
+          "displayNamePattern": "^MirrorSim",
+          "publisherPattern": "^mahcks$",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
       "id": "Makestar.MakestarAdminCLI",
-      "version": "0.2.18",
+      "version": "0.3.0",
       "displayName": "Makestar.MakestarAdminCLI",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://github.com/makestarlab/makestar-admin-cli-releases/releases/download/r2026.09.29/makestar-admin-windows-x86_64.msi",
-          "sha256": "CACFCD98D2E7142E4181157F6D857D1DEFACB856276D1E9816BF603B6B73376A",
-          "productCode": "{F4741941-05A6-5553-9B8A-CBFBEA07017A}",
+          "url": "https://github.com/makestarlab/makestar-admin-cli-releases/releases/download/r2026.10.15/makestar-admin-windows-x86_64.msi",
+          "sha256": "99119DF175B2B8DD1CF62F2D7E7746E5BC305CE1EDED8193C2A588CE0C7CEFDB",
+          "productCode": "{5F0EA7E5-D125-56A4-917D-A205722C9B18}",
           "displayNamePattern": "^Makestar\\ Admin\\ CLI",
           "publisherPattern": "^Makestar$",
           "silentArgs": []
@@ -13296,15 +13411,15 @@
     },
     {
       "id": "Mattermost.MattermostDesktop",
-      "version": "6.3.0",
+      "version": "6.3.1",
       "displayName": "Mattermost.MattermostDesktop",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/mattermost/desktop/releases/download/v6.3.0/mattermost-desktop-6.3.0-win-x64.msi",
-          "sha256": "0615EE83C6A94ED24B6AE08A7CA4CD27D1EA079B957E6B788204B1A49A3494BC",
-          "productCode": "{801D60A8-3FF2-4D20-AE05-D5D719851014}",
+          "url": "https://github.com/mattermost/desktop/releases/download/v6.3.1/mattermost-desktop-6.3.1-win-x64.msi",
+          "sha256": "5F47B75874680F944539F4C33BE60DE83A4572180FE0A40848669932DB88D2B8",
+          "productCode": "{E8B4499C-4C77-433A-A508-4FC444B06FD9}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -13312,9 +13427,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/mattermost/desktop/releases/download/v6.3.0/mattermost-desktop-6.3.0-win-arm64.msi",
-          "sha256": "90D8024285C7D4D2F258E19B1579582A3906D9EFB20D1CBDF0189FD98B568E7A",
-          "productCode": "{2F4A0042-1FC6-41DD-A984-E380ADF7D26E}",
+          "url": "https://github.com/mattermost/desktop/releases/download/v6.3.1/mattermost-desktop-6.3.1-win-arm64.msi",
+          "sha256": "D771AD11CBF9D1814465F2459A49962651E3EA5E88ED1B0619DE08CB94119084",
+          "productCode": "{D772BBEE-3466-4A68-ADBE-C52533BD93E1}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -13577,15 +13692,15 @@
     },
     {
       "id": "Mickem.NSClient",
-      "version": "0.24.1",
+      "version": "0.25.0",
       "displayName": "Mickem.NSClient",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/mickem/nscp/releases/download/0.24.1/NSCP-0.24.1-x64.msi",
-          "sha256": "96A82FB9F0437F2ACB98FFC7407986510706AE98DE761523989673305BA2B5F7",
-          "productCode": "{5B7E4CDF-EE0C-4402-B7B7-C94F593C86F1}",
+          "url": "https://github.com/mickem/nscp/releases/download/0.25.0/NSCP-0.25.0-x64.msi",
+          "sha256": "B2F5A0ACD907DFB79E4E82592FE42C99AA4B11506CE0F3D96FD8FD18F92AE471",
+          "productCode": "{48DB21CB-9276-46D9-BF9B-31AD2DCEFCDB}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -13593,9 +13708,9 @@
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/mickem/nscp/releases/download/0.24.1/NSCP-0.24.1-Win32.msi",
-          "sha256": "EDA163AF67151D2527BCF962054826C9BC7E755A440D104DCAF3A5187ED03903",
-          "productCode": "{720FACD5-C0C4-4695-88B3-3E32943BC4F3}",
+          "url": "https://github.com/mickem/nscp/releases/download/0.25.0/NSCP-0.25.0-Win32.msi",
+          "sha256": "023F231DEA15F587E97EACF7188016541A36ED94109D8E44747E8A59C9E245AC",
+          "productCode": "{93412480-F03F-433C-A059-F29CC60B73C8}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15244,15 +15359,15 @@
     },
     {
       "id": "Microsoft.PowerShell",
-      "version": "7.6.6.0",
+      "version": "7.6.7.0",
       "displayName": "Microsoft.PowerShell",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.msi",
-          "sha256": "958838FF55091E1C8705D89EFED0CC7E8245A3A6EF6C0CCFAE20015227108AD8",
-          "productCode": "{B1A9B37E-00B6-4BFD-A439-3120FE4F766E}",
+          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/PowerShell-7.6.7-win-x64.msi",
+          "sha256": "EC575CEF9EC56FCD905DE0D5EEAC9CB7F81A0A65ABB87BB5CD0E87FDFE2B8CC0",
+          "productCode": "{B6950B97-25F0-4EB3-9FC8-DB5D085645DE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15260,9 +15375,9 @@
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x86.msi",
-          "sha256": "34CFD071B83D5BBA4F7E913D3545A35E8CCE97B5E7B46A3B44D167D48C361DD6",
-          "productCode": "{1B83F953-4C7C-473F-8D2A-BFEA9F14DB92}",
+          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/PowerShell-7.6.7-win-x86.msi",
+          "sha256": "E0A5296FE368B2DC1B4FEF1217979A32CFED8A26F3586FB09FCEE9A72873691B",
+          "productCode": "{F28FBCC8-0AC9-40D2-B90B-4F5CB623B1DA}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15270,9 +15385,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-arm64.msi",
-          "sha256": "387D0AF8E92BA97F73616C91FA8F29A284E8F82EE6C40FE12DADE971BB05BAC4",
-          "productCode": "{8FADDD2A-62B7-4A60-B133-79A595459ED5}",
+          "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/PowerShell-7.6.7-win-arm64.msi",
+          "sha256": "DDB2F3613A0AD27817B90601A0827F7347E81DFA5BCE18D4BE8009B8CB0E0A31",
+          "productCode": "{6048B5FB-540F-4864-83CD-7A632F706DCF}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15342,15 +15457,15 @@
     },
     {
       "id": "Microsoft.RemoteDesktopClient",
-      "version": "1.2.7391.0",
+      "version": "1.2.7422.0",
       "displayName": "Microsoft.RemoteDesktopClient",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://res.cdn.office.net/remote-desktop-windows-client/fe14bee0-2c3c-4ead-91ff-0c9f623cc132/RemoteDesktop_1.2.7391.0_x86.msi",
-          "sha256": "1A34C221921ED02187EA91C988DADA035C9006D66F3D572B239F5C6E265B78DA",
-          "productCode": "{1810F79F-0797-43E8-85B5-33A9454042EF}",
+          "url": "https://res.cdn.office.net/remote-desktop-windows-client/e45d54e8-589f-411b-a06b-b3e7a1f62654/RemoteDesktop_1.2.7422.0_x86.msi",
+          "sha256": "DB44BF727E0E103DEC0393A8CDB130E6A2C007E01CC5496656A61E6776A2C101",
+          "productCode": "{D284C4B8-564A-498A-9265-64C704152D20}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15358,9 +15473,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://res.cdn.office.net/remote-desktop-windows-client/b441efed-bddd-4bdc-a3da-c3481cb65896/RemoteDesktop_1.2.7391.0_x64.msi",
-          "sha256": "71FF413B80599524A662A750972D04297954D07BDFA0D230ED813E62BBEFAC26",
-          "productCode": "{5CE2773C-0C16-428A-855F-4145AE776A79}",
+          "url": "https://res.cdn.office.net/remote-desktop-windows-client/7a991e13-40ae-4ee4-9353-f42e622f5ee0/RemoteDesktop_1.2.7422.0_x64.msi",
+          "sha256": "4F133A0058454CA90F72682E663A4090CDED1F8E8B07EAEEFB5A478D304DD7AE",
+          "productCode": "{275CF83A-112F-49D0-82D6-0E867119265F}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -15368,9 +15483,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://res.cdn.office.net/remote-desktop-windows-client/3a950274-9234-4141-a86e-dd2939a3f5bf/RemoteDesktop_1.2.7391.0_ARM64.msi",
-          "sha256": "584D830A8C0A3EF73681EE9F33036F1924FBA28F318B058FE0CF13EF7CB63A89",
-          "productCode": "{C5323CBD-6A51-46BC-8C86-92EB9DF04798}",
+          "url": "https://res.cdn.office.net/remote-desktop-windows-client/92c82d2a-5487-49eb-b89b-1dd8b892f2bd/RemoteDesktop_1.2.7422.0_ARM64.msi",
+          "sha256": "51E3129A146BB55A3414E78284FBC127AAFEE2DCB52A8D09823EEBBEBA1E1D97",
+          "productCode": "{835AA00A-51FA-4FF5-9962-A58E8DFD195C}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -17462,15 +17577,15 @@
     },
     {
       "id": "MySolutionsNORDIC.NSClient++",
-      "version": "0.24.1",
+      "version": "0.25.0",
       "displayName": "MySolutionsNORDIC.NSClient++",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/mickem/nscp/releases/download/0.24.1/NSCP-0.24.1-Win32-legacy-xp.msi",
-          "sha256": "93DA099C6F68DF935914E32713406F4571D1AECFD919CACA747AFDBE95B76211",
-          "productCode": "{53C0A9F2-39B8-47FB-9701-1040CC411A0F}",
+          "url": "https://github.com/mickem/nscp/releases/download/0.25.0/NSCP-0.25.0-Win32-legacy-xp.msi",
+          "sha256": "5A4EBEE49FB54680CA91AC3BFD5779041C7ED5FA8993083D41592EEFEF9892C1",
+          "productCode": "{2F9F7426-3F54-4102-B531-A4CAAC85D089}",
           "displayNamePattern": "^NSClient\\+\\+\\ \\(x86\\)",
           "publisherPattern": "",
           "silentArgs": []
@@ -17478,9 +17593,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/mickem/nscp/releases/download/0.24.1/NSCP-0.24.1-x64.msi",
-          "sha256": "96A82FB9F0437F2ACB98FFC7407986510706AE98DE761523989673305BA2B5F7",
-          "productCode": "{5B7E4CDF-EE0C-4402-B7B7-C94F593C86F1}",
+          "url": "https://github.com/mickem/nscp/releases/download/0.25.0/NSCP-0.25.0-x64.msi",
+          "sha256": "B2F5A0ACD907DFB79E4E82592FE42C99AA4B11506CE0F3D96FD8FD18F92AE471",
+          "productCode": "{48DB21CB-9276-46D9-BF9B-31AD2DCEFCDB}",
           "displayNamePattern": "^NSClient\\+\\+\\ \\(x64\\)",
           "publisherPattern": "",
           "silentArgs": []
@@ -17489,15 +17604,15 @@
     },
     {
       "id": "nabdev.iloader",
-      "version": "2.3.6",
+      "version": "2.3.9",
       "displayName": "nabdev.iloader",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/nab138/iloader/releases/download/v2.3.6/iloader-windows-x64.msi",
-          "sha256": "6F0D038F74F60E2E036EFA17DD45B7CEBD3A4C61B226FF0F03CC8668BB5E3B2D",
-          "productCode": "{76C50F01-3D00-476E-8C31-02EEEBB732C8}",
+          "url": "https://github.com/nab138/iloader/releases/download/v2.3.9/iloader-windows-x64.msi",
+          "sha256": "774ED8C14B74530D278EC229A861A8719D92827508B2871BB90FD0D52BE85F16",
+          "productCode": "{32C8F204-F0AE-426C-9401-A0DF5E456ED0}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -17786,15 +17901,15 @@
     },
     {
       "id": "Netbird.Netbird",
-      "version": "0.80.0",
+      "version": "0.81.2",
       "displayName": "Netbird.Netbird",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/netbirdio/netbird/releases/download/v0.80.0/netbird_installer_0.80.0_windows_amd64.msi",
-          "sha256": "B9A3EB6BA880F3D4205A30041CAB9738716C89D7EC021DD41AF38A36E21B6FB8",
-          "productCode": "{85279BA8-C0CA-4445-864D-6D48FACB0CD9}",
+          "url": "https://github.com/netbirdio/netbird/releases/download/v0.81.2/netbird_installer_0.81.2_windows_amd64.msi",
+          "sha256": "5AA2F63BF09FCB3332BA2FB3F6ECB5425F9E3509D229557F831780EF12123140",
+          "productCode": "{D4D3D0D0-1BE6-4B53-86F3-D89D4F559FDB}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -17802,9 +17917,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/netbirdio/netbird/releases/download/v0.80.0/netbird_installer_0.80.0_windows_arm64.msi",
-          "sha256": "347A318EB9DF6CD441584EA22A4FF2816F983472D45EF06D082EFF326D92358E",
-          "productCode": "{C32A849B-DCC8-4E67-93BD-FCAAE18DEC82}",
+          "url": "https://github.com/netbirdio/netbird/releases/download/v0.81.2/netbird_installer_0.81.2_windows_arm64.msi",
+          "sha256": "EA643DB70CFBE84426BAFB1DA7C65E0BAFE713E3A90FAE5C4531CE5C3A50F047",
+          "productCode": "{8758D07E-7B77-49F3-8911-6D181FD3F4ED}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -17894,15 +18009,15 @@
     },
     {
       "id": "newdee.Magpie",
-      "version": "0.6.1",
+      "version": "0.6.6",
       "displayName": "newdee.Magpie",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/newdee/magpie/releases/download/v0.6.1/magpie_0.6.1_x64_en-US.msi",
-          "sha256": "47282E3E51DCC4D24FA845542BAD494A172CA4E8FB7545C8203A165B41D8B20D",
-          "productCode": "{A31ADD55-40C3-499E-A505-55E9EA039F83}",
+          "url": "https://github.com/newdee/magpie/releases/download/v0.6.6/magpie_0.6.6_x64_en-US.msi",
+          "sha256": "1A802EF2E368F19A3302BAAC39B1659D28A82893A2E1DBC9AE1DC5C198C01CC3",
+          "productCode": "{8CB46051-10AA-4928-B008-FEC931AD05CD}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -17962,15 +18077,15 @@
     },
     {
       "id": "Nextcloud.Talk",
-      "version": "2.3.2",
+      "version": "2.3.3",
       "displayName": "Nextcloud.Talk",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/nextcloud-releases/talk-desktop/releases/download/v2.3.2/Nextcloud.Talk-windows-x64.msi",
-          "sha256": "2960CC175F53FC302ACFFD4B788FB57AAC9985197FBDDCEC0243394F2D73F06A",
-          "productCode": "{4B564998-BC44-4EE7-8B20-8BC93F9CDB04}",
+          "url": "https://github.com/nextcloud-releases/talk-desktop/releases/download/v2.3.3/Nextcloud.Talk-windows-x64.msi",
+          "sha256": "FD15B8E356A4E9629FB42FE10221566BB76A67B5168B775E6553F48C60402510",
+          "productCode": "{0A6B7BA8-3099-4FF1-A196-51F77812A5FE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -18825,14 +18940,14 @@
     },
     {
       "id": "OneWare.OneWareStudio",
-      "version": "1.0.44",
+      "version": "1.0.45",
       "displayName": "OneWare.OneWareStudio",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/one-ware/OneWare/releases/download/1.0.44/OneWareStudio-1.0.44-win-x64.msi",
-          "sha256": "6DB8E2C0645F83DB06828DA4D1E92BFFD555077A9A71F522553CB9B9C192D65D",
+          "url": "https://github.com/one-ware/OneWare/releases/download/1.0.45/OneWareStudio-1.0.45-win-x64.msi",
+          "sha256": "B113F5696AAA461A42D0BFF60F66A74DF26C2C35961577C8C93C00634AD2BAD8",
           "productCode": "{A2DF8F12-3168-4E6E-BDA4-75FC6645A316}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -18841,8 +18956,8 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/one-ware/OneWare/releases/download/1.0.44/OneWareStudio-1.0.44-win-arm64.msi",
-          "sha256": "8DB4B680EF64928EB293924B53E3E720812DE22C87C7CC1ECD60D9D1D27227C9",
+          "url": "https://github.com/one-ware/OneWare/releases/download/1.0.45/OneWareStudio-1.0.45-win-arm64.msi",
+          "sha256": "48FAAF6F00823A076D5E06F27359993131A9328B1C6B19ABF623BD575B203003",
           "productCode": "{AF058946-7884-40B6-938E-1F39E1570E1A}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -18896,15 +19011,15 @@
     },
     {
       "id": "OO-Software.Defrag.Professional",
-      "version": "32.0.26130",
+      "version": "32.1.26138",
       "displayName": "OO-Software.Defrag.Professional",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/defrag/32.0.26130/oodefrag_32.0.26130_pro_eng_x64.msi",
-          "sha256": "8D90CF0D2A2AD65FD83806325DFE59CF2EC0FEB31C1CA77CC00302A608E87819",
-          "productCode": "{A95C56C2-4C07-4DFE-86A5-89E9E8E0AAAA}",
+          "url": "https://package.oo-software.com/winget/defrag/32.1.26138/oodefrag_32.1.26138_pro_eng_x64.msi",
+          "sha256": "567FF36C6DC10462ACF5A29CB48397EF913F6C4FB54D13BD7027B7D73CB20F2E",
+          "productCode": "{4D5FE9E3-FBDC-441A-98CE-01C40973D808}",
           "displayNamePattern": "^O&O\\ Defrag\\ Professional",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -18912,9 +19027,9 @@
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/defrag/32.0.26130/oodefrag_32.0.26130_pro_deu_x64.msi",
-          "sha256": "86402FD67DDF51267E3C6DDCA8B75C74DE591EBCB1E360554F51F141FD9E8F1A",
-          "productCode": "{7D739AEA-EC8D-4AD1-BC60-3BC47BD44A7B}",
+          "url": "https://package.oo-software.com/winget/defrag/32.1.26138/oodefrag_32.1.26138_pro_deu_x64.msi",
+          "sha256": "6F46BAEF8D8D21D998AFA09E6AC24B72E26A52F0C4C3EB85539EF6CA3AA1305C",
+          "productCode": "{44278AF5-0DCB-4005-BCB2-9531EC982633}",
           "displayNamePattern": "^O&O\\ Defrag\\ Professional",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -18922,9 +19037,9 @@
         {
           "architecture": "arm64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/defrag/32.0.26130/oodefrag_32.0.26130_pro_eng_arm64.msi",
-          "sha256": "194B7447855AD11253534B5A0A786CB0501A173B846F8296FC8B29296D838F94",
-          "productCode": "{65830F8C-EF92-493D-8DAB-4E397B492DC0}",
+          "url": "https://package.oo-software.com/winget/defrag/32.1.26138/oodefrag_32.1.26138_pro_eng_arm64.msi",
+          "sha256": "C79871736AD40EBFA9C965F98582F47B034A47A651F4F4E31C40A1BA7C95EC3A",
+          "productCode": "{AC687987-BBFD-41A2-B37F-CB14B8AEC930}",
           "displayNamePattern": "^O&O\\ Defrag\\ Professional",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -18932,9 +19047,9 @@
         {
           "architecture": "arm64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/defrag/32.0.26130/oodefrag_32.0.26130_pro_deu_arm64.msi",
-          "sha256": "178F93A714C3462E0212C81F33F09F3648DA466D23988D8B059E05BB070C8867",
-          "productCode": "{05420F08-DB6D-4D4B-83CE-8A7983534600}",
+          "url": "https://package.oo-software.com/winget/defrag/32.1.26138/oodefrag_32.1.26138_pro_deu_arm64.msi",
+          "sha256": "24AA5BC6E59DF289EA1FB1F037506BC9D635E7CD796DC36F41DABF962FBBC0FB",
+          "productCode": "{497D7285-80CB-446C-BDE2-F156EC013FB5}",
           "displayNamePattern": "^O&O\\ Defrag\\ Professional",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -19017,15 +19132,15 @@
     },
     {
       "id": "OO-Software.DiskImage.Premium",
-      "version": "22.6.1231",
+      "version": "23.0.26039",
       "displayName": "OO-Software.DiskImage.Premium",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/diskimage/22.6.1231/oodiskimage_22.6.1231_premium_eng_x64.msi",
-          "sha256": "EFE268C4E1D82064E889ACABE9068813BA62CF81A50F4F51BCC95B0E5E2ABE5B",
-          "productCode": "{20BD48CD-A611-4CEE-833F-3DE8B7488C0E}",
+          "url": "https://package.oo-software.com/winget/diskimage/23.0.26039/oodiskimage_23.0.26039_premium_eng_x64.msi",
+          "sha256": "21451B904418A15C977292D6FCB9BDC3B06C8DB77B0ADA4EFD8DDB720D6D26E7",
+          "productCode": "{424EC064-1256-461E-BC7A-6ABFD68DE0CB}",
           "displayNamePattern": "^O&O\\ DiskImage\\ Premium",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -19033,9 +19148,9 @@
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://package.oo-software.com/winget/diskimage/22.6.1231/oodiskimage_22.6.1231_premium_deu_x64.msi",
-          "sha256": "CAC8F011A7CC06BEDE07C52785634A208762A3F85527A60ACE958CD930BC5FDF",
-          "productCode": "{20BD48CD-A611-4CEE-833F-3DE8B7488C0E}",
+          "url": "https://package.oo-software.com/winget/diskimage/23.0.26039/oodiskimage_23.0.26039_premium_deu_x64.msi",
+          "sha256": "667395A8FDF1CC4581C83FF32D91199BBFE49867B95D6CF526D6AED2D835B61B",
+          "productCode": "{424EC064-1256-461E-BC7A-6ABFD68DE0CB}",
           "displayNamePattern": "^O&O\\ DiskImage\\ Premium",
           "publisherPattern": "^O&O\\ Software\\ GmbH$",
           "silentArgs": []
@@ -19257,6 +19372,23 @@
           "productCode": "{5723F799-3AA9-47CD-A477-4A8B2DB4C7DC}",
           "displayNamePattern": "",
           "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "OpenGeos.RustGIS",
+      "version": "0.3.0",
+      "displayName": "OpenGeos.RustGIS",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/opengeos/RustGIS/releases/download/v0.3.0/RustGIS-0.3.0-windows-x86_64.msi",
+          "sha256": "6536FB44D55545FBAF6EEE020CA432FF53C3E5A7AB98587A36D4ECCC0503DD9C",
+          "productCode": "{CDADED68-1CB5-4644-A801-0F8112D3DD66}",
+          "displayNamePattern": "^RustGIS",
+          "publisherPattern": "^Open\\ Geospatial\\ Solutions$",
           "silentArgs": []
         }
       ]
@@ -19789,15 +19921,15 @@
     },
     {
       "id": "OpenLess.OpenLess",
-      "version": "1.3.18",
+      "version": "2.0.1",
       "displayName": "OpenLess.OpenLess",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/Open-Less/openless/releases/download/v1.3.18-tauri/OpenLess_1.3.18_x64_en-US.msi",
-          "sha256": "37FC13E1D87A2338E106C5E8CE0A18153976796F82A11EA07182DBAE37D2FA74",
-          "productCode": "{17EB8FC5-540A-423A-B67D-71E91F3815A7}",
+          "url": "https://github.com/Open-Less/openless/releases/download/v2.0.1-tauri/OpenLess_2.0.1+build.20261016_x64_en-US.msi",
+          "sha256": "2084D718A6B408C291451F42A3BEE857F16C85969D75C596B8C2015BA3A33930",
+          "productCode": "{AE1F0952-7C0E-4BB2-A1B7-EE0E98EB0099}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -19859,33 +19991,6 @@
       ]
     },
     {
-      "id": "OpenMedia.4KTokkit",
-      "version": "25.1.0.1020",
-      "displayName": "OpenMedia.4KTokkit",
-      "installers": [
-        {
-          "architecture": "x86",
-          "installerType": "wix",
-          "url": "https://dl.4kdownload.com/app/4ktokkit_25.1.0.msi",
-          "sha256": "7128DFD636420CB6263C65D5E6C94AD2581322DA2F595B506363D710F717E295",
-          "productCode": "{C425D3F0-7C48-4F5E-AE2C-700A3EB72472}",
-          "displayNamePattern": "",
-          "publisherPattern": "^InterPromo\\ GMBH$",
-          "silentArgs": []
-        },
-        {
-          "architecture": "x64",
-          "installerType": "wix",
-          "url": "https://dl.4kdownload.com/app/4ktokkit_25.1.0_x64.msi",
-          "sha256": "95EAADE0D11978C3716C9EBA12D0E1AFADE972CF7027D8E72C0E70CB16774B02",
-          "productCode": "{53BE2021-FDC4-4D06-9B5A-5725A52A3D5C}",
-          "displayNamePattern": "",
-          "publisherPattern": "^InterPromo\\ GMBH$",
-          "silentArgs": []
-        }
-      ]
-    },
-    {
       "id": "OpenMedia.4KVideoDownloader",
       "version": "4.33.5.0172",
       "displayName": "OpenMedia.4KVideoDownloader",
@@ -19940,43 +20045,16 @@
       ]
     },
     {
-      "id": "OpenMedia.4KYoutubetoMP3",
-      "version": "5.7.4.166",
-      "displayName": "OpenMedia.4KYoutubetoMP3",
-      "installers": [
-        {
-          "architecture": "x86",
-          "installerType": "wix",
-          "url": "https://dl.4kdownload.com/app/4kyoutubetomp3_5.7.4.msi",
-          "sha256": "006D79C73AC6944A239EDCD050CBB2D0E4048A0BE048FB0450C50D543807D429",
-          "productCode": "{DC283878-DAA5-4D9A-BD23-BAA19F7AA577}",
-          "displayNamePattern": "^4K\\ YouTube\\ to\\ MP3",
-          "publisherPattern": "^Open\\ Media\\ LLC$",
-          "silentArgs": []
-        },
-        {
-          "architecture": "x64",
-          "installerType": "wix",
-          "url": "https://dl.4kdownload.com/app/4kyoutubetomp3_5.7.4_x64.msi",
-          "sha256": "CA6D5BE96FF7FC09267FEC2E6688CF129666B0E87E5DC7236691B6708D2C4782",
-          "productCode": "{D9E19FA0-C22F-4DDA-AD86-6669A82E071F}",
-          "displayNamePattern": "^4K\\ YouTube\\ to\\ MP3",
-          "publisherPattern": "^Open\\ Media\\ LLC$",
-          "silentArgs": []
-        }
-      ]
-    },
-    {
       "id": "OpenPencil.OpenPencil",
-      "version": "0.15.1",
+      "version": "0.16.0",
       "displayName": "OpenPencil.OpenPencil",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/open-pencil/open-pencil/releases/download/v0.15.1/OpenPencil_0.15.1_x64_en-US.msi",
-          "sha256": "BEE6617F9164DC965C226F14068A1E90BA6C5E6F619400F2A2CA6DDC62B1BF0D",
-          "productCode": "{62682FD9-5DE1-4C96-8FE8-956630A098EB}",
+          "url": "https://github.com/open-pencil/open-pencil/releases/download/v0.16.0/OpenPencil_0.16.0_x64_en-US.msi",
+          "sha256": "AE728C37173BEC562AFFD433B797621094CBBDCC4BB0335F9A727E6863801162",
+          "productCode": "{A00D4EF5-238A-4C21-B6A4-85C76CC640D3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -19984,9 +20062,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/open-pencil/open-pencil/releases/download/v0.15.1/OpenPencil_0.15.1_arm64_en-US.msi",
-          "sha256": "32BA3143DA55BCB227A95665187442FFEA1C605465F14F6E6658D70EF366BBAF",
-          "productCode": "{C249267D-24C3-4343-BA99-312C3D3332B3}",
+          "url": "https://github.com/open-pencil/open-pencil/releases/download/v0.16.0/OpenPencil_0.16.0_arm64_en-US.msi",
+          "sha256": "79DC61421387C17318718385F70EFB0C577F35779D087C5FBF6390AED012B0A1",
+          "productCode": "{CAB8FC1A-F916-41F9-8312-51250ADEF291}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20350,15 +20428,15 @@
     },
     {
       "id": "PaloAltoNetworks.PrismaAccessBrowser",
-      "version": "155.16.5.40",
+      "version": "155.16.7.85",
       "displayName": "PaloAltoNetworks.PrismaAccessBrowser",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://updates.talon-sec.com/releases/Prisma%20Access%20Browser/win/packaged/x64/crx_signed_o4_stable_prisma_access_browser_installer_155_16_5_40-155.16.5.40-bd420db5.msi",
-          "sha256": "97D7E0E47205E95001694747EF1BEBA709ACCB6CA6F0B218CC2E4B4BC596C774",
-          "productCode": "{37BBF781-7797-347C-B1D7-CEA6A6EB6524}",
+          "url": "https://updates.talon-sec.com/releases/Prisma%20Access%20Browser/win/packaged/x64/crx_signed_o4_stable_prisma_access_browser_installer_155_16_7_85-155.16.7.85-82234cc7.msi",
+          "sha256": "821370197AE51D5732B1063DE3F4D9CAE5709A26570677114EE3EA0110E42CE5",
+          "productCode": "{B1AF8413-71C4-378F-8FD9-2A7FEAEC75B4}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20366,9 +20444,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://updates.talon-sec.com/releases/Prisma%20Access%20Browser/win/packaged/arm64/crx_signed_o4_stable_prisma_access_browser_installer_155_16_5_40-155.16.5.40-23dd0b5f.msi",
-          "sha256": "36D499AD67F43AAC5FDF6D223EB354ED67304125AF14BF8478291DB992AA7BFA",
-          "productCode": "{E39AD6EC-3851-3087-B840-0845799369B1}",
+          "url": "https://updates.talon-sec.com/releases/Prisma%20Access%20Browser/win/packaged/arm64/crx_signed_o4_stable_prisma_access_browser_installer_155_16_7_85-155.16.7.85-08f10375.msi",
+          "sha256": "0534B8B4E3A542A67902EAFADA2E84B8CC199819B7F1B56FF7272317078969F5",
+          "productCode": "{4B0A2F38-6F8A-3A02-A85B-BDBFB67CA1A1}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20438,15 +20516,15 @@
     },
     {
       "id": "Parallels.Parallels",
-      "version": "21.2.27311",
+      "version": "21.2.27429",
       "displayName": "Parallels.Parallels",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://download.parallels.com/ras/v21/21.2.1.27311/RASClient-21.2.27311.msi",
-          "sha256": "E690072420F7726028178DB0E7F7E7B9C28D1D4B561837F835BB9EDAFE2ADB14",
-          "productCode": "{D2C0CDDE-5628-4958-8564-DB25A7738CB7}",
+          "url": "https://download.parallels.com/ras/v21/21.2.2.27429/RASClient-21.2.27429.msi",
+          "sha256": "C042D669CCDEBB18D50DB6F2DF552881EFCDEA7B964A049A92D15A9D78D1B9E4",
+          "productCode": "{5571C254-2480-4613-9217-C6CBB39BDC8F}",
           "displayNamePattern": "^Parallels\\ Client",
           "publisherPattern": "^Parallels\\ International\\ GmbH$",
           "silentArgs": []
@@ -20454,9 +20532,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://download.parallels.com/ras/v21/21.2.1.27311/RASClient-x64-21.2.27311.msi",
-          "sha256": "A675997CF1F9AFEE8E773C8F84AA34C1442A73191DFB113122373F32FAB2C43B",
-          "productCode": "{488DEDE2-4326-430D-96B0-FEE0C9B3B9EB}",
+          "url": "https://download.parallels.com/ras/v21/21.2.2.27429/RASClient-x64-21.2.27429.msi",
+          "sha256": "3F082D0035CA127880AFEE82FCD67392343BAEA555A2EFBDCC4B427E11239F86",
+          "productCode": "{9E1096D2-9002-43A2-8E90-DCF86713D510}",
           "displayNamePattern": "^Parallels\\ Client\\ 64-bit",
           "publisherPattern": "^Parallels\\ International\\ GmbH$",
           "silentArgs": []
@@ -20464,9 +20542,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://download.parallels.com/ras/v21/21.2.1.27311/RASClient-ARM64-21.2.27311.msi",
-          "sha256": "36B4F77B4A94389A437BE86C0160F8255C5303030C25DE4FF75BEB5263EA059C",
-          "productCode": "{EA301812-46D8-418B-A408-F99E3E959D7F}",
+          "url": "https://download.parallels.com/ras/v21/21.2.2.27429/RASClient-ARM64-21.2.27429.msi",
+          "sha256": "2D6B27D2E81C2D8C961241732A957B24086B9DF6013EEAC7354438C9B2577FFC",
+          "productCode": "{CC97ABEC-A990-4B42-A086-D0D109FCE46F}",
           "displayNamePattern": "^Parallels\\ Client\\ ARM64",
           "publisherPattern": "^Parallels\\ International\\ GmbH$",
           "silentArgs": []
@@ -20806,15 +20884,15 @@
     },
     {
       "id": "pkgconf.pkgconf",
-      "version": "3.0.7",
+      "version": "3.0.8",
       "displayName": "pkgconf.pkgconf",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.7/pkgconf-x86-3.0.7.msi",
-          "sha256": "5577E1CB77556D72859A474C1E91741506F3CB8D6DDB39002432B667C7A3D863",
-          "productCode": "{49AFBB2B-9412-46ED-B5F5-AB337BAE6D03}",
+          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.8/pkgconf-x86-3.0.8.msi",
+          "sha256": "619E605414383963DE4FC819FAFFC99D48EF9DF9BD54FAB77D00882D008BE6C6",
+          "productCode": "{AD9CA1A7-BEC1-4CA4-8A27-FE8459A4BC87}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20822,9 +20900,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.7/pkgconf-x64-3.0.7.msi",
-          "sha256": "7A316DBA4A4498EA952B746C82DEED41C597657095A0F776B75654191B45AE44",
-          "productCode": "{63BA1CA8-D29F-4A2F-9981-A32839073EBE}",
+          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.8/pkgconf-x64-3.0.8.msi",
+          "sha256": "A236479BBE403B202816745BEF19AFE2D6240606F28AB1F008BA0F33FBFAE43E",
+          "productCode": "{111E05D9-C56F-445B-9AD2-46242B2E593A}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20832,9 +20910,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.7/pkgconf-arm64-3.0.7.msi",
-          "sha256": "BC690B61CF20D0F8FA81B263482C1C50AFE852298301BB7F99BBEAD80C19F7DC",
-          "productCode": "{B38D16CB-F49C-4962-BE0F-9909C4BA91B9}",
+          "url": "https://github.com/pkgconf/pkgconf/releases/download/pkgconf-3.0.8/pkgconf-arm64-3.0.8.msi",
+          "sha256": "5F79545C8C341030CA288AFE1EA1A9D264AE1BA107035812269C58FC09E9D7F0",
+          "productCode": "{36DED988-FB45-4BB4-A462-6D6B44F30E7D}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20894,15 +20972,15 @@
     },
     {
       "id": "poco-ai.Agentero",
-      "version": "0.11.5",
+      "version": "0.11.8",
       "displayName": "poco-ai.Agentero",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/poco-ai/Agentero/releases/download/v0.11.5/Agentero_0.11.5_x64_en-US.msi",
-          "sha256": "C4351EF9E684ED957B8FEA99D551C43F96B7D903EEA07024E9550FE9B89A123B",
-          "productCode": "{28C6F344-B076-4812-A7EF-A15345217552}",
+          "url": "https://github.com/poco-ai/Agentero/releases/download/v0.11.8/Agentero_0.11.8_x64_en-US.msi",
+          "sha256": "98A14905DBD9F2880569142BC9B54F1BAF5204F89722345E889F2B5839C42E78",
+          "productCode": "{4E09088D-AF39-48A8-8BAC-FF10E38737A8}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20911,15 +20989,15 @@
     },
     {
       "id": "Podman.CLI",
-      "version": "6.1.3",
+      "version": "6.1.4",
       "displayName": "Podman.CLI",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/podman-container-tools/podman/releases/download/v6.1.3/podman-installer-windows-amd64.msi",
-          "sha256": "8EB4B84B9130F915A83D2B659CAA430270F0DE4FE566F97C32FC1C919D28E22B",
-          "productCode": "{4F96BCF1-9666-4D18-925B-2D807258C39A}",
+          "url": "https://github.com/podman-container-tools/podman/releases/download/v6.1.4/podman-installer-windows-amd64.msi",
+          "sha256": "4A05240054CB990629CBE098DB090C5C7848C44162C11910CABB45CA75A40D53",
+          "productCode": "{E8D285D4-F069-44B9-BF8A-C41ED47B02B8}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -20927,9 +21005,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/podman-container-tools/podman/releases/download/v6.1.3/podman-installer-windows-arm64.msi",
-          "sha256": "B5096F603B5BF6B98823EBE10768AFCE5A925837EDBBD9E99174ABA2A5FC1E9C",
-          "productCode": "{F55DE391-6964-4715-A1CF-B63345A7C185}",
+          "url": "https://github.com/podman-container-tools/podman/releases/download/v6.1.4/podman-installer-windows-arm64.msi",
+          "sha256": "A1B65FFA7DD60A5ECEEDD3DF7FC5D1D005B8D21018FF9DEAA15AEACFBC92CD6C",
+          "productCode": "{E55F342F-1F18-4AA4-81F3-586FC59DD5FE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -21073,15 +21151,15 @@
     },
     {
       "id": "presono.presono",
-      "version": "3.28.0",
+      "version": "3.29.1",
       "displayName": "presono.presono",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://presono-desktop-app.s3-eu-west-1.amazonaws.com/presono-Setup.3.28.0.msi",
-          "sha256": "580AF3A5F1E4DB195A4FB7EF82A570636F9407AB1EA02A944B35C5365C42E7C0",
-          "productCode": "{3D3EB99C-94D5-4D01-9A7F-807E43C00C42}",
+          "url": "https://presono-desktop-app.s3-eu-west-1.amazonaws.com/presono-Setup.3.29.1.msi",
+          "sha256": "A84966838F8132447B608B8B6B8402B65443247350CEF0C6A4300C1BB55594A1",
+          "productCode": "{E0FDEB8A-A60D-4EC9-A26B-C56977C34949}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -21134,14 +21212,14 @@
     },
     {
       "id": "Prometheus.WindowsExporter",
-      "version": "0.31.8",
+      "version": "0.31.9",
       "displayName": "Prometheus.WindowsExporter",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/prometheus-community/windows_exporter/releases/download/v0.31.8/windows_exporter-0.31.8-amd64.msi",
-          "sha256": "0AADCE6AFB20182B678BFCA9E8F2E8464EF48C469B28B4CF02E99D82158F5D40",
+          "url": "https://github.com/prometheus-community/windows_exporter/releases/download/v0.31.9/windows_exporter-0.31.9-amd64.msi",
+          "sha256": "1E8A3898E8FEBAA475E008FFD2E729E1BEF84ECBCB6875910546EE0798E96126",
           "productCode": "{605DC431-98AA-404F-91BB-9069024E0FF3}",
           "displayNamePattern": "",
           "publisherPattern": "^prometheus-community$",
@@ -21150,8 +21228,8 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/prometheus-community/windows_exporter/releases/download/v0.31.8/windows_exporter-0.31.8-arm64.msi",
-          "sha256": "1ACC1C92040D0189AA5D2572F3D2CCD8C7D41A1A0FB2561B9A529D930D3A46D3",
+          "url": "https://github.com/prometheus-community/windows_exporter/releases/download/v0.31.9/windows_exporter-0.31.9-arm64.msi",
+          "sha256": "ED3F9A5F55764C1FEC5086F70310209C860519F74F12F57E55574C8E46B58D34",
           "productCode": "{63FCAB57-A76C-4358-AF82-39BE1AC7E65F}",
           "displayNamePattern": "",
           "publisherPattern": "^prometheus-community$",
@@ -21323,15 +21401,15 @@
     },
     {
       "id": "PTRTECH.UVtools",
-      "version": "7.0.3",
+      "version": "7.1.0",
       "displayName": "PTRTECH.UVtools",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/sn4k3/UVtools/releases/download/v7.0.3/UVtools_win-x64_v7.0.3.msi",
-          "sha256": "6F83BCCB65146527973CC89A47E732243D0729CB86BC1754DECEEABFA621D0FB",
-          "productCode": "{A3DADDCD-D432-403A-8C4A-DC9B5202ADD2}",
+          "url": "https://github.com/sn4k3/UVtools/releases/download/v7.1.0/UVtools_win-x64_v7.1.0.msi",
+          "sha256": "7B49286B0E0521E783811E795D2BB5B3B5FE06BD94ACA4CBDB54CEB221E632A3",
+          "productCode": "{E0D400BC-8766-49F0-B919-B225B8B290F4}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -21339,9 +21417,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/sn4k3/UVtools/releases/download/v7.0.3/UVtools_win-arm64_v7.0.3.msi",
-          "sha256": "6747E3C40CFAE0DE7FE6BAC8B9B61E9C254591112590FF9552299AD268BEBFF1",
-          "productCode": "{50DD503E-B1CA-4BDE-968F-7C6DEF544BA0}",
+          "url": "https://github.com/sn4k3/UVtools/releases/download/v7.1.0/UVtools_win-arm64_v7.1.0.msi",
+          "sha256": "96423F98110A89835CE915D81144E0C8535BF5C0FDFA73309AEACB96A089340C",
+          "productCode": "{217835CC-CF3A-43C1-A1F1-A6BA292BF8B4}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -21681,15 +21759,15 @@
     },
     {
       "id": "QGIS.QField",
-      "version": "4.3.5",
+      "version": "4.3.6",
       "displayName": "QGIS.QField",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/opengisch/QField/releases/download/v4.3.5/qfield-v4.3.5-windows-x64.msi",
-          "sha256": "B62714A4C1534ED0F0AE5D82E1471221508E9A247CE72A89D28EF4C62D707FFB",
-          "productCode": "{652E029E-FF0D-4987-B628-005812F76530}",
+          "url": "https://github.com/opengisch/QField/releases/download/v4.3.6/qfield-v4.3.6-windows-x64.msi",
+          "sha256": "8591ECA5ACBBDBCE0D6D2AEE548259E9D9407D78AB7C93BD46B9C525A09B17F4",
+          "productCode": "{01D481B3-5F5D-4E21-8843-B902A510F468}",
           "displayNamePattern": "",
           "publisherPattern": "^OPENGIS\\.ch$",
           "silentArgs": []
@@ -21697,9 +21775,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/opengisch/QField/releases/download/v4.3.5/qfield-v4.3.5-windows-arm64.msi",
-          "sha256": "655ACBF066B1FB8DB253785A67F81BE5563F752A34163AF3CF96A19DD7E64EC6",
-          "productCode": "{23C98056-D96B-4571-862C-14E37EFB4EEC}",
+          "url": "https://github.com/opengisch/QField/releases/download/v4.3.6/qfield-v4.3.6-windows-arm64.msi",
+          "sha256": "E19E3415D567EF6DE623A9F996223EF248E609E9292EAC23C4C0DA646FE4089C",
+          "productCode": "{34A1B4A9-4D79-401B-B922-3E4D0C1F5DAC}",
           "displayNamePattern": "",
           "publisherPattern": "^OPENGIS\\.ch$",
           "silentArgs": []
@@ -21708,15 +21786,15 @@
     },
     {
       "id": "qingchencloud.ClawPanel",
-      "version": "0.22.1",
+      "version": "0.22.3",
       "displayName": "qingchencloud.ClawPanel",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/qingchencloud/clawpanel/releases/download/v0.22.1/ClawPanel_0.22.1_x64-full_en-US.msi",
-          "sha256": "801E164A81D5AF9BAA402948BA5D53F8B3A7338C7152FFFA58E503194BF6517B",
-          "productCode": "{9C0BBED3-6107-4560-808E-8838A089F0D5}",
+          "url": "https://github.com/qingchencloud/clawpanel/releases/download/v0.22.3/ClawPanel_0.22.3_x64-full_en-US.msi",
+          "sha256": "8880E490ADE00E4604A29C17B91F8FD256AE0572A8BC4E4A3C943BA6132F63A9",
+          "productCode": "{C688C85A-05B3-4324-BEA0-16013F10C7B3}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22151,15 +22229,15 @@
     },
     {
       "id": "ReincubateLtd.CamoStudio",
-      "version": "2.9.2.25892",
+      "version": "2.9.3.26054",
       "displayName": "ReincubateLtd.CamoStudio",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
           "url": "https://reincubate.com/res/labs/camo/camo-windows-latest.msi",
-          "sha256": "777B5F90E2BCBBB741EE7D56A391DE376A5A24CD07C751D59F79CDF0CC01336F",
-          "productCode": "{C6D65CF8-797E-4F8B-A8C4-82FD88E7423B}",
+          "sha256": "4CCF7CA9E260B3494E49848B2C175B75845FDFB7492983590A08E61F02D2DA14",
+          "productCode": "{813B3A35-17F5-4F3C-8BB3-A58F65A9F1DE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22273,14 +22351,14 @@
     },
     {
       "id": "RicardoCabral.icuvisor",
-      "version": "1.6.5",
+      "version": "1.8.0",
       "displayName": "RicardoCabral.icuvisor",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/ricardocabral/icuvisor/releases/download/v1.6.5/icuvisor_1.6.5_windows_amd64.msi",
-          "sha256": "D7A9EC6C9650FCBE90B4D0AE91847158F0A595638E4353F7FC3449F66F9A254B",
+          "url": "https://github.com/ricardocabral/icuvisor/releases/download/v1.8.0/icuvisor_1.8.0_windows_amd64.msi",
+          "sha256": "292EAAC697A5A81FDDA35E08357923C572418DCBFF339E7884D2627262BB05B4",
           "productCode": "{D658284C-D030-4033-BE07-4D4755AF624C}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -22289,8 +22367,8 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/ricardocabral/icuvisor/releases/download/v1.6.5/icuvisor_1.6.5_windows_arm64.msi",
-          "sha256": "3631FA5479FB27A5D869F368E52E65D4BFC45E7791833DFA30A703F04EDD6BC0",
+          "url": "https://github.com/ricardocabral/icuvisor/releases/download/v1.8.0/icuvisor_1.8.0_windows_arm64.msi",
+          "sha256": "B40E553448B2B6418BDBF6B0E43AF7F9B98EEECEE8D9C5E35197C3060E1E5856",
           "productCode": "{799D1848-8F19-408C-B63B-24277C299FBE}",
           "displayNamePattern": "",
           "publisherPattern": "",
@@ -22343,33 +22421,6 @@
           "url": "https://github.com/pbkit/pbkit/releases/download/v0.0.70/pollapo-windows-installer.msi",
           "sha256": "DF14C6EE7703A56B25F0C302311CFD3F6B50E107ADA79BEF2CD1C29CC654207F",
           "productCode": "{9F7B8FBD-BE96-4BB8-86E4-35A3AC6ED5DE}",
-          "displayNamePattern": "",
-          "publisherPattern": "",
-          "silentArgs": []
-        }
-      ]
-    },
-    {
-      "id": "RingCentral.RingCentral",
-      "version": "26.3.2012.1787",
-      "displayName": "RingCentral.RingCentral",
-      "installers": [
-        {
-          "architecture": "x64",
-          "installerType": "wix",
-          "url": "https://app.ringcentral.com/download/RingCentral-x64.msi",
-          "sha256": "E14F5A3DDF7AB990A9F3B4B771B681737EC108F5EF75F7543D205EF4E86B5547",
-          "productCode": "{5D3536C2-EE82-4E58-9106-CCE83BA933B4}",
-          "displayNamePattern": "",
-          "publisherPattern": "",
-          "silentArgs": []
-        },
-        {
-          "architecture": "arm64",
-          "installerType": "wix",
-          "url": "https://app.ringcentral.com/download/RingCentral-arm64.msi",
-          "sha256": "73796AD9E09A11F81CE2830FC0A5DB938E4408256BFB8819C851A7823DFF6610",
-          "productCode": "{E4A15DCB-2B46-43F9-B79A-A69805E09C9B}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22466,15 +22517,15 @@
     },
     {
       "id": "Rustlang.Rust.GNU",
-      "version": "1.99.0",
+      "version": "1.99.1",
       "displayName": "Rustlang.Rust.GNU",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-i686-pc-windows-gnu.msi",
-          "sha256": "7CE1C0FE17A413EDC629EFAD0E8F15C1D421BCE95CBC5BBC08C025E718E3F993",
-          "productCode": "{241F1E9B-DCC0-4A02-86B7-34010647AE37}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-i686-pc-windows-gnu.msi",
+          "sha256": "CB29BAE32106BBF57F2D6DCDA265FFBC2280541A47260260B7042566A6526760",
+          "productCode": "{3AF9C662-C90B-475B-998A-0D98F702E4BC}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22482,9 +22533,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-x86_64-pc-windows-gnu.msi",
-          "sha256": "56968ED813D457405DC008773AFE24ECA9E5AFDAA7B14BD930CFCF3BC3A2C09D",
-          "productCode": "{A24DEEE8-DA6B-479E-8817-E249663D2A5C}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-x86_64-pc-windows-gnu.msi",
+          "sha256": "8A5C93727D7AC758554193C7ECE9916FA3C7AA1E9478A3A42E18C2E0A3ED2D2C",
+          "productCode": "{E8723D09-E544-4E8D-AC22-ECB79C9704FA}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22493,15 +22544,15 @@
     },
     {
       "id": "Rustlang.Rust.GNU.LLVM",
-      "version": "1.99.0",
+      "version": "1.99.1",
       "displayName": "Rustlang.Rust.GNU.LLVM",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-x86_64-pc-windows-gnullvm.msi",
-          "sha256": "9FE13F586254A4FA41AFE8553DF0097349D952AC1F1583BAA398330315706AE0",
-          "productCode": "{AAF6A960-7886-4BE5-A531-5F6C24FD6C91}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-x86_64-pc-windows-gnullvm.msi",
+          "sha256": "930A84D45BFE84B7FDC61DB9AC3E75883D8D7E872E172CEFAD19DA0C1F2D8675",
+          "productCode": "{C8BEA5B2-4476-41B4-AE53-B572D862FF79}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22509,9 +22560,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-aarch64-pc-windows-gnullvm.msi",
-          "sha256": "DD52CD90DC2020BB80F98C111F73A1C0F6322D7D0C792CAA3F11AAC3D5C3D520",
-          "productCode": "{7C9DC99D-7D71-457A-B86A-3E9F719025F5}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-aarch64-pc-windows-gnullvm.msi",
+          "sha256": "918F3AA5B33FF4C341DD62A0B14677456FFE9F44F009CBE7C7F2B96A214DF027",
+          "productCode": "{8579158F-4818-4A5F-953E-91C38E24D07D}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22520,15 +22571,15 @@
     },
     {
       "id": "Rustlang.Rust.MSVC",
-      "version": "1.99.0",
+      "version": "1.99.1",
       "displayName": "Rustlang.Rust.MSVC",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-i686-pc-windows-msvc.msi",
-          "sha256": "219BBA7C267D4E1B39166063205EF590FC3FF6EA1FF4A7C4CE01B56DB3C4D3BD",
-          "productCode": "{CFCE138B-DE23-4258-8D49-A19E00810D84}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-i686-pc-windows-msvc.msi",
+          "sha256": "A0810F1743C4D8CA46DD9607245B048AAC4B785F3D916669AA8FFDD30D51609F",
+          "productCode": "{37BA825D-41BC-4FB5-97E6-016D2F1BC19A}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22536,9 +22587,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-x86_64-pc-windows-msvc.msi",
-          "sha256": "0CCECC0D77722CF4AB3288ECDCF541530BEC129B530F91618CBDD9E3A0DBE7FD",
-          "productCode": "{E92C217C-4125-4570-A12D-1760A95572CD}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-x86_64-pc-windows-msvc.msi",
+          "sha256": "11D5B1D217277B0C9CD1688B8682F046CF0D6778C58D8894309104F0FE860F23",
+          "productCode": "{148B6454-CC8F-45E7-B84A-7C22CCB69B86}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22546,9 +22597,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://static.rust-lang.org/dist/rust-1.99.0-aarch64-pc-windows-msvc.msi",
-          "sha256": "C936B4067ED3B53F7EA8FC8044F7D66ED17DFA3675005976A452AB93A1110052",
-          "productCode": "{549C2723-2731-4C4C-ABDE-C034F4486C15}",
+          "url": "https://static.rust-lang.org/dist/rust-1.99.1-aarch64-pc-windows-msvc.msi",
+          "sha256": "9E1ABBFF9227FD4CD3849792D00946B799FB75E67067E7C8DD9FD21AB805B28C",
+          "productCode": "{D3A45B42-1B17-44DA-8C75-EDECD80879BF}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22954,15 +23005,15 @@
     },
     {
       "id": "ScreenCloud.ScreenCloudPlayer",
-      "version": "3.12.0",
+      "version": "3.13.1",
       "displayName": "ScreenCloud.ScreenCloudPlayer",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://release.screen.cloud/player/desktop/channel/stable/scplayer_3.12.0_win32_ia32.msi",
-          "sha256": "D49CD013CE0251D18451669AF0FC8B66FD3C870D661012D80449EA5750949CBB",
-          "productCode": "{9BC874B7-671C-44E4-A098-D3D1B885EC07}",
+          "url": "https://release.screen.cloud/player/desktop/channel/stable/scplayer_3.13.1_win32_ia32.msi",
+          "sha256": "864AC53CE6A34B5D434A3D03646B63DF109EA00824D104737C1E5663F64C204D",
+          "productCode": "{BDD9FA35-BE32-4426-AB8A-15F1B40BC9C5}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22970,9 +23021,9 @@
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://release.screen.cloud/player/desktop/channel/stable/scplayer_3.12.0_win32_x64.msi",
-          "sha256": "4622C664F4E0FFB9767FD84AF6EC14D6FCCD35026555403D85128121A48FC584",
-          "productCode": "{2FADB1CB-3A03-4475-9635-6019C3C400DD}",
+          "url": "https://release.screen.cloud/player/desktop/channel/stable/scplayer_3.13.1_win32_x64.msi",
+          "sha256": "741C04E7A0C53D9E19B16CCAA35805759AADD39F6B8C51B0EB40AA9F258198AE",
+          "productCode": "{2D440291-48A9-4C23-822F-9A3DB1FB4CEE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22981,15 +23032,15 @@
     },
     {
       "id": "ScryerMedia.Scryer",
-      "version": "0.21.14",
+      "version": "0.21.17",
       "displayName": "ScryerMedia.Scryer",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://github.com/scryer-media/scryer/releases/download/scryer-v0.21.14/scryer-windows-x86_64-winget.msi",
-          "sha256": "D4276328D38DDAB665076FC731C4CE26F257101D3707E474843997532D1755FC",
-          "productCode": "{702B7357-D52A-425D-81BD-456DCCBDE079}",
+          "url": "https://github.com/scryer-media/scryer/releases/download/scryer-v0.21.17/scryer-windows-x86_64-winget.msi",
+          "sha256": "B3042FAEE2FAFE2E166FA308C0591A8A949A19F83B15DCDD6FF8F75D77CD91D8",
+          "productCode": "{477329E2-2B89-418C-9004-C1E66AA4B6B2}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -22997,9 +23048,9 @@
         {
           "architecture": "arm64",
           "installerType": "msi",
-          "url": "https://github.com/scryer-media/scryer/releases/download/scryer-v0.21.14/scryer-windows-arm64-winget.msi",
-          "sha256": "BE23DDA3F84B080834B1A9E32F093457C8BD8A6D28E497CE027E0FEF85D2DD3B",
-          "productCode": "{A11AD35C-88C5-4B43-A93C-E0CCC37EC0B7}",
+          "url": "https://github.com/scryer-media/scryer/releases/download/scryer-v0.21.17/scryer-windows-arm64-winget.msi",
+          "sha256": "F900F67F7908F5AB477A62E5FAE56EC5BCF480FCB4B7C0B1C24B32C7750C5F70",
+          "productCode": "{C37E8DC5-7AF8-4B52-A802-333AFC6D5668}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -23008,15 +23059,15 @@
     },
     {
       "id": "ScryerMedia.Weaver",
-      "version": "0.14.7",
+      "version": "0.15.0",
       "displayName": "ScryerMedia.Weaver",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://github.com/scryer-media/weaver/releases/download/weaver-v0.14.7/weaver-windows-x86_64.msi",
-          "sha256": "841D2031C2D7CB689AB12D473E2FA225E392CBC1A2D4F3DD09DAA36FC6A5B3B2",
-          "productCode": "{78A55849-752D-4482-AD77-DB3750F914E4}",
+          "url": "https://github.com/scryer-media/weaver/releases/download/weaver-v0.15.0/weaver-windows-x86_64.msi",
+          "sha256": "F26B961D7C3B90B2CB4E5A6D009F48B420F79E16DB998539F3DAB523345DBB00",
+          "productCode": "{F6B4B96F-7AEC-450C-A35B-6341ED789AA0}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -23024,9 +23075,9 @@
         {
           "architecture": "arm64",
           "installerType": "msi",
-          "url": "https://github.com/scryer-media/weaver/releases/download/weaver-v0.14.7/weaver-windows-arm64.msi",
-          "sha256": "B8E76F6AEF782C0A0CBAC887A72151C7400ED695B49F544366227E0A493E5E5D",
-          "productCode": "{014B48A6-44D1-4FED-9DBA-C339FA1C1946}",
+          "url": "https://github.com/scryer-media/weaver/releases/download/weaver-v0.15.0/weaver-windows-arm64.msi",
+          "sha256": "AA995219B0B876B1CD72C7F2EE0933BF7759019F25FB5C97373A3F5D60652863",
+          "productCode": "{40A635ED-88F6-4C8C-9FDB-EC7511B40611}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -23491,15 +23542,15 @@
     },
     {
       "id": "SmartSoft.SmartFTP",
-      "version": "10.0.3331.0",
+      "version": "10.0.3333.0",
       "displayName": "SmartSoft.SmartFTP",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://static.smartftp.com/static/Products/Client/10.0.3331.0/x64/SmartFTP.msi",
-          "sha256": "485B4184AE89AF9A8AF5E57ABBBC4FD099343F1F989CA86AD4C0FD04F5610F77",
-          "productCode": "{25EBC5A5-F799-4F8E-A702-9BBBEE0E2597}",
+          "url": "https://static.smartftp.com/static/Products/Client/10.0.3333.0/x64/SmartFTP.msi",
+          "sha256": "366CEC5C9A91033230F863D3D1BD420ACBC51CC35FD133449F6EE08C5503D034",
+          "productCode": "{33EBECC6-67D4-4B18-9208-3274CA12FFF0}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -24664,15 +24715,15 @@
     },
     {
       "id": "SureshJanakiReddy.GeminiDesktop",
-      "version": "0.2.32",
+      "version": "0.2.33",
       "displayName": "SureshJanakiReddy.GeminiDesktop",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/sureshjsreddy/gemini-desktop/releases/download/v0.2.32/Gemini.Desktop_0.2.32_x64_en-US.msi",
-          "sha256": "C9BB7A8ACC90D165F33A3F9C43353B99E62ECC7984CE42CB6DBF91F8A0DB4E7D",
-          "productCode": "{38369E4D-B4F0-4A67-8ED1-F78FF2E570D9}",
+          "url": "https://github.com/sureshjsreddy/gemini-desktop/releases/download/v0.2.33/Gemini.Desktop_0.2.33_x64_en-US.msi",
+          "sha256": "BE188B06E8AFE779F3244D7756C19424F98A795D10F5F22B3C6194FFA12C9C02",
+          "productCode": "{617E0A9F-DFE4-44FA-B1DD-3D2F647DCF71}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -25009,15 +25060,15 @@
     },
     {
       "id": "sysmanage.sysmanage",
-      "version": "3.10.0.7",
+      "version": "3.11.0.5",
       "displayName": "sysmanage.sysmanage",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/bceverly/sysmanage/releases/download/v3.10.0.7/sysmanage-3.10.0.7-windows-x64.msi",
-          "sha256": "BF705224A5D12984DDF4162E14EBB3AF19A88552930820BAD1CBFCD11B2F25CB",
-          "productCode": "{F6D3FC2E-7E62-470D-B513-1C8024863AA6}",
+          "url": "https://github.com/bceverly/sysmanage/releases/download/v3.11.0.5/sysmanage-3.11.0.5-windows-x64.msi",
+          "sha256": "2E2965B4CFB5267C6646A21C99AEA51B96EE9320C5FC5FE40E8DD5A2B2910B1E",
+          "productCode": "{1273527C-C354-4B55-A0B6-BBC60AC94698}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -25025,9 +25076,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/bceverly/sysmanage/releases/download/v3.10.0.7/sysmanage-3.10.0.7-windows-arm64.msi",
-          "sha256": "2029598BE26A046B6138A4189E31C150580288567C48F101BD2B353E122CEF44",
-          "productCode": "{EF9F2CA5-5A06-461F-A0CF-508B431B639B}",
+          "url": "https://github.com/bceverly/sysmanage/releases/download/v3.11.0.5/sysmanage-3.11.0.5-windows-arm64.msi",
+          "sha256": "BB944904C8650913CB5DA03C9C3B40E04AB454025E238CC471A16EFED397DB8A",
+          "productCode": "{63A5ED79-71E2-45B4-BE4C-0B461BF1C9AD}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -25204,6 +25255,23 @@
           "url": "https://files.teamspeak-services.com/pre_releases/client/5.0.0-beta77/teamspeak-client.msi",
           "sha256": "44EF7E071D6A5BE10ADA913A3D40996E202A2B02D3353746BA52DC98771F0604",
           "productCode": "{EE883F28-D7AF-48E5-87B6-1F59D856362F}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "Technicalflight.AiGuard",
+      "version": "0.1.1",
+      "displayName": "Technicalflight.AiGuard",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/Technicalflight/AiGuard/releases/download/v0.1.1/AI._0.1.1_x64_zh-CN.msi",
+          "sha256": "5D8B4171BCFD898E1AA80F2AE70A168A6F8FC10002ABFE529460680A3B999255",
+          "productCode": "{225449BB-135B-4992-BCA9-F6683A5CB226}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -25557,6 +25625,33 @@
           "url": "https://cdn.textexpander.com/windows/848.4.0/TextExpander_x64.msi",
           "sha256": "010C16347C85DD72562925A23B1E57A34191F912639CAA7220185342A4FDE75C",
           "productCode": "{2D7FBA27-E627-4096-A66B-AE67582D24B2}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        }
+      ]
+    },
+    {
+      "id": "TheCodeSaiyan.Loadout",
+      "version": "0.66.1",
+      "displayName": "TheCodeSaiyan.Loadout",
+      "installers": [
+        {
+          "architecture": "x64",
+          "installerType": "wix",
+          "url": "https://github.com/ntatschner/loadout-cli/releases/download/v0.66.1/loadout-0.66.1-win-x64.msi",
+          "sha256": "0BBA64DABAF19EF6C90AFCE2AEC6AE15B429CFCA7F709C2A1DCE40A0CD83E6ED",
+          "productCode": "{2BE617BE-D57E-42F7-8ABD-682DD33C86BB}",
+          "displayNamePattern": "",
+          "publisherPattern": "",
+          "silentArgs": []
+        },
+        {
+          "architecture": "arm64",
+          "installerType": "wix",
+          "url": "https://github.com/ntatschner/loadout-cli/releases/download/v0.66.1/loadout-0.66.1-win-arm64.msi",
+          "sha256": "19DBEE5E6AA02BCB7FD9A425FAA8909D47991549BFF11E183F8D09D5E398B455",
+          "productCode": "{59CD44C5-4D7F-4714-8C2F-E27DD3CE4C85}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -27846,15 +27941,15 @@
     },
     {
       "id": "Tomclanc.GestureSignV2",
-      "version": "18.3.5",
+      "version": "18.3.9",
       "displayName": "Tomclanc.GestureSignV2",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/Tomclanc/GestureSignv2/releases/download/v18.3.5/GestureSign-V2-18.3.5-x64.msi",
-          "sha256": "CBD47B95ACBAA0A4AAE4EDEA6EA12C8D4D7170ED16BF7A832AC6F1F2DF0A88B2",
-          "productCode": "{345BE62B-2D3C-4D56-8999-05B29B79078F}",
+          "url": "https://github.com/Tomclanc/GestureSignv2/releases/download/v18.3.9/GestureSign-V2-18.3.9-x64.msi",
+          "sha256": "9E638854BE7BDC1137950BE7362937E4966EA31808F62C1AA343BDCB47F79A2B",
+          "productCode": "{0340BBDF-63B3-43C2-8A8D-3196FF96FABF}",
           "displayNamePattern": "^GestureSign\\ V2",
           "publisherPattern": "^TransposonY\\ /\\ WinUI\\ rebuild$",
           "silentArgs": []
@@ -27862,9 +27957,9 @@
         {
           "architecture": "arm64",
           "installerType": "wix",
-          "url": "https://github.com/Tomclanc/GestureSignv2/releases/download/v18.3.5/GestureSign-V2-18.3.5-arm64.msi",
-          "sha256": "386B3180EFF6C23CACAE45300727A9B642D0DD479DA87DF5A69449D6E78A748C",
-          "productCode": "{1BBE879C-0D0C-4EB9-B129-D46B68F123B4}",
+          "url": "https://github.com/Tomclanc/GestureSignv2/releases/download/v18.3.9/GestureSign-V2-18.3.9-arm64.msi",
+          "sha256": "BA33F13A5EC78ADC9E8CACDCC4AA6C80A7F8D01738C3E6C98484E3AA37F01608",
+          "productCode": "{991A4B7D-97C8-40AD-9D1F-E46E768D49ED}",
           "displayNamePattern": "^GestureSign\\ V2",
           "publisherPattern": "^TransposonY\\ /\\ WinUI\\ rebuild$",
           "silentArgs": []
@@ -28888,15 +28983,15 @@
     },
     {
       "id": "VitorPamplona.Amethyst",
-      "version": "1.18.0",
+      "version": "1.19.0",
       "displayName": "VitorPamplona.Amethyst",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://github.com/vitorpamplona/amethyst/releases/download/v1.18.0/amethyst-desktop-1.18.0-windows-x64.msi",
-          "sha256": "5508E2C86C5538056825B8B88A349C060EF7AA44EF0AD57640F1B97738FF4670",
-          "productCode": "{4A998FE3-C8B9-35FA-B420-580AD6542396}",
+          "url": "https://github.com/vitorpamplona/amethyst/releases/download/v1.19.0/amethyst-desktop-1.19.0-windows-x64.msi",
+          "sha256": "BCB2FE4931D88900971E76A18139F6B3C0356508A6CF164E8D6018159E177482",
+          "productCode": "{EEE9A3B6-B68D-3299-8A3B-BFB12570DD0B}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -29098,15 +29193,15 @@
     },
     {
       "id": "WendyLabs.Wendy",
-      "version": "2026.10.05-134249",
+      "version": "2026.10.14-064751",
       "displayName": "WendyLabs.Wendy",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "msi",
-          "url": "https://github.com/wendylabsinc/wendy-agent/releases/download/2026.10.05-134249/wendy-cli-windows-amd64-2026.10.05-134249.msi",
-          "sha256": "42897EB00E41CFDD0BBF21D039495CDAE6F0A95A958A15E56A02763A92607C96",
-          "productCode": "{5911B885-D34C-4D4E-9FB1-E92B2EE30EAC}",
+          "url": "https://github.com/wendylabsinc/wendy-agent/releases/download/2026.10.14-064751/wendy-cli-windows-amd64-2026.10.14-064751.msi",
+          "sha256": "47FB14566CEAB10547F1900AFE1AEBE73EE224578AD5BA363B7F7E38873FD151",
+          "productCode": "{4385CD71-E62F-43AD-9CA8-38124F6B852F}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -29114,9 +29209,9 @@
         {
           "architecture": "arm64",
           "installerType": "msi",
-          "url": "https://github.com/wendylabsinc/wendy-agent/releases/download/2026.10.05-134249/wendy-cli-windows-arm64-2026.10.05-134249.msi",
-          "sha256": "327382AC8E3EC2DD0BB324597EF5FF762C5E6DE66E7A015A0276EFAB5BBE464A",
-          "productCode": "{D8E22097-411F-48B2-86D5-AD5033756035}",
+          "url": "https://github.com/wendylabsinc/wendy-agent/releases/download/2026.10.14-064751/wendy-cli-windows-arm64-2026.10.14-064751.msi",
+          "sha256": "5181581FDF6B4E13AD9D6084DBBD5EA42EB0D72F3427DF0EC05964DDFBB322B0",
+          "productCode": "{91926AC2-362E-4D97-97E3-A0B8D0B7734A}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -29625,15 +29720,15 @@
     },
     {
       "id": "WinSCP.WinSCP",
-      "version": "6.5.7",
+      "version": "6.7",
       "displayName": "WinSCP.WinSCP",
       "installers": [
         {
           "architecture": "x86",
           "installerType": "wix",
-          "url": "https://sourceforge.net/projects/winscp/files/WinSCP/6.5.7/WinSCP-6.5.7.msi/download",
-          "sha256": "D04B962C8F1C00D93F1E609E644B7A65F272843987C6206D339250D1DEFDCFB1",
-          "productCode": "{4773A17A-F643-4A1B-99FC-B47F3470C7EB}",
+          "url": "https://sourceforge.net/projects/winscp/files/WinSCP/6.7/WinSCP-6.7.msi/download",
+          "sha256": "BF69FB2EF3345BA7639F7EE4DCCEAC53198DB9E5644926B39B2853931299E53E",
+          "productCode": "{4AA55A86-5225-4762-B9E9-DB089914BAAE}",
           "displayNamePattern": "",
           "publisherPattern": "",
           "silentArgs": []
@@ -29723,17 +29818,17 @@
     },
     {
       "id": "WiresharkFoundation.Wireshark",
-      "version": "4.6.8",
+      "version": "4.6.9",
       "displayName": "WiresharkFoundation.Wireshark",
       "installers": [
         {
           "architecture": "x64",
           "installerType": "wix",
-          "url": "https://2.na.dl.wireshark.org/win64/all-versions/Wireshark-4.6.8-x64.msi",
-          "sha256": "779EE66F846376942A3B631A78BBA8C3D509697D07743349E1893056211D05E3",
-          "productCode": "{44623207-AC43-4DED-B865-92626BD36E4F}",
+          "url": "https://2.na.dl.wireshark.org/win64/all-versions/Wireshark-4.6.9-x64.msi",
+          "sha256": "1975DFC96581A9B674FDA3F41AC1585963B4BA52EA9459F3B6D9CEDFAC3A7217",
+          "productCode": "{B9717009-0193-4E75-A6F4-A4B95F2856A9}",
           "displayNamePattern": "",
-          "publisherPattern": "",
+          "publisherPattern": "^The\\ Wireshark\\ developer\\ community,\\ https://www\\.wireshark\\.org/$",
           "silentArgs": []
         }
       ]
